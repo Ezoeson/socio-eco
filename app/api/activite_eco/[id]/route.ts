@@ -1,14 +1,11 @@
 // app/api/activite-economique/[id]/route.ts
 
 import { PrismaClient } from '@prisma/client';
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
 const prisma = new PrismaClient();
 
-export async function GET(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function GET({ params }: { params: { id: string } }) {
   try {
     const activite = await prisma.activiteEconomique.findUnique({
       where: { id: params.id },
@@ -36,7 +33,7 @@ export async function GET(
 }
 
 export async function PUT(
-  request: Request,
+  request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
@@ -126,10 +123,7 @@ export async function PUT(
   }
 }
 
-export async function DELETE(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function DELETE({ params }: { params: { id: string } }) {
   try {
     const activite = await prisma.activiteEconomique.findUnique({
       where: { id: params.id },

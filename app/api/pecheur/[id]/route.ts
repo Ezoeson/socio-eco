@@ -1,14 +1,11 @@
 // app/api/pecheur/[id]/route.ts
 
 import { PrismaClient } from '@prisma/client';
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
 const prisma = new PrismaClient();
 
-export async function GET(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function GET({ params }: { params: { id: string } }) {
   try {
     const pecheur = await prisma.pecheur.findUnique({
       where: { id: params.id },
@@ -27,7 +24,7 @@ export async function GET(
     }
 
     return NextResponse.json(pecheur);
-  } catch  {
+  } catch {
     return NextResponse.json(
       { error: 'Failed to fetch pecheur' },
       { status: 500 }
@@ -36,7 +33,7 @@ export async function GET(
 }
 
 export async function PUT(
-  request: Request,
+  request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
@@ -86,7 +83,7 @@ export async function PUT(
       message: 'Pecheur updated successfully',
       data: updatedPecheur,
     });
-  } catch  {
+  } catch {
     return NextResponse.json(
       { error: 'Failed to update pecheur' },
       { status: 500 }
@@ -94,10 +91,7 @@ export async function PUT(
   }
 }
 
-export async function DELETE(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function DELETE({ params }: { params: { id: string } }) {
   try {
     const pecheur = await prisma.pecheur.findUnique({
       where: { id: params.id },
@@ -114,7 +108,7 @@ export async function DELETE(
     return NextResponse.json({
       message: 'Pecheur deleted successfully',
     });
-  } catch  {
+  } catch {
     return NextResponse.json(
       { error: 'Failed to delete pecheur' },
       { status: 500 }

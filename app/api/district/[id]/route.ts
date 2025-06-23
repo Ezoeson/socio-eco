@@ -1,13 +1,10 @@
 import { PrismaClient } from '@prisma/client';
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
 const prisma = new PrismaClient();
 
 // GET single district by ID
-export async function GET(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function GET({ params }: { params: { id: string } }) {
   try {
     const district = await prisma.district.findUnique({
       where: { id: params?.id },
@@ -35,7 +32,7 @@ export async function GET(
 
 // PUT update district
 export async function PUT(
-  request: Request,
+  request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
@@ -109,10 +106,7 @@ export async function PUT(
 }
 
 // DELETE district
-export async function DELETE(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function DELETE({ params }: { params: { id: string } }) {
   try {
     // Check if district exists
     const district = await prisma.district.findUnique({

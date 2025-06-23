@@ -1,15 +1,10 @@
-
-
 import { PrismaClient } from '@prisma/client';
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
 const prisma = new PrismaClient();
 
 // GET single region by ID
-export async function GET(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function GET({ params }: { params: { id: string } }) {
   try {
     const region = await prisma.region.findUnique({
       where: { id: params.id },
@@ -20,7 +15,6 @@ export async function GET(
     }
 
     return NextResponse.json(region);
-   
   } catch {
     return NextResponse.json(
       { error: 'Failed to fetch region' },
@@ -31,7 +25,7 @@ export async function GET(
 
 // PUT update region
 export async function PUT(
-  request: Request,
+  request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
@@ -64,10 +58,7 @@ export async function PUT(
 }
 
 // DELETE region
-export async function DELETE(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function DELETE({ params }: { params: { id: string } }) {
   try {
     // Check if region exists
     const region = await prisma.region.findUnique({

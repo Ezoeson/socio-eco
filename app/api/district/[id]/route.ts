@@ -4,10 +4,14 @@ import { NextRequest, NextResponse } from 'next/server';
 const prisma = new PrismaClient();
 
 // GET single district by ID
-export async function GET({ params }: { params: { id: string } }) {
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
+    const { id } = await params;
     const district = await prisma.district.findUnique({
-      where: { id: params?.id },
+      where: { id: id },
       include: {
         region: true,
         communes: true,
@@ -33,14 +37,15 @@ export async function GET({ params }: { params: { id: string } }) {
 // PUT update district
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const json = await request.json();
 
     // Check if district exists
     const districtExists = await prisma.district.findUnique({
-      where: { id: params.id },
+      where: { id: id },
     });
 
     if (!districtExists) {
@@ -71,7 +76,7 @@ export async function PUT(
           nom: json.nom,
           regionId: json.regionId || districtExists.regionId,
           NOT: {
-            id: params.id,
+            id: id,
           },
         },
       });
@@ -85,7 +90,7 @@ export async function PUT(
     }
 
     const updatedDistrict = await prisma.district.update({
-      where: { id: params?.id },
+      where: { id: id },
       data: json,
       include: {
         region: true,
@@ -106,11 +111,15 @@ export async function PUT(
 }
 
 // DELETE district
-export async function DELETE({ params }: { params: { id: string } }) {
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
-    // Check if district exists
+    const { id } = await params;
+  
     const district = await prisma.district.findUnique({
-      where: { id: params?.id },
+      where: { id: id },
     });
 
     if (!district) {
@@ -122,7 +131,7 @@ export async function DELETE({ params }: { params: { id: string } }) {
 
     // Delete the district (cascades to communes due to Prisma relation)
     await prisma.district.delete({
-      where: { id: params?.id },
+      where: { id: id },
     });
 
     return NextResponse.json({

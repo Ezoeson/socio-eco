@@ -5,10 +5,14 @@ import { NextRequest, NextResponse } from 'next/server';
 
 const prisma = new PrismaClient();
 
-export async function GET({ params }: { params: { id: string } }) {
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
+    const { id } = await params;
     const embarcation = await prisma.embarcationPeche.findUnique({
-      where: { id: params.id },
+      where: { id: id },
       include: {
         pecheur: true,
       },
@@ -32,13 +36,14 @@ export async function GET({ params }: { params: { id: string } }) {
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const json = await request.json();
 
     const embarcationExists = await prisma.embarcationPeche.findUnique({
-      where: { id: params.id },
+      where: { id: id },
     });
 
     if (!embarcationExists) {
@@ -62,7 +67,7 @@ export async function PUT(
     }
 
     const updatedEmbarcation = await prisma.embarcationPeche.update({
-      where: { id: params.id },
+      where: { id: id },
       data: json,
       include: {
         pecheur: true,
@@ -81,10 +86,14 @@ export async function PUT(
   }
 }
 
-export async function DELETE({ params }: { params: { id: string } }) {
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
+    const { id } = await params;
     const embarcation = await prisma.embarcationPeche.findUnique({
-      where: { id: params.id },
+      where: { id: id },
     });
 
     if (!embarcation) {
@@ -95,7 +104,7 @@ export async function DELETE({ params }: { params: { id: string } }) {
     }
 
     await prisma.embarcationPeche.delete({
-      where: { id: params.id },
+      where: { id: id },
     });
 
     return NextResponse.json({

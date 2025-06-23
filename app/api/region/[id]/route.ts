@@ -4,10 +4,14 @@ import { NextRequest, NextResponse } from 'next/server';
 const prisma = new PrismaClient();
 
 // GET single region by ID
-export async function GET({ params }: { params: { id: string } }) {
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
+    const { id } = await params;
     const region = await prisma.region.findUnique({
-      where: { id: params.id },
+      where: { id: id },
     });
 
     if (!region) {
@@ -26,14 +30,15 @@ export async function GET({ params }: { params: { id: string } }) {
 // PUT update region
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const json = await request.json();
 
     // Check if region exists
     const regionExists = await prisma.region.findUnique({
-      where: { id: params.id },
+      where: { id: id },
     });
 
     if (!regionExists) {
@@ -41,7 +46,7 @@ export async function PUT(
     }
 
     const updatedRegion = await prisma.region.update({
-      where: { id: params.id },
+      where: { id: id },
       data: json,
     });
 
@@ -58,11 +63,15 @@ export async function PUT(
 }
 
 // DELETE region
-export async function DELETE({ params }: { params: { id: string } }) {
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
+    const { id } = await params;
     // Check if region exists
     const region = await prisma.region.findUnique({
-      where: { id: params.id },
+      where: { id: id },
     });
 
     if (!region) {
@@ -71,7 +80,7 @@ export async function DELETE({ params }: { params: { id: string } }) {
 
     // Delete the region (cascades to communes due to Prisma relation)
     await prisma.region.delete({
-      where: { id: params.id },
+      where: { id: id },
     });
 
     return NextResponse.json({

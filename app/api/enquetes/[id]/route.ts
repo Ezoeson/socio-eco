@@ -3,10 +3,15 @@ import { NextRequest, NextResponse } from 'next/server';
 
 const prisma = new PrismaClient();
 
-export async function GET({ params }: { params: { id: string } }) {
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
+    const { id } = await params;
+    
     const enquete = await prisma.enquete.findUnique({
-      where: { id: params.id },
+      where: { id:id },
       include: {
         enqueteur: true,
         secteur: true,
@@ -32,13 +37,14 @@ export async function GET({ params }: { params: { id: string } }) {
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const json = await request.json();
 
     const enqueteExists = await prisma.enquete.findUnique({
-      where: { id: params.id },
+      where: { id: id },
     });
 
     if (!enqueteExists) {
@@ -71,7 +77,7 @@ export async function PUT(
     }
 
     const updatedEnquete = await prisma.enquete.update({
-      where: { id: params.id },
+      where: { id: id },
       data: json,
       include: {
         enqueteur: true,
@@ -95,10 +101,14 @@ export async function PUT(
   }
 }
 
-export async function DELETE({ params }: { params: { id: string } }) {
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
+    const { id } = await params;
     const enquete = await prisma.enquete.findUnique({
-      where: { id: params.id },
+      where: { id: id },
     });
 
     if (!enquete) {
@@ -106,7 +116,7 @@ export async function DELETE({ params }: { params: { id: string } }) {
     }
 
     await prisma.enquete.delete({
-      where: { id: params.id },
+      where: { id: id },
     });
 
     return NextResponse.json({

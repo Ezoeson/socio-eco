@@ -5,10 +5,13 @@ import { NextRequest, NextResponse } from 'next/server';
 
 const prisma = new PrismaClient();
 
-export async function GET({ params }: { params: { id: string } }) {
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params;
     const produit = await prisma.produitAchete.findUnique({
-      where: { id: params.id },
+      where: { id: id },
       include: {
         operateur: true,
       },
@@ -32,13 +35,14 @@ export async function GET({ params }: { params: { id: string } }) {
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const json = await request.json();
 
     const produitExists = await prisma.produitAchete.findUnique({
-      where: { id: params.id },
+      where: { id: id },
     });
 
     if (!produitExists) {
@@ -68,7 +72,7 @@ export async function PUT(
           operateurId: json.operateurId || produitExists.operateurId,
           typeProduit: json.typeProduit,
           NOT: {
-            id: params.id,
+            id: id,
           },
         },
       });
@@ -82,7 +86,7 @@ export async function PUT(
     }
 
     const updatedProduit = await prisma.produitAchete.update({
-      where: { id: params.id },
+      where: { id:id },
       data: json,
       include: {
         operateur: true,
@@ -101,10 +105,15 @@ export async function PUT(
   }
 }
 
-export async function DELETE({ params }: { params: { id: string } }) {
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
+    const { id } = await params;
+    
     const produit = await prisma.produitAchete.findUnique({
-      where: { id: params.id },
+      where: { id:id },
     });
 
     if (!produit) {
@@ -115,7 +124,7 @@ export async function DELETE({ params }: { params: { id: string } }) {
     }
 
     await prisma.produitAchete.delete({
-      where: { id: params.id },
+      where: { id: id },
     });
 
     return NextResponse.json({

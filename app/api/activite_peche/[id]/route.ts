@@ -5,10 +5,14 @@ import { NextRequest, NextResponse } from 'next/server';
 
 const prisma = new PrismaClient();
 
-export async function GET({ params }: { params: { id: string } }) {
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
+    const { id } = await params;
     const pratique = await prisma.pratiquePeche.findUnique({
-      where: { id: params.id },
+      where: { id: id },
       include: {
         pecheur: true,
       },
@@ -32,13 +36,14 @@ export async function GET({ params }: { params: { id: string } }) {
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const json = await request.json();
 
     const pratiqueExists = await prisma.pratiquePeche.findUnique({
-      where: { id: params.id },
+      where: { id: id },
     });
 
     if (!pratiqueExists) {
@@ -68,7 +73,7 @@ export async function PUT(
           pecheurId: json.pecheurId || pratiqueExists.pecheurId,
           especeCible: json.especeCible,
           NOT: {
-            id: params.id,
+            id: id,
           },
         },
       });
@@ -85,7 +90,7 @@ export async function PUT(
     }
 
     const updatedPratique = await prisma.pratiquePeche.update({
-      where: { id: params.id },
+      where: { id:id },
       data: json,
       include: {
         pecheur: true,
@@ -104,10 +109,14 @@ export async function PUT(
   }
 }
 
-export async function DELETE({ params }: { params: { id: string } }) {
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
+    const { id } = await params;
     const pratique = await prisma.pratiquePeche.findUnique({
-      where: { id: params.id },
+      where: { id: id },
     });
 
     if (!pratique) {
@@ -118,7 +127,7 @@ export async function DELETE({ params }: { params: { id: string } }) {
     }
 
     await prisma.pratiquePeche.delete({
-      where: { id: params.id },
+      where: { id:id },
     });
 
     return NextResponse.json({

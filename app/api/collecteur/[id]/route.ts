@@ -3,10 +3,14 @@ import { NextRequest, NextResponse } from 'next/server';
 
 const prisma = new PrismaClient();
 
-export async function GET({ params }: { params: { id: string } }) {
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
+    const { id } = await params;
     const collecteur = await prisma.collecteur.findUnique({
-      where: { id: params.id },
+      where: { id: id },
       include: {
         enquete: true,
         produitsAchetes: true,
@@ -34,13 +38,14 @@ export async function GET({ params }: { params: { id: string } }) {
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const json = await request.json();
 
     const collecteurExists = await prisma.collecteur.findUnique({
-      where: { id: params.id },
+      where: { id: id },
     });
 
     if (!collecteurExists) {
@@ -66,7 +71,7 @@ export async function PUT(
         where: { enqueteId: json.enqueteId },
       });
 
-      if (existingCollecteur && existingCollecteur.id !== params.id) {
+      if (existingCollecteur && existingCollecteur.id !== id) {
         return NextResponse.json(
           { error: 'Another collecteur already exists for this enquete' },
           { status: 400 }
@@ -75,7 +80,7 @@ export async function PUT(
     }
 
     const updatedCollecteur = await prisma.collecteur.update({
-      where: { id: params.id },
+      where: { id: id },
       data: json,
       include: {
         enquete: true,
@@ -94,10 +99,14 @@ export async function PUT(
   }
 }
 
-export async function DELETE({ params }: { params: { id: string } }) {
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
+    const { id } = await params;
     const collecteur = await prisma.collecteur.findUnique({
-      where: { id: params.id },
+      where: { id },
     });
 
     if (!collecteur) {
@@ -108,7 +117,7 @@ export async function DELETE({ params }: { params: { id: string } }) {
     }
 
     await prisma.collecteur.delete({
-      where: { id: params.id },
+      where: { id: id },
     });
 
     return NextResponse.json({

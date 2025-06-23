@@ -5,10 +5,13 @@ import { NextRequest, NextResponse } from 'next/server';
 
 const prisma = new PrismaClient();
 
-export async function GET({ params }: { params: { id: string } }) {
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params;
     const membre = await prisma.membreFamille.findUnique({
-      where: { id: params.id },
+      where: { id:id },
       include: {
         enquete: true,
       },
@@ -32,13 +35,14 @@ export async function GET({ params }: { params: { id: string } }) {
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const json = await request.json();
 
     const membreExists = await prisma.membreFamille.findUnique({
-      where: { id: params.id },
+      where: { id: id },
     });
 
     if (!membreExists) {
@@ -62,7 +66,7 @@ export async function PUT(
     }
 
     const updatedMembre = await prisma.membreFamille.update({
-      where: { id: params.id },
+      where: { id: id },
       data: json,
       include: {
         enquete: true,
@@ -81,10 +85,14 @@ export async function PUT(
   }
 }
 
-export async function DELETE({ params }: { params: { id: string } }) {
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
+    const { id } = await params;
     const membre = await prisma.membreFamille.findUnique({
-      where: { id: params.id },
+      where: { id: id },
     });
 
     if (!membre) {
@@ -95,7 +103,7 @@ export async function DELETE({ params }: { params: { id: string } }) {
     }
 
     await prisma.membreFamille.delete({
-      where: { id: params.id },
+      where: { id: id },
     });
 
     return NextResponse.json({

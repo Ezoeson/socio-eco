@@ -3,10 +3,14 @@ import { NextRequest, NextResponse } from 'next/server';
 
 const prisma = new PrismaClient();
 
-export async function GET({ params }: { params: { id: string } }) {
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
+    const { id } = await params;
     const fokontany = await prisma.fokontany.findUnique({
-      where: { id: params.id },
+      where: { id: id },
       include: {
         commune: true,
         secteurs: true,
@@ -31,13 +35,14 @@ export async function GET({ params }: { params: { id: string } }) {
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const json = await request.json();
 
     const fokontanyExists = await prisma.fokontany.findUnique({
-      where: { id: params.id },
+      where: { id: id },
     });
 
     if (!fokontanyExists) {
@@ -66,7 +71,7 @@ export async function PUT(
           nom: json.nom,
           communeId: json.communeId || fokontanyExists.communeId,
           NOT: {
-            id: params.id,
+            id: id,
           },
         },
       });
@@ -80,7 +85,7 @@ export async function PUT(
     }
 
     const updatedFokontany = await prisma.fokontany.update({
-      where: { id: params.id },
+      where: { id: id },
       data: json,
       include: {
         commune: true,
@@ -100,10 +105,14 @@ export async function PUT(
   }
 }
 
-export async function DELETE({ params }: { params: { id: string } }) {
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
+    const { id } = await params;
     const fokontany = await prisma.fokontany.findUnique({
-      where: { id: params.id },
+      where: { id: id },
     });
 
     if (!fokontany) {
@@ -114,7 +123,7 @@ export async function DELETE({ params }: { params: { id: string } }) {
     }
 
     await prisma.fokontany.delete({
-      where: { id: params.id },
+      where: { id: id },
     });
 
     return NextResponse.json({

@@ -5,10 +5,14 @@ import { NextRequest, NextResponse } from 'next/server';
 
 const prisma = new PrismaClient();
 
-export async function GET({ params }: { params: { id: string } }) {
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
+    const { id } = await params;
     const circuit = await prisma.circuitCommercialProduit.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         pecheur: true,
         destinations: true,
@@ -33,13 +37,15 @@ export async function GET({ params }: { params: { id: string } }) {
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
+
     const json = await request.json();
 
     const circuitExists = await prisma.circuitCommercialProduit.findUnique({
-      where: { id: params.id },
+      where: { id: id },
     });
 
     if (!circuitExists) {
@@ -66,12 +72,12 @@ export async function PUT(
     if (json.destinations) {
       // First delete existing destinations
       await prisma.destinationCommerciale.deleteMany({
-        where: { circuitId: params.id },
+        where: { circuitId: id },
       });
 
       // Then create new ones
       await prisma.circuitCommercialProduit.update({
-        where: { id: params.id },
+        where: { id: id },
         data: {
           destinations: {
             create: json.destinations,
@@ -81,7 +87,7 @@ export async function PUT(
     }
 
     const updatedCircuit = await prisma.circuitCommercialProduit.update({
-      where: { id: params.id },
+      where: { id: id },
       data: json,
       include: {
         pecheur: true,
@@ -101,10 +107,14 @@ export async function PUT(
   }
 }
 
-export async function DELETE({ params }: { params: { id: string } }) {
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
+    const { id } = await params;
     const circuit = await prisma.circuitCommercialProduit.findUnique({
-      where: { id: params.id },
+      where: { id: id },
     });
 
     if (!circuit) {
@@ -115,7 +125,7 @@ export async function DELETE({ params }: { params: { id: string } }) {
     }
 
     await prisma.circuitCommercialProduit.delete({
-      where: { id: params.id },
+      where: { id: id },
     });
 
     return NextResponse.json({

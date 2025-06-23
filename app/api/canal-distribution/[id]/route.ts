@@ -19,15 +19,15 @@ export async function GET(
 
     if (!canal) {
       return NextResponse.json(
-        { error: "Distribution channel not found" },
+        { error: 'Distribution channel not found' },
         { status: 404 }
       );
     }
 
     return NextResponse.json(canal);
-  } catch (error) {
+  } catch {
     return NextResponse.json(
-      { error: "Failed to fetch distribution channel" },
+      { error: 'Failed to fetch distribution channel' },
       { status: 500 }
     );
   }
@@ -39,14 +39,14 @@ export async function PUT(
 ) {
   try {
     const json = await request.json();
-    
+
     const canalExists = await prisma.canalDistribution.findUnique({
       where: { id: params.id },
     });
 
     if (!canalExists) {
       return NextResponse.json(
-        { error: "Distribution channel not found" },
+        { error: 'Distribution channel not found' },
         { status: 404 }
       );
     }
@@ -55,10 +55,10 @@ export async function PUT(
       const operateurExists = await prisma.collecteur.findUnique({
         where: { id: json.operateurId },
       });
-      
+
       if (!operateurExists) {
         return NextResponse.json(
-          { error: "Collecteur not found" },
+          { error: 'Collecteur not found' },
           { status: 404 }
         );
       }
@@ -73,12 +73,12 @@ export async function PUT(
     });
 
     return NextResponse.json({
-      message: "Distribution channel updated successfully",
+      message: 'Distribution channel updated successfully',
       data: updatedCanal,
     });
-  } catch (error) {
+  } catch {
     return NextResponse.json(
-      { error: "Failed to update distribution channel" },
+      { error: 'Failed to update distribution channel' },
       { status: 500 }
     );
   }
@@ -95,7 +95,7 @@ export async function DELETE(
 
     if (!canal) {
       return NextResponse.json(
-        { error: "Distribution channel not found" },
+        { error: 'Distribution channel not found' },
         { status: 404 }
       );
     }
@@ -105,11 +105,11 @@ export async function DELETE(
     });
 
     return NextResponse.json({
-      message: "Distribution channel deleted successfully",
+      message: 'Distribution channel deleted successfully',
     });
-  } catch  {
+  } catch {
     return NextResponse.json(
-      { error: "Failed to delete distribution channel" },
+      { error: 'Failed to delete distribution channel' },
       { status: 500 }
     );
   }

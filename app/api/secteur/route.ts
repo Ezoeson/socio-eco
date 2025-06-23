@@ -15,7 +15,7 @@ export async function GET() {
       },
     });
     return NextResponse.json(secteurs);
-  } catch (error) {
+  } catch  {
     return NextResponse.json(
       { error: 'Failed to fetch secteurs' },
       { status: 500 }
@@ -63,7 +63,7 @@ export async function POST(request: Request) {
       message: 'Secteur created successfully',
       data: secteur,
     });
-  } catch (error) {
+  } catch  {
     return NextResponse.json(
       { error: 'Failed to create secteur' },
       { status: 500 }

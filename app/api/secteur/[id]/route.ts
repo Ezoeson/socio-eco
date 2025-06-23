@@ -24,7 +24,7 @@ export async function GET(
     }
 
     return NextResponse.json(secteur);
-  } catch (error) {
+  } catch  {
     return NextResponse.json(
       { error: 'Failed to fetch secteur' },
       { status: 500 }
@@ -92,7 +92,7 @@ export async function PUT(
       message: 'Secteur updated successfully',
       data: updatedSecteur,
     });
-  } catch (error) {
+  } catch  {
     return NextResponse.json(
       { error: 'Failed to update secteur' },
       { status: 500 }
@@ -120,7 +120,7 @@ export async function DELETE(
     return NextResponse.json({
       message: 'Secteur deleted successfully',
     });
-  } catch (error) {
+  } catch  {
     return NextResponse.json(
       { error: 'Failed to delete secteur' },
       { status: 500 }

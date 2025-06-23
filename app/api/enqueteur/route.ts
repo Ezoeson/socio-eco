@@ -14,12 +14,10 @@ export async function GET() {
           include: {
             secteur: true,
             collecteur: {
-              include:{
-                produitsAchetes:true,
-                methodesStockage:true,
-                
-
-              }
+              include: {
+                produitsAchetes: true,
+                methodesStockage: true,
+              },
             },
             pecheur: true,
           },
@@ -27,7 +25,7 @@ export async function GET() {
       },
     });
     return NextResponse.json(enqueteurs);
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { error: 'Failed to fetch enqueteurs' },
       { status: 500 }
@@ -84,7 +82,7 @@ export async function POST(request: Request) {
       message: 'Enqueteur created successfully',
       data: enqueteur,
     });
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { error: 'Failed to create enqueteur' },
       { status: 500 }

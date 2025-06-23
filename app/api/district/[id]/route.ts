@@ -28,7 +28,7 @@ export async function GET(
     }
 
     return NextResponse.json(district);
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { error: 'Failed to fetch district' },
       { status: 500 }
@@ -103,7 +103,7 @@ export async function PUT(
       message: 'District updated successfully',
       data: updatedDistrict,
     });
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { error: 'Failed to update district' },
       { status: 500 }
@@ -137,7 +137,7 @@ export async function DELETE(
     return NextResponse.json({
       message: 'District deleted successfully',
     });
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { error: 'Failed to delete district' },
       { status: 500 }

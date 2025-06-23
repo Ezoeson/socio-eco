@@ -24,7 +24,7 @@ export async function GET(
     }
 
     return NextResponse.json(commune);
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { error: 'Failed to fetch commune' },
       { status: 500 }
@@ -92,7 +92,7 @@ export async function PUT(
       message: 'Commune updated successfully',
       data: updatedCommune,
     });
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { error: 'Failed to update commune' },
       { status: 500 }
@@ -120,7 +120,7 @@ export async function DELETE(
     return NextResponse.json({
       message: 'Commune deleted successfully',
     });
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { error: 'Failed to delete commune' },
       { status: 500 }

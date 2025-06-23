@@ -14,7 +14,7 @@ import {
   Select,
   SelectContent,
   SelectTrigger,
-  SelectItem,
+
   SelectValue,
 } from '@/dynamicImport/dynamic-import';
 

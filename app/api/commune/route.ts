@@ -15,7 +15,7 @@ export async function GET() {
       },
     });
     return NextResponse.json(communes);
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { error: 'Failed to fetch communes' },
       { status: 500 }
@@ -64,7 +64,7 @@ export async function POST(request: Request) {
       message: 'Commune created successfully',
       data: commune,
     });
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { error: 'Failed to create commune' },
       { status: 500 }

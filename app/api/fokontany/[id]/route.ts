@@ -27,7 +27,7 @@ export async function GET(
     }
 
     return NextResponse.json(fokontany);
-  } catch (error) {
+  } catch  {
     return NextResponse.json(
       { error: 'Failed to fetch fokontany' },
       { status: 500 }
@@ -98,7 +98,7 @@ export async function PUT(
       message: 'Fokontany updated successfully',
       data: updatedFokontany,
     });
-  } catch (error) {
+  } catch  {
     return NextResponse.json(
       { error: 'Failed to update fokontany' },
       { status: 500 }
@@ -129,7 +129,7 @@ export async function DELETE(
     return NextResponse.json({
       message: 'Fokontany deleted successfully',
     });
-  } catch (error) {
+  } catch  {
     return NextResponse.json(
       { error: 'Failed to delete fokontany' },
       { status: 500 }

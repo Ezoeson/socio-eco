@@ -22,7 +22,7 @@ export async function GET(
 
     return NextResponse.json(region);
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { error: 'Failed to fetch region' },
       { status: 500 }
@@ -56,7 +56,7 @@ export async function PUT(
       message: 'Region updated successfully',
       data: updatedRegion,
     });
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { error: 'Failed to update region' },
       { status: 500 }
@@ -87,7 +87,7 @@ export async function DELETE(
     return NextResponse.json({
       message: 'Region deleted successfully',
     });
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { error: 'Failed to delete region' },
       { status: 500 }

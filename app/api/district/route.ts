@@ -24,7 +24,7 @@ export async function GET() {
       },
     });
     return NextResponse.json(districts);
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { error: 'Failed to fetch districts' },
       { status: 500 }
@@ -63,7 +63,7 @@ export async function POST(request: Request) {
       message: 'District created successfully',
       data: district,
     });
-  } catch (error) {
+  } catch  {
     return NextResponse.json(
       { error: 'Failed to create district' },
       { status: 500 }

@@ -25,7 +25,7 @@ export async function GET({ params }: { params: { id: string } }) {
     }
 
     return NextResponse.json(enquete);
-  } catch (error) {
+  } catch  {
     return NextResponse.json(
       { error: 'Failed to fetch enquete' },
       { status: 500 }
@@ -90,7 +90,7 @@ export async function PUT(
       message: 'Enquete updated successfully',
       data: updatedEnquete,
     });
-  } catch (error) {
+  } catch  {
     return NextResponse.json(
       { error: 'Failed to update enquete' },
       { status: 500 }
@@ -118,7 +118,7 @@ export async function DELETE(
     return NextResponse.json({
       message: 'Enquete deleted successfully',
     });
-  } catch (error) {
+  } catch  {
     return NextResponse.json(
       { error: 'Failed to delete enquete' },
       { status: 500 }

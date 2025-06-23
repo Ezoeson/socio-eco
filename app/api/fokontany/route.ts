@@ -15,7 +15,7 @@ export async function GET() {
       },
     });
     return NextResponse.json(fokontanys);
-  } catch (error) {
+  } catch  {
     return NextResponse.json(
       { error: 'Failed to fetch fokontanys' },
       { status: 500 }
@@ -60,7 +60,7 @@ export async function POST(request: Request) {
       message: 'Fokontany created successfully',
       data: fokontany,
     });
-  } catch (error) {
+  } catch  {
     return NextResponse.json(
       { error: 'Failed to create fokontany' },
       { status: 500 }

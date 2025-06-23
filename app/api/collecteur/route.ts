@@ -18,7 +18,7 @@ export async function GET() {
       },
     });
     return NextResponse.json(collecteurs);
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { error: 'Failed to fetch collecteurs' },
       { status: 500 }
@@ -61,7 +61,7 @@ export async function POST(request: Request) {
       message: 'Collecteur created successfully',
       data: collecteur,
     });
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { error: 'Failed to create collecteur' },
       { status: 500 }

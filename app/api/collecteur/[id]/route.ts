@@ -30,7 +30,7 @@ export async function GET(
     }
 
     return NextResponse.json(collecteur);
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { error: 'Failed to fetch collecteur' },
       { status: 500 }
@@ -92,7 +92,7 @@ export async function PUT(
       message: 'Collecteur updated successfully',
       data: updatedCollecteur,
     });
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { error: 'Failed to update collecteur' },
       { status: 500 }
@@ -123,7 +123,7 @@ export async function DELETE(
     return NextResponse.json({
       message: 'Collecteur deleted successfully',
     });
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { error: 'Failed to delete collecteur' },
       { status: 500 }

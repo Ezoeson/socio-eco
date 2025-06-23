@@ -1,0 +1,379 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum NiveauEducation {
+  AUCUN
+  PRESCOLAIRE
+  PRIMAIRE_NON_COMPLET
+  PRIMAIRE_COMPLET
+  COLLEGE_NON_COMPLET
+  COLLEGE_COMPLET
+  SECONDAIRE_NON_COMPLET
+  SECONDAIRE_COMPLET
+}
+
+enum SourceFinancement {
+  PROPRE
+  EMPRUNT
+  DON
+}
+
+enum Sexe {
+  MASCULIN
+  FEMININ
+}
+
+enum LienFamilial {
+  CONJOINT
+  ENFANT
+  PARENT
+  BEAU_PARENT
+  FRERE_SOEUR
+  AUTRE
+}
+
+model Region {
+  id        String     @id @default(uuid())
+  nom       String
+  districts District[]
+
+  @@map("regions")
+}
+
+model District {
+  id       String    @id @default(uuid())
+  nom      String
+  region   Region    @relation(fields: [regionId], references: [id], onDelete: Cascade)
+  regionId String
+  communes Commune[]
+
+  @@unique([nom, regionId])
+  @@map("districts")
+}
+
+model Commune {
+  id         String      @id @default(uuid())
+  nom        String
+  district   District    @relation(fields: [districtId], references: [id], onDelete: Cascade)
+  districtId String
+  fokontanys Fokontany[]
+
+  @@unique([nom, districtId])
+  @@map("communes")
+}
+
+model Fokontany {
+  id        String    @id @default(uuid())
+  nom       String
+  commune   Commune   @relation(fields: [communeId], references: [id], onDelete: Cascade)
+  communeId String
+  secteurs  Secteur[]
+
+  @@unique([nom, communeId])
+  @@map("fokontanys")
+}
+
+model Secteur {
+  id          String    @id @default(uuid())
+  nom         String
+  fokontany   Fokontany @relation(fields: [fokontanyId], references: [id], onDelete: Cascade)
+  fokontanyId String
+  enquetes    Enquete[]
+
+  @@unique([nom, fokontanyId])
+  @@map("secteurs")
+}
+
+model Enqueteur {
+  id        String    @id @default(uuid())
+  nom       String    @unique
+  prenom    String?
+  code      String?   @unique
+  telephone String?
+  email     String?   @unique
+  actif     Boolean   @default(true)
+  enquetes  Enquete[]
+
+  @@map("enqueteurs")
+}
+
+model Enquete {
+  id                     String    @id @default(uuid())
+  estPecheur             Boolean   @default(false)
+  estCollecteur          Boolean   @default(false)
+  touteActivite          Boolean   @default(false)
+  nomRepondant           String?
+  nomEnquete             String
+  ethnie                 String?
+  districtOrigine        String?
+  anneeArriveeVillage    Int?
+  possessionAncienMetier Boolean?
+  ancienMetier           String?
+  dateEnquete            DateTime?
+
+  enqueteur   Enqueteur? @relation(fields: [enqueteurId], references: [id], onDelete: SetNull)
+  enqueteurId String?
+  secteur     Secteur?   @relation(fields: [secteurId], references: [id], onDelete: SetNull)
+  secteurId   String?
+
+  pecheur        Pecheur?
+  collecteur     Collecteur?
+  membresFamille MembreFamille[]
+  activites      ActiviteEconomique[]
+
+  @@map("enquetes")
+}
+
+model MembreFamille {
+  id        String  @id @default(uuid())
+  enquete   Enquete @relation(fields: [enqueteId], references: [id], onDelete: Cascade)
+  enqueteId String
+  nom       String
+
+  age Int?
+
+  ancienLieuResidence String?
+  villageOrigine      String?
+  anneeArrivee        Int?
+  niveauEducation     NiveauEducation?
+  lienFamilial        LienFamilial?
+  sexe                Sexe?
+  frequentationEcole  Boolean?
+
+  estChefMenage Boolean? @default(false)
+
+  @@map("membres_famille")
+}
+
+model Pecheur {
+  id                 String                     @id @default(uuid())
+  enquete            Enquete                    @relation(fields: [enqueteId], references: [id], onDelete: Cascade)
+  enqueteId          String                     @unique
+  anneeDebut         Int?
+  pratiquesPeche     PratiquePeche[]
+  equipementsPeche   EquipementPeche[]
+  embarcations       EmbarcationPeche[]
+  circuitsCommercial CircuitCommercialProduit[]
+  activites          ActiviteEconomique[]
+
+  @@map("pecheurs")
+}
+
+model PratiquePeche {
+  id          String  @id @default(uuid())
+  pecheur     Pecheur @relation(fields: [pecheurId], references: [id], onDelete: Cascade)
+  pecheurId   String
+  especeCible String?
+
+  dureeSaisonHaute            Int?
+  dureeSaisonBasse            Int?
+  frequenceSortiesSaisonHaute Float?
+  frequenceSortiesSaisonBasse Float?
+  capturesMoyennesSaisonHaute Float?
+  capturesMoyennesSaisonBasse Float?
+  classificationActivite      String?
+
+  @@unique([pecheurId, especeCible])
+  @@map("pratiques_peche")
+}
+
+model EquipementPeche {
+  id                      String  @id @default(uuid())
+  pecheur                 Pecheur @relation(fields: [pecheurId], references: [id], onDelete: Cascade)
+  pecheurId               String
+  typeEquipement          String?
+  quantite                Int?
+  utilisationHebdomadaire Int?
+  dureeUtilisation        Int?
+  rendementEstime         Int?
+
+  @@map("equipements_peche")
+}
+
+model EmbarcationPeche {
+  id                   String             @id @default(uuid())
+  pecheur              Pecheur            @relation(fields: [pecheurId], references: [id], onDelete: Cascade)
+  pecheurId            String
+  nombre               Int?
+  proprietaire         Boolean?
+  statutPropriete      String?
+  nombreEquipage       Int?
+  partageCaptures      Float?
+  coutAcquisition      Float?
+  modeAcquisition      String?
+  typeFinancement      SourceFinancement?
+  montantFinancement   Float?
+  dureeFinancement     Int?
+  remboursementMensuel Float?
+  typeEmbarcation      String?
+
+  systemePropulsion     String?
+  longueur              Float?
+  capacitePassagers     Int?
+  ageMois               Int?
+  materiauxConstruction String?
+  typeBois              String?
+  dureeVieEstimee       Int?
+
+  @@map("embarcations_peche")
+}
+
+model CircuitCommercialProduit {
+  id                    String  @id @default(uuid())
+  pecheur               Pecheur @relation(fields: [pecheurId], references: [id], onDelete: Cascade)
+  pecheurId             String
+  typeProduit           String?
+  modeLivraison         String?
+  dureeDeplacement      Int?
+  prixAvantCorona       Float?
+  prixApresCorona       Float?
+  prixPendantCorona     Float?
+  methodeDeconservation String?
+
+  avanceFinanciere     Boolean?
+  montantAvance        Int?
+  determinePrix        Boolean?
+  prixUnitaire         Int?
+  restrictionQuantite  Boolean?
+  quantiteLivree       Float?
+  modePaiement         String?
+  periodeDemandeElevee String?
+  periodeDemandeFaible String?
+  partMarche           Float?
+
+  destinations DestinationCommerciale[]
+
+  @@map("circuits_commerciaux")
+}
+
+model DestinationCommerciale {
+  id          String                   @id @default(uuid())
+  circuit     CircuitCommercialProduit @relation(fields: [circuitId], references: [id], onDelete: Cascade)
+  circuitId   String
+  nom         String?
+  pourcentage Float?
+
+  @@map("destinations_commerciales")
+}
+
+model Collecteur {
+  id                       String   @id @default(uuid())
+  enquete                  Enquete  @relation(fields: [enqueteId], references: [id], onDelete: Cascade)
+  enqueteId                String   @unique
+  localFokontany           Boolean?
+  experienceAnnees         Float?
+  estMareyeur              Boolean? @default(false)
+  lieuCollecte             String[]
+  capitalTotal             Float?
+  partCapitalPropre        Float?
+  partCapitalEmprunte      Float?
+  investissementEquipement Float?
+  investissementLocation   Float?
+  coutRessourcesHumaines   Float?
+
+  produitsAchetes    ProduitAchete[]
+  methodesStockage   MethodeStockage[]
+  canauxDistribution CanalDistribution[]
+  activites          ActiviteEconomique[]
+
+  @@map("operateurs_marche")
+}
+
+model ProduitAchete {
+  id                     String     @id @default(uuid())
+  operateur              Collecteur @relation(fields: [operateurId], references: [id], onDelete: Cascade)
+  operateurId            String
+  typeProduit            String?
+  volumeHebdomadaireKg   Float?
+  criteresQualite        String?
+  systemeAvance          Boolean?
+  montantAvance          Int?
+  possedeCarteProfession Boolean?
+  varieteProduitA        String?
+  varieteProduitB        String?
+  dureeCollecteHebdo     Float?
+
+  @@unique([operateurId, typeProduit])
+  @@map("produits_achetes")
+}
+
+model MethodeStockage {
+  id                    String     @id @default(uuid())
+  operateur             Collecteur @relation(fields: [operateurId], references: [id], onDelete: Cascade)
+  operateurId           String
+  typeProduit           String?
+  lieuStockage          String[]
+  techniqueConservation String?
+  dureeStockageJours    Int?
+  tauxPerte             Float?
+  gestionDechets        String?
+
+  @@map("methodes_stockage")
+}
+
+model CanalDistribution {
+  id                      String     @id @default(uuid())
+  operateur               Collecteur @relation(fields: [operateurId], references: [id], onDelete: Cascade)
+  operateurId             String
+  typeProduit             String?
+  circuitDistribution     String?
+  pointVente              String[]
+  moyenTransport          String?
+  frequenceLivraisonsMois Int?
+  techniqueTransport      String?
+  prixVenteKg             Int?
+  periodeDemandeElevee    String?
+  periodeDemandeFaible    String?
+  requiertAvance          Boolean?
+  montantAvance           Int?
+  acheteurDeterminePrix   Boolean?
+
+  @@map("canaux_distribution")
+}
+
+model ActiviteEconomique {
+  id        String  @id @default(uuid())
+  enquete   Enquete @relation(fields: [enqueteId], references: [id], onDelete: Cascade)
+  enqueteId String
+
+  typeActivite String?
+  sousType     String?
+
+  utilisationRessource       String?
+  prixVente                  Int?
+  frequenceCollecte          String?
+  frequenceCommercialisation String?
+  saisonHaute                String?
+  saisonBasse                String?
+  importanceActivite         String?
+
+  lienAvecPeche      String?
+  superficie         Float?
+  productionAnnuelle Float?
+  regimeFoncier      String?
+  localisation       String?
+  outilsUtilises     String?
+
+  frequenceActivite String?
+
+  dureeExperience String?
+  nombreAnimaux   Int?
+  zonePaturage    String?
+  frequenceSoins  String?
+
+  tempsConsacreHebdo   Int?
+  revenuMensuel        Float?
+  lieuExercice         String?
+  niveauSpecialization String?
+
+  pecheur    Pecheur[]
+  collecteur Collecteur[]
+
+  @@map("activites_economiques")
+}

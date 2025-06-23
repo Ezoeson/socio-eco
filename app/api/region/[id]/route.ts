@@ -1,5 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-// app/api/region/[id]/route.ts
+
 
 import { PrismaClient } from '@prisma/client';
 import { NextResponse } from 'next/server';
@@ -21,7 +20,7 @@ export async function GET(
     }
 
     return NextResponse.json(region);
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+   
   } catch {
     return NextResponse.json(
       { error: 'Failed to fetch region' },

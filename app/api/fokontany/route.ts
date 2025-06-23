@@ -1,6 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-// app/api/fokontany/route.ts
-
 import { PrismaClient } from '@prisma/client';
 import { NextResponse } from 'next/server';
 
@@ -15,7 +12,7 @@ export async function GET() {
       },
     });
     return NextResponse.json(fokontanys);
-  } catch  {
+  } catch {
     return NextResponse.json(
       { error: 'Failed to fetch fokontanys' },
       { status: 500 }
@@ -60,7 +57,7 @@ export async function POST(request: Request) {
       message: 'Fokontany created successfully',
       data: fokontany,
     });
-  } catch  {
+  } catch {
     return NextResponse.json(
       { error: 'Failed to create fokontany' },
       { status: 500 }

@@ -1,6 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-// app/api/enquete/[id]/route.ts
-
 import { PrismaClient } from '@prisma/client';
 import { NextResponse } from 'next/server';
 
@@ -25,7 +22,7 @@ export async function GET({ params }: { params: { id: string } }) {
     }
 
     return NextResponse.json(enquete);
-  } catch  {
+  } catch {
     return NextResponse.json(
       { error: 'Failed to fetch enquete' },
       { status: 500 }
@@ -90,7 +87,7 @@ export async function PUT(
       message: 'Enquete updated successfully',
       data: updatedEnquete,
     });
-  } catch  {
+  } catch {
     return NextResponse.json(
       { error: 'Failed to update enquete' },
       { status: 500 }
@@ -118,7 +115,7 @@ export async function DELETE(
     return NextResponse.json({
       message: 'Enquete deleted successfully',
     });
-  } catch  {
+  } catch {
     return NextResponse.json(
       { error: 'Failed to delete enquete' },
       { status: 500 }

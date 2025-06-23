@@ -1,6 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-// app/api/district/route.ts
-
 import { PrismaClient } from '@prisma/client';
 import { NextResponse } from 'next/server';
 
@@ -63,7 +60,7 @@ export async function POST(request: Request) {
       message: 'District created successfully',
       data: district,
     });
-  } catch  {
+  } catch {
     return NextResponse.json(
       { error: 'Failed to create district' },
       { status: 500 }

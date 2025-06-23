@@ -1,6 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-// app/api/secteur/route.ts
-
 import { PrismaClient } from '@prisma/client';
 import { NextResponse } from 'next/server';
 
@@ -15,7 +12,7 @@ export async function GET() {
       },
     });
     return NextResponse.json(secteurs);
-  } catch  {
+  } catch {
     return NextResponse.json(
       { error: 'Failed to fetch secteurs' },
       { status: 500 }
@@ -63,7 +60,7 @@ export async function POST(request: Request) {
       message: 'Secteur created successfully',
       data: secteur,
     });
-  } catch  {
+  } catch {
     return NextResponse.json(
       { error: 'Failed to create secteur' },
       { status: 500 }

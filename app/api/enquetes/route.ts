@@ -1,6 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-// app/api/enquete/route.ts
-
 import { PrismaClient } from '@prisma/client';
 import { NextResponse } from 'next/server';
 
@@ -19,7 +16,7 @@ export async function GET() {
       },
     });
     return NextResponse.json(enquetes);
-  } catch  {
+  } catch {
     return NextResponse.json(
       { error: 'Failed to fetch enquetes' },
       { status: 500 }
@@ -68,12 +65,10 @@ export async function POST(request: Request) {
       message: 'Enquete created successfully',
       data: enquete,
     });
-  } catch  {
+  } catch {
     return NextResponse.json(
       { error: 'Failed to create enquete' },
       { status: 500 }
     );
   }
 }
-
-

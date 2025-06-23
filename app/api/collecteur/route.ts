@@ -1,5 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-// app/api/collecteur/route.ts
+
 
 import { PrismaClient } from '@prisma/client';
 import { NextResponse } from 'next/server';

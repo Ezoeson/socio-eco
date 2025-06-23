@@ -1,6 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-// app/api/fokontany/[id]/route.ts
-
 import { PrismaClient } from '@prisma/client';
 import { NextResponse } from 'next/server';
 
@@ -27,7 +24,7 @@ export async function GET(
     }
 
     return NextResponse.json(fokontany);
-  } catch  {
+  } catch {
     return NextResponse.json(
       { error: 'Failed to fetch fokontany' },
       { status: 500 }
@@ -98,7 +95,7 @@ export async function PUT(
       message: 'Fokontany updated successfully',
       data: updatedFokontany,
     });
-  } catch  {
+  } catch {
     return NextResponse.json(
       { error: 'Failed to update fokontany' },
       { status: 500 }
@@ -129,7 +126,7 @@ export async function DELETE(
     return NextResponse.json({
       message: 'Fokontany deleted successfully',
     });
-  } catch  {
+  } catch {
     return NextResponse.json(
       { error: 'Failed to delete fokontany' },
       { status: 500 }

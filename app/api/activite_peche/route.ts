@@ -1,6 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
- // app/api/pratique-peche/route.ts
-
 import { PrismaClient } from '@prisma/client';
 import { NextResponse } from 'next/server';
 
@@ -14,9 +11,9 @@ export async function GET() {
       },
     });
     return NextResponse.json(pratiques);
-  } catch (error) {
+  } catch {
     return NextResponse.json(
-      { error: "Failed to fetch fishing practices" },
+      { error: 'Failed to fetch fishing practices' },
       { status: 500 }
     );
   }
@@ -25,17 +22,14 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const json = await request.json();
-    
+
     // Validate pecheur exists
     const pecheurExists = await prisma.pecheur.findUnique({
       where: { id: json.pecheurId },
     });
-    
+
     if (!pecheurExists) {
-      return NextResponse.json(
-        { error: "Pecheur not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Pecheur not found' }, { status: 404 });
     }
 
     // Check unique constraint (pecheurId + especeCible)
@@ -49,7 +43,10 @@ export async function POST(request: Request) {
 
       if (existingPratique) {
         return NextResponse.json(
-          { error: "Fishing practice for this species already exists for this pecheur" },
+          {
+            error:
+              'Fishing practice for this species already exists for this pecheur',
+          },
           { status: 400 }
         );
       }
@@ -63,12 +60,12 @@ export async function POST(request: Request) {
     });
 
     return NextResponse.json({
-      message: "Fishing practice created successfully",
+      message: 'Fishing practice created successfully',
       data: pratique,
     });
-  } catch (error) {
+  } catch {
     return NextResponse.json(
-      { error: "Failed to create fishing practice" },
+      { error: 'Failed to create fishing practice' },
       { status: 500 }
     );
   }

@@ -1,6 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-// app/api/secteur/[id]/route.ts
-
 import { PrismaClient } from '@prisma/client';
 import { NextResponse } from 'next/server';
 
@@ -24,7 +21,7 @@ export async function GET(
     }
 
     return NextResponse.json(secteur);
-  } catch  {
+  } catch {
     return NextResponse.json(
       { error: 'Failed to fetch secteur' },
       { status: 500 }
@@ -92,7 +89,7 @@ export async function PUT(
       message: 'Secteur updated successfully',
       data: updatedSecteur,
     });
-  } catch  {
+  } catch {
     return NextResponse.json(
       { error: 'Failed to update secteur' },
       { status: 500 }
@@ -120,7 +117,7 @@ export async function DELETE(
     return NextResponse.json({
       message: 'Secteur deleted successfully',
     });
-  } catch  {
+  } catch {
     return NextResponse.json(
       { error: 'Failed to delete secteur' },
       { status: 500 }

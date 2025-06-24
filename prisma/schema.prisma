@@ -96,6 +96,7 @@ model Enqueteur {
   prenom    String?
   code      String?   @unique
   telephone String?
+  image     String?
   email     String?   @unique
   actif     Boolean   @default(true)
   enquetes  Enquete[]

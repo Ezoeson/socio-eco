@@ -1,8 +1,18 @@
 'use client';
-
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import Wrapper from '@/components/Wrapper';
+import { Plus, Search, Edit, Trash2, MapPin } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Label } from '@/components/ui/label';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 import {
   Table,
   TableBody,
@@ -11,46 +21,138 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import Wrapper from '@/components/Wrapper';
-import { Plus, Search, Edit, Trash2, MapPin } from 'lucide-react';
-import { useState } from 'react';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
-const initialFokontany = [
-  {
-    id: '1',
-    nom: '67 Ha',
-    commune: 'Antananarivo I',
-    secteurs: 4,
-    population: 12500,
-  },
-  {
-    id: '2',
-    nom: 'Analakely',
-    commune: 'Antananarivo I',
-    secteurs: 3,
-    population: 8900,
-  },
-  {
-    id: '3',
-    nom: 'Tsaralalana',
-    commune: 'Antananarivo I',
-    secteurs: 5,
-    population: 15200,
-  },
-];
+type Fokontany = {
+  id: string;
+  nom: string;
+  communeId: string;
+  commune: { id: string; nom: string };
+};
 
-export default function Fokontany() {
-  const [fokontany, setFokontany] = useState(initialFokontany);
+type Commune = {
+  id: string;
+  nom: string;
+};
+
+export default function Fokontanys() {
+  const [fokontanys, setFokontanys] = useState<Fokontany[]>([]);
+  const [formData, setFormData] = useState<{
+    nom?: string;
+    communeId: string;
+  }>({
+    communeId: '',
+  });
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [communeOptions, setCommuneOptions] = useState<Commune[]>([]);
 
-  const filteredFokontany = fokontany.filter(
-    (fkt) =>
-      fkt.nom.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      fkt.commune.toLowerCase().includes(searchTerm.toLowerCase())
+  useEffect(() => {
+    const fetchFokontany = async () => {
+      try {
+        const response = await fetch('/api/fokontany');
+        const data = await response.json();
+        setFokontanys(data);
+      } catch (error) {
+        console.error('Error fetching fokontany:', error);
+      }
+    };
+
+    const fetchCommunes = async () => {
+      try {
+        const response = await fetch('/api/commune');
+        const data = await response.json();
+        setCommuneOptions(data);
+      } catch (error) {
+        console.error('Error fetching communes:', error);
+      }
+    };
+
+    fetchFokontany();
+    fetchCommunes();
+  }, [
+    setFokontanys,
+    setCommuneOptions,
+    setFormData,
+    setEditingId,
+    isDialogOpen,
+  ]);
+
+  const filteredFokontanys = fokontanys.filter((fokontany) =>
+    fokontany?.nom?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData.nom || !formData.communeId) {
+      alert('Veuillez remplir tous les champs obligatoires.');
+      return;
+    }
+
+    const method = editingId ? 'PUT' : 'POST';
+    const url = editingId ? `/api/fokontany/${editingId}` : '/api/fokontany';
+
+    try {
+      // create
+      fetch(url, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          nom: formData.nom,
+          communeId: formData.communeId,
+        }),
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          if (editingId) {
+            // update
+            setFokontanys(
+              fokontanys.map((fokontany) =>
+                fokontany.id === editingId
+                  ? { ...fokontany, ...formData }
+                  : fokontany
+              )
+            );
+          } else {
+            // create
+            setFokontanys([...fokontanys, data]);
+          }
+          setIsDialogOpen(false);
+          setFormData({ communeId: '' });
+          setEditingId(null);
+        });
+
+      // update
+    } catch (error) {
+      console.error('Error submitting form:', error);
+    }
+  };
+
+  const handleEdit = (fokontany: Fokontany) => {
+    setFormData({ nom: fokontany.nom, communeId: fokontany.communeId });
+    setEditingId(fokontany.id);
+    setIsDialogOpen(true);
+  };
+
   const handleDelete = (id: string) => {
-    setFokontany(fokontany.filter((fkt) => fkt.id !== id));
+    if (!confirm('Êtes-vous sûr de vouloir supprimer ce fokontany ?')) return;
+
+    fetch(`/api/fokontany/${id}`, {
+      method: 'DELETE',
+    })
+      .then(() => {
+        setFokontanys(fokontanys.filter((fokontany) => fokontany.id !== id));
+      })
+      .catch((error) => console.error('Error deleting fokontany:', error));
   };
 
   return (
@@ -60,18 +162,67 @@ export default function Fokontany() {
           <div>
             <h2 className='text-3xl font-bold flex items-center gap-2'>
               <MapPin className='h-8 w-8 text-green-600' />
-              Gestion des Fokontany
+              Gestion des Fokontanys
             </h2>
             <p className='text-gray-600'>
-              Administration territoriale - Niveau local
+              Administration territoriale - Niveau fokontany
             </p>
           </div>
-          <div className='flex gap-2'>
-            <Button className='cursor-pointer'>
-              <Plus className='h-4 w-4 mr-2' />
-              Nouveau fokontany
-            </Button>
-          </div>
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogTrigger asChild>
+              <Button
+                onClick={() => {
+                  setFormData({ communeId: '' });
+                  setEditingId(null);
+                }}
+              >
+                <Plus className='h-4 w-4 mr-2' />
+                Nouveau fokontany
+              </Button>
+            </DialogTrigger>
+
+            <DialogContent className='max-w-md'>
+              <DialogHeader>
+                <DialogTitle>
+                  {editingId ? 'Modifier un fokontany' : 'Ajouter un fokontany'}
+                </DialogTitle>
+              </DialogHeader>
+              <form onSubmit={handleSubmit} className='space-y-4'>
+                <div>
+                  <Label htmlFor='nom'>Nom du secteur</Label>
+                  <Input
+                    id='nom'
+                    value={formData.nom || ''}
+                    onChange={(e) =>
+                      setFormData((prev) => ({ ...prev, nom: e.target.value }))
+                    }
+                    required
+                  />
+                  <Select
+                    value={formData.communeId || ''}
+                    onValueChange={(value) =>
+                      setFormData((prev) => ({ ...prev, communeId: value }))
+                    }
+                    required
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder='Sélectionner un commune' />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {communeOptions.map((commune) => (
+                        <SelectItem key={commune.id} value={commune.id}>
+                          {commune.nom}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <Button type='submit' className='w-full'>
+                  {editingId ? 'Modifier' : 'Ajouter'}
+                </Button>
+              </form>
+            </DialogContent>
+          </Dialog>
         </div>
 
         <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
@@ -80,7 +231,7 @@ export default function Fokontany() {
               <CardHeader>
                 <div className='flex justify-between items-center'>
                   <CardTitle>
-                    Liste des Fokontany ({filteredFokontany.length})
+                    Liste des Fokontanys ({filteredFokontanys.length})
                   </CardTitle>
                   <div className='flex items-center gap-2'>
                     <Search className='h-4 w-4 text-gray-400' />
@@ -99,27 +250,29 @@ export default function Fokontany() {
                     <TableRow>
                       <TableHead>Nom du fokontany</TableHead>
                       <TableHead>Commune</TableHead>
-                      <TableHead>Secteurs</TableHead>
-                      <TableHead>Population</TableHead>
                       <TableHead>Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredFokontany.map((fkt) => (
-                      <TableRow key={fkt.id}>
-                        <TableCell className='font-medium'>{fkt.nom}</TableCell>
-                        <TableCell>{fkt.commune}</TableCell>
-                        <TableCell>{fkt.secteurs}</TableCell>
-                        <TableCell>{fkt.population.toLocaleString()}</TableCell>
+                    {filteredFokontanys.map((fokontany) => (
+                      <TableRow key={fokontany?.id}>
+                        <TableCell className='font-medium'>
+                          {fokontany?.nom}
+                        </TableCell>
+                        <TableCell>{fokontany?.commune.nom}</TableCell>
                         <TableCell>
                           <div className='flex gap-2'>
-                            <Button variant='outline' size='sm'>
+                            <Button
+                              variant='outline'
+                              size='sm'
+                              onClick={() => handleEdit(fokontany)}
+                            >
                               <Edit className='h-3 w-3' />
                             </Button>
                             <Button
                               variant='outline'
                               size='sm'
-                              onClick={() => handleDelete(fkt.id)}
+                              onClick={() => handleDelete(fokontany.id)}
                             >
                               <Trash2 className='h-3 w-3' />
                             </Button>

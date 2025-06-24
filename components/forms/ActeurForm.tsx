@@ -4,22 +4,14 @@ import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-  Tabs,
-  TabsTrigger,
-  TabsList,
-  TabsContent,
-  Button,
-  Checkbox,
-  Select,
-  SelectContent,
-  SelectTrigger,
 
-  SelectValue,
-} from '@/dynamicImport/dynamic-import';
 
 import { MembreFamilleForm } from './MembreFamilleForm';
 import { User, Users } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
+import { Select, SelectContent, SelectTrigger, SelectValue } from '../ui/select';
+import { Checkbox } from '../ui/checkbox';
+import { Button } from '../ui/button';
 
 interface MembreFamille {
   id: string;

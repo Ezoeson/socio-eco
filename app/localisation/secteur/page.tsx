@@ -1,17 +1,11 @@
 'use client';
-
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import Wrapper from '@/components/Wrapper';
+import { Plus, Search, Edit, Trash2, MapPin } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { Label } from '@/components/ui/label';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
 import {
   Dialog,
   DialogContent,
@@ -20,100 +14,137 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import Wrapper from '@/components/Wrapper';
-import { Plus, Edit, Trash2, Search, MapPin } from 'lucide-react';
-import { useState } from 'react';
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
-interface Secteur {
+type Secteur = {
   id: string;
   nom: string;
   fokontanyId: string;
-  fokontanyNom: string;
-}
+  fokontany: { id: string; nom: string };
+};
 
-// Données fictives pour les fokontany
-const fokontanyOptions = [
-  { id: '1', nom: '67 Ha' },
-  { id: '2', nom: 'Analakely' },
-  { id: '3', nom: 'Tsaralalana' },
-];
-
-const mockData: Secteur[] = [
-  {
-    id: '1',
-    nom: 'Secteur Nord',
-    fokontanyId: '1',
-    fokontanyNom: '67 Ha',
-  },
-];
+type Fokontany = {
+  id: string;
+  nom: string;
+};
 
 export default function Secteurs() {
-  const [secteurs, setSecteurs] = useState<Secteur[]>(mockData);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [formData, setFormData] = useState<Partial<Secteur>>({});
+  const [secteurs, setSecteurs] = useState<Secteur[]>([]);
+  const [formData, setFormData] = useState<{
+    nom?: string;
+    fokontanyId: string;
+  }>({
+    fokontanyId: '',
+  });
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [fokontanyOptions, setFokontanyOptions] = useState<Fokontany[]>([]);
 
-  const filteredSecteurs = secteurs.filter(
-    (secteur) =>
-      secteur.nom?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      secteur.fokontanyNom?.toLowerCase().includes(searchTerm.toLowerCase())
+  useEffect(() => {
+    const fetchSecteur = async () => {
+      try {
+        const response = await fetch('/api/secteur');
+        const data = await response.json();
+        setSecteurs(data);
+      } catch (error) {
+        console.error('Error fetching secteur:', error);
+      }
+    };
+
+    const fetchFokontanys = async () => {
+      try {
+        const response = await fetch('/api/fokontany');
+        const data = await response.json();
+        setFokontanyOptions(data);
+      } catch (error) {
+        console.error('Error fetching fokontanys:', error);
+      }
+    };
+
+    fetchSecteur();
+    fetchFokontanys();
+  }, [
+    setSecteurs,
+    setFokontanyOptions,
+    setFormData,
+    setEditingId,
+    isDialogOpen,
+  ]);
+
+  const filteredSecteurs = secteurs.filter((secteur) =>
+    secteur?.nom?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (!formData.nom || !formData.fokontanyId) return;
-
-    const selectedFokontany = fokontanyOptions.find(
-      (f) => f.id === formData.fokontanyId
-    );
-
-    if (editingId) {
-      setSecteurs((prev) =>
-        prev.map((s) =>
-          s.id === editingId
-            ? {
-                ...s,
-                nom: formData.nom || '',
-                fokontanyId: formData.fokontanyId || '',
-                fokontanyNom: selectedFokontany?.nom || '',
-              }
-            : s
-        )
-      );
-    } else {
-      const newSecteur: Secteur = {
-        id: Date.now().toString(),
-        nom: formData.nom || '',
-        fokontanyId: formData.fokontanyId || '',
-        fokontanyNom: selectedFokontany?.nom || '',
-      };
-      setSecteurs((prev) => [...prev, newSecteur]);
+    if (!formData.nom || !formData.fokontanyId) {
+      alert('Veuillez remplir tous les champs obligatoires.');
+      return;
     }
 
-    setFormData({});
-    setEditingId(null);
-    setIsDialogOpen(false);
+    const method = editingId ? 'PUT' : 'POST';
+    const url = editingId ? `/api/secteur/${editingId}` : '/api/secteur';
+
+    try {
+      // create
+      fetch(url, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          nom: formData.nom,
+          fokontanyId: formData.fokontanyId,
+        }),
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          if (editingId) {
+            // update
+            setSecteurs(
+              secteurs.map((secteur) =>
+                secteur.id === editingId ? { ...secteur, ...formData } : secteur
+              )
+            );
+          } else {
+            // create
+            setSecteurs([...secteurs, data]);
+          }
+          setIsDialogOpen(false);
+          setFormData({ fokontanyId: '' });
+          setEditingId(null);
+        });
+
+      // update
+    } catch (error) {
+      console.error('Error submitting form:', error);
+    }
   };
 
   const handleEdit = (secteur: Secteur) => {
-    setFormData({
-      nom: secteur.nom,
-      fokontanyId: secteur.fokontanyId,
-    });
+    setFormData({ nom: secteur.nom, fokontanyId: secteur.fokontanyId });
     setEditingId(secteur.id);
     setIsDialogOpen(true);
   };
 
   const handleDelete = (id: string) => {
-    setSecteurs((prev) => prev.filter((s) => s.id !== id));
+    if (!confirm('Êtes-vous sûr de vouloir supprimer ce secteur ?')) return;
+
+    fetch(`/api/secteur/${id}`, {
+      method: 'DELETE',
+    })
+      .then(() => {
+        setSecteurs(secteurs.filter((secteur) => secteur.id !== id));
+      })
+      .catch((error) => console.error('Error deleting secteur:', error));
   };
 
   return (
@@ -123,28 +154,29 @@ export default function Secteurs() {
           <div>
             <h2 className='text-3xl font-bold flex items-center gap-2'>
               <MapPin className='h-8 w-8 text-green-600' />
-              Secteurs
+              Gestion des Secteurs
             </h2>
-            <p className='text-gray-600'>Gestion des secteurs</p>
+            <p className='text-gray-600'>
+              Administration territoriale - Niveau secteur
+            </p>
           </div>
-
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
               <Button
-                className='cursor-pointer'
                 onClick={() => {
-                  setFormData({});
+                  setFormData({ fokontanyId: '' });
                   setEditingId(null);
                 }}
               >
                 <Plus className='h-4 w-4 mr-2' />
-                Ajouter secteur
+                Nouveau secteur
               </Button>
             </DialogTrigger>
+
             <DialogContent className='max-w-md'>
               <DialogHeader>
                 <DialogTitle>
-                  {editingId ? 'Modifier' : 'Ajouter'} un secteur
+                  {editingId ? 'Modifier un secteur' : 'Ajouter un secteur'}
                 </DialogTitle>
               </DialogHeader>
               <form onSubmit={handleSubmit} className='space-y-4'>
@@ -158,9 +190,6 @@ export default function Secteurs() {
                     }
                     required
                   />
-                </div>
-                <div>
-                  <Label>Fokontany</Label>
                   <Select
                     value={formData.fokontanyId || ''}
                     onValueChange={(value) =>
@@ -194,12 +223,12 @@ export default function Secteurs() {
               <CardHeader>
                 <div className='flex justify-between items-center'>
                   <CardTitle>
-                    Liste des secteurs ({filteredSecteurs.length})
+                    Liste des Secteurs ({filteredSecteurs.length})
                   </CardTitle>
                   <div className='flex items-center gap-2'>
                     <Search className='h-4 w-4 text-gray-400' />
                     <Input
-                      placeholder='Rechercher...'
+                      placeholder='Rechercher un secteur...'
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
                       className='w-64'
@@ -211,18 +240,18 @@ export default function Secteurs() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Secteur</TableHead>
+                      <TableHead>Nom du secteur</TableHead>
                       <TableHead>Fokontany</TableHead>
                       <TableHead>Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {filteredSecteurs.map((secteur) => (
-                      <TableRow key={secteur.id}>
+                      <TableRow key={secteur?.id}>
                         <TableCell className='font-medium'>
-                          {secteur.nom}
+                          {secteur?.nom}
                         </TableCell>
-                        <TableCell>{secteur.fokontanyNom}</TableCell>
+                        <TableCell>{secteur?.fokontany.nom}</TableCell>
                         <TableCell>
                           <div className='flex gap-2'>
                             <Button

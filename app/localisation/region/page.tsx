@@ -4,19 +4,7 @@ import { Button } from '@/components/ui/button';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import {
-  Table,
-  TableHeader,
-  TableBody,
-  TableRow,
-  TableHead,
-  TableCell,
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/dynamicImport/dynamic-import';
+
 import Wrapper from '@/components/Wrapper';
 
 import { Plus, Search, Edit, Trash2, MapPin } from 'lucide-react';
@@ -35,6 +23,21 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 
 interface Region {
   id: string;
@@ -99,8 +102,10 @@ export default function Region() {
               region.id === editingId ? { ...region, nom: data.nom } : region
             )
           );
+          toast.success('Modification réussie');
         } else {
           setRegions((prev) => [...prev, { ...data, id: data.id }]);
+          toast.success('Ajout réussi');
         }
         setFormData({});
         setEditingId(null);
@@ -127,11 +132,17 @@ export default function Region() {
         }
         return response.json();
       })
+      .then(() => {
+        setRegions((prev) => prev.filter((region) => region.id !== deletingId));
+        toast('Suppression réussie');
+      })
       .catch((error) => {
         console.error('Erreur:', error);
+      })
+      .finally(() => {
+        setIsDialogOpen(false);
+        setDeletingId(null);
       });
-    toast('suppression reussi');
-    setIsDialogOpen(false);
   };
 
   return (
@@ -151,24 +162,24 @@ export default function Region() {
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
               <Button
-                className='cursor-pointer'
+                className='cursor-pointer flex justify-center items-center gap-2'
                 onClick={() => {
                   setFormData({});
                   setEditingId(null);
                 }}
               >
                 <Plus className='h-4 w-4 mr-2' />
-                Ajouter région
+                <span className='hidden md:block'> Ajouter région</span>
               </Button>
             </DialogTrigger>
             <DialogContent className='max-w-md'>
               <DialogHeader>
                 <DialogTitle>
-                  {editingId ? 'Modifier' : 'Ajouter'} une region
+                  {editingId ? 'Modifier une region' : 'Ajouter une region'}
                 </DialogTitle>
               </DialogHeader>
               <form onSubmit={handleSubmit} className='space-y-4'>
-                <div>
+                <div className='space-y-4'>
                   <Label>Nom de la région</Label>
                   <Input
                     value={formData.nom || ''}
@@ -190,9 +201,11 @@ export default function Region() {
           <div className='lg:col-span-2'>
             <Card>
               <CardHeader>
-                <div className='flex justify-between items-center'>
+                <div className='flex md:justify-between justify-center items-center'>
                   <CardTitle>
-                    Liste des Régions ({filteredRegions.length})
+                    <span className='hidden md:block'>
+                      Liste des Régions ({filteredRegions.length})
+                    </span>
                   </CardTitle>
                   <div className='flex items-center gap-2'>
                     <Search className='h-4 w-4 text-gray-400' />

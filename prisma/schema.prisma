@@ -99,6 +99,8 @@ model Enqueteur {
   image     String?
   email     String?   @unique
   actif     Boolean   @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
   enquetes  Enquete[]
 
   @@map("enqueteurs")

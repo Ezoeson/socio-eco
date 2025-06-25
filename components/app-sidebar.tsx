@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import * as React from 'react';
+import * as React from "react";
 import {
   Frame,
   // AudioWaveform,
@@ -9,33 +9,34 @@ import {
   PieChart,
   SquareTerminal,
   Store,
+  UserCheck2Icon,
   Waves,
   Workflow,
-} from 'lucide-react';
+} from "lucide-react";
 
-import { NavMain } from '@/components/nav-main';
-import { NavUser } from '@/components/nav-user';
-import { TeamSwitcher } from '@/components/team-switcher';
+import { NavMain } from "@/components/nav-main";
+import { NavUser } from "@/components/nav-user";
+import { TeamSwitcher } from "@/components/team-switcher";
 import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
   SidebarHeader,
   SidebarRail,
-} from '@/components/ui/sidebar';
+} from "@/components/ui/sidebar";
 
 // This is sample data.
 const data = {
   user: {
-    name: 'Ezoeson',
-    email: 'nambinintsoa6017@gmail.com',
-    avatar: '',
+    name: "Ezoeson",
+    email: "nambinintsoa6017@gmail.com",
+    avatar: "",
   },
   teams: [
     {
-      name: 'Magnirike',
+      name: "Magnirike",
       logo: GalleryVerticalEnd,
-      plan: 'Enterprise',
+      plan: "Enterprise",
     },
     // {
     //   name: 'Acme Corp.',
@@ -50,127 +51,127 @@ const data = {
   ],
   navMain: [
     {
-      title: 'Enqueteur',
-      url: '/enqueteur',
+      title: "Enqueteur",
+      url: "/enqueteur",
       icon: Store,
     },
     {
-      title: 'Enquetes',
-      url: '/enquete',
-      icon: Store,
+      title: "Enquetes",
+      url: "/enquete",
+      icon: UserCheck2Icon,
     },
     {
-      title: 'Localisation',
-      url: '#',
+      title: "Localisation",
+      url: "",
       icon: SquareTerminal,
 
       items: [
         {
-          title: 'Region',
-          url: '/localisation/region',
+          title: "Region",
+          url: "/localisation/region",
         },
         {
-          title: 'District',
-          url: '/localisation/district',
+          title: "District",
+          url: "/localisation/district",
         },
         {
-          title: 'Commune',
-          url: '/localisation/commune',
+          title: "Commune",
+          url: "/localisation/commune",
         },
         {
-          title: 'Fokontany',
-          url: '/localisation/fokontany',
+          title: "Fokontany",
+          url: "/localisation/fokontany",
         },
         {
-          title: 'Secteur',
-          url: '/localisation/secteur',
+          title: "Secteur",
+          url: "/localisation/secteur",
         },
       ],
     },
     {
-      title: 'Activite  Peches',
-      url: '#',
+      title: "Activite  Peches",
+      url: "#",
       icon: Waves,
       items: [
         {
-          title: 'PratiquePeche',
-          url: '#',
+          title: "PratiquePeche",
+          url: "/activitePeche/pratique-peche",
         },
         {
-          title: 'Equipement',
-          url: '#',
+          title: "Equipement",
+          url: "/activitePeche/equip-peche",
         },
         {
-          title: 'Embarcation',
-          url: '#',
+          title: "Embarcation",
+          url: "/activitePeche/embar-peche",
         },
         {
-          title: 'Circuits commerciaux',
-          url: '#',
+          title: "Circuits commerciaux",
+          url: "/activitePeche/circuits-commerciaux",
         },
       ],
     },
     {
-      title: 'Activites Collectes',
-      url: '#',
+      title: "Activites Collectes",
+      url: "",
       icon: Store,
       items: [
         {
           title: "Lieux d'approvisionnement",
-          url: '#',
+          url: "#",
         },
         {
-          title: 'Produits achetés',
-          url: '#',
+          title: "Produits achetés",
+          url: "",
         },
         {
-          title: 'Méthodes de stockage',
-          url: '#',
+          title: "Méthodes de stockage",
+          url: "#",
         },
         {
-          title: 'Canaux de distribution',
-          url: '#',
+          title: "Canaux de distribution",
+          url: "#",
         },
       ],
     },
     {
-      title: 'Activités économiques',
-      url: '#',
+      title: "Activités économiques",
+      url: "#",
       icon: Workflow,
       items: [
         {
-          title: 'Commerce de gros',
-          url: '#',
+          title: "Commerce de gros",
+          url: "#",
         },
         {
-          title: 'Agriculture',
-          url: '#',
+          title: "Agriculture",
+          url: "#",
         },
         {
-          title: 'Elevage',
-          url: '#',
+          title: "Elevage",
+          url: "#",
         },
         {
-          title: ' Salariale',
-          url: '#',
+          title: " Salariale",
+          url: "#",
         },
       ],
     },
   ],
   projects: [
     {
-      name: 'Enqueteur',
-      url: '#',
+      name: "Enqueteur",
+      url: "#",
       icon: Frame,
     },
     {
-      name: 'Enquetes',
-      url: '#',
+      name: "Enquetes",
+      url: "#",
       icon: PieChart,
     },
     {
-      name: 'Travel',
-      url: '#',
+      name: "Travel",
+      url: "#",
       icon: Map,
     },
   ],
@@ -178,7 +179,7 @@ const data = {
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
-    <Sidebar collapsible='icon' {...props}>
+    <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
         <TeamSwitcher teams={data.teams} />
       </SidebarHeader>

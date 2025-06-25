@@ -1,17 +1,18 @@
-import type { Metadata } from 'next';
-import { Mooli } from 'next/font/google';
-import './globals.css';
-import { ThemeProvider } from '@/components/theme-provider';
-import { Toaster } from 'sonner';
+import type { Metadata } from "next";
+import { Mooli } from "next/font/google";
+import "./globals.css";
+import { ThemeProvider } from "@/components/theme-provider";
+import { Toaster } from "@/components/ui/sonner";
+
 
 const mooli = Mooli({
-  weight: '400',
-  variable: '--font-mooli',
-  subsets: ['latin'],
+  weight: "400",
+  variable: "--font-mooli",
+  subsets: ["latin"],
 });
 
 export const metadata: Metadata = {
-  title: 'Magnirike',
+  title: "Magnirike",
   description:
     "Gestion d'une application concernant la bancarisation de socio-economiques.",
 };
@@ -22,12 +23,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html className={mooli.className} lang='en' suppressHydrationWarning>
+    <html className={mooli.className} lang="en" suppressHydrationWarning>
       <body>
-        <Toaster />
         <ThemeProvider
-          attribute='class'
-          defaultTheme='light'
+          attribute="class"
+          defaultTheme="light"
           enableSystem
           disableTransitionOnChange
         >

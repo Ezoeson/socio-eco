@@ -1,18 +1,29 @@
-'use client';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import Wrapper from '@/components/Wrapper';
-import { Plus, Search, Edit, Trash2, MapPin } from 'lucide-react';
-import { useEffect, useState } from 'react';
-import { Label } from '@/components/ui/label';
+"use client";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import Wrapper from "@/components/Wrapper";
+import { Plus, Search, Edit, Trash2, MapPin } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Label } from "@/components/ui/label";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '@/components/ui/dialog';
+} from "@/components/ui/dialog";
 import {
   Table,
   TableBody,
@@ -20,14 +31,15 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
+} from "@/components/ui/table";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from "@/components/ui/select";
+import { toast } from "sonner";
 
 type Fokontany = {
   id: string;
@@ -47,31 +59,33 @@ export default function Fokontanys() {
     nom?: string;
     communeId: string;
   }>({
-    communeId: '',
+    communeId: "",
   });
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
   const [communeOptions, setCommuneOptions] = useState<Commune[]>([]);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [isDeleteModal, setIsDeleteModal] = useState(false);
 
   useEffect(() => {
     const fetchFokontany = async () => {
       try {
-        const response = await fetch('/api/fokontany');
+        const response = await fetch("/api/fokontany");
         const data = await response.json();
         setFokontanys(data);
       } catch (error) {
-        console.error('Error fetching fokontany:', error);
+        console.error("Error fetching fokontany:", error);
       }
     };
 
     const fetchCommunes = async () => {
       try {
-        const response = await fetch('/api/commune');
+        const response = await fetch("/api/commune");
         const data = await response.json();
         setCommuneOptions(data);
       } catch (error) {
-        console.error('Error fetching communes:', error);
+        console.error("Error fetching communes:", error);
       }
     };
 
@@ -92,19 +106,19 @@ export default function Fokontanys() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.nom || !formData.communeId) {
-      alert('Veuillez remplir tous les champs obligatoires.');
+      alert("Veuillez remplir tous les champs obligatoires.");
       return;
     }
 
-    const method = editingId ? 'PUT' : 'POST';
-    const url = editingId ? `/api/fokontany/${editingId}` : '/api/fokontany';
+    const method = editingId ? "PUT" : "POST";
+    const url = editingId ? `/api/fokontany/${editingId}` : "/api/fokontany";
 
     try {
       // create
       fetch(url, {
         method,
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           nom: formData.nom,
@@ -127,13 +141,13 @@ export default function Fokontanys() {
             setFokontanys([...fokontanys, data]);
           }
           setIsDialogOpen(false);
-          setFormData({ communeId: '' });
+          setFormData({ communeId: "" });
           setEditingId(null);
         });
 
       // update
     } catch (error) {
-      console.error('Error submitting form:', error);
+      console.error("Error submitting form:", error);
     }
   };
 
@@ -143,28 +157,41 @@ export default function Fokontanys() {
     setIsDialogOpen(true);
   };
 
-  const handleDelete = (id: string) => {
-    if (!confirm('Êtes-vous sûr de vouloir supprimer ce fokontany ?')) return;
-
-    fetch(`/api/fokontany/${id}`, {
-      method: 'DELETE',
+  const handleDelete = () => {
+    fetch(`/api/fokontany/${deletingId}`, {
+      method: "DELETE",
     })
-      .then(() => {
-        setFokontanys(fokontanys.filter((fokontany) => fokontany.id !== id));
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error("Erreur lors de la suppression de fokontany");
+        }
+        return response.json();
       })
-      .catch((error) => console.error('Error deleting fokontany:', error));
+      .then(() => {
+        setFokontanys((prev) =>
+          prev.filter((region) => region.id !== deletingId)
+        );
+        toast(<p className="text-red-700-">Suppression réussi</p>);
+      })
+      .catch((error) => {
+        console.error("Erreur:", error);
+      })
+      .finally(() => {
+        setIsDialogOpen(false);
+        setDeletingId(null);
+      });
   };
 
   return (
     <Wrapper>
-      <div className='space-y-6'>
-        <div className='flex justify-between items-center'>
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
           <div>
-            <h2 className='text-3xl font-bold flex items-center gap-2'>
-              <MapPin className='h-8 w-8 text-green-600' />
+            <h2 className="text-3xl font-bold flex items-center gap-2">
+              <MapPin className="h-8 w-8 text-green-600" />
               Gestion des Fokontanys
             </h2>
-            <p className='text-gray-600'>
+            <p className="text-gray-600">
               Administration territoriale - Niveau fokontany
             </p>
           </div>
@@ -172,41 +199,41 @@ export default function Fokontanys() {
             <DialogTrigger asChild>
               <Button
                 onClick={() => {
-                  setFormData({ communeId: '' });
+                  setFormData({ communeId: "" });
                   setEditingId(null);
                 }}
               >
-                <Plus className='h-4 w-4 mr-2' />
+                <Plus className="h-4 w-4 mr-2" />
                 Nouveau fokontany
               </Button>
             </DialogTrigger>
 
-            <DialogContent className='max-w-md'>
+            <DialogContent className="max-w-md">
               <DialogHeader>
                 <DialogTitle>
-                  {editingId ? 'Modifier un fokontany' : 'Ajouter un fokontany'}
+                  {editingId ? "Modifier un fokontany" : "Ajouter un fokontany"}
                 </DialogTitle>
               </DialogHeader>
-              <form onSubmit={handleSubmit} className='space-y-4'>
+              <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                  <Label htmlFor='nom'>Nom du secteur</Label>
+                  <Label htmlFor="nom">Nom du secteur</Label>
                   <Input
-                    id='nom'
-                    value={formData.nom || ''}
+                    id="nom"
+                    value={formData.nom || ""}
                     onChange={(e) =>
                       setFormData((prev) => ({ ...prev, nom: e.target.value }))
                     }
                     required
                   />
                   <Select
-                    value={formData.communeId || ''}
+                    value={formData.communeId || ""}
                     onValueChange={(value) =>
                       setFormData((prev) => ({ ...prev, communeId: value }))
                     }
                     required
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder='Sélectionner un commune' />
+                      <SelectValue placeholder="Sélectionner un commune" />
                     </SelectTrigger>
                     <SelectContent>
                       {communeOptions.map((commune) => (
@@ -217,29 +244,29 @@ export default function Fokontanys() {
                     </SelectContent>
                   </Select>
                 </div>
-                <Button type='submit' className='w-full'>
-                  {editingId ? 'Modifier' : 'Ajouter'}
+                <Button type="submit" className="w-full">
+                  {editingId ? "Modifier" : "Ajouter"}
                 </Button>
               </form>
             </DialogContent>
           </Dialog>
         </div>
 
-        <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
-          <div className='lg:col-span-2'>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="lg:col-span-2">
             <Card>
               <CardHeader>
-                <div className='flex justify-between items-center'>
+                <div className="flex justify-between items-center">
                   <CardTitle>
                     Liste des Fokontanys ({filteredFokontanys.length})
                   </CardTitle>
-                  <div className='flex items-center gap-2'>
-                    <Search className='h-4 w-4 text-gray-400' />
+                  <div className="flex items-center gap-2">
+                    <Search className="h-4 w-4 text-gray-400" />
                     <Input
-                      placeholder='Rechercher un fokontany...'
+                      placeholder="Rechercher un fokontany..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
-                      className='w-64'
+                      className="w-64"
                     />
                   </div>
                 </div>
@@ -256,26 +283,56 @@ export default function Fokontanys() {
                   <TableBody>
                     {filteredFokontanys.map((fokontany) => (
                       <TableRow key={fokontany?.id}>
-                        <TableCell className='font-medium'>
+                        <TableCell className="font-medium">
                           {fokontany?.nom}
                         </TableCell>
                         <TableCell>{fokontany?.commune.nom}</TableCell>
                         <TableCell>
-                          <div className='flex gap-2'>
+                          <div className="flex gap-2">
                             <Button
-                              variant='outline'
-                              size='sm'
+                              variant="outline"
+                              size="sm"
                               onClick={() => handleEdit(fokontany)}
                             >
-                              <Edit className='h-3 w-3' />
+                              <Edit className="h-3 w-3 text-green-500" />
                             </Button>
-                            <Button
-                              variant='outline'
-                              size='sm'
-                              onClick={() => handleDelete(fokontany.id)}
+                            <AlertDialog
+                              open={isDeleteModal}
+                              onOpenChange={setIsDeleteModal}
                             >
-                              <Trash2 className='h-3 w-3' />
-                            </Button>
+                              <AlertDialogTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => {
+                                    setDeletingId(fokontany.id);
+                                    setIsDeleteModal(true);
+                                  }}
+                                >
+                                  <Trash2 className="h-3 w-3 text-red-500" />
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>
+                                    Voulez-vous supprimer?
+                                  </AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    This action cannot be undone. This will
+                                    permanently delete your account and remove
+                                    your data from our servers.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Annuler</AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={() => handleDelete()}
+                                  >
+                                    Continue
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
                           </div>
                         </TableCell>
                       </TableRow>

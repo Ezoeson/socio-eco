@@ -1,5 +1,7 @@
-import { PrismaClient } from '@prisma/client';
-import { NextRequest, NextResponse } from 'next/server';
+import { PrismaClient } from "@prisma/client";
+import { unlink } from "fs/promises";
+import { NextRequest, NextResponse } from "next/server";
+import path from "path";
 
 const prisma = new PrismaClient();
 
@@ -18,7 +20,7 @@ export async function GET(
 
     if (!enqueteur) {
       return NextResponse.json(
-        { error: 'Enqueteur not found' },
+        { error: "Enqueteur not found" },
         { status: 404 }
       );
     }
@@ -26,7 +28,7 @@ export async function GET(
     return NextResponse.json(enqueteur);
   } catch {
     return NextResponse.json(
-      { error: 'Failed to fetch enqueteur' },
+      { error: "Failed to fetch enqueteur" },
       { status: 500 }
     );
   }
@@ -39,6 +41,9 @@ export async function PUT(
   try {
     const { id } = await params;
     const json = await request.json();
+    if (!json.image) {
+      delete json.image;
+    }
 
     const enqueteurExists = await prisma.enqueteur.findUnique({
       where: { id: id },
@@ -46,22 +51,17 @@ export async function PUT(
 
     if (!enqueteurExists) {
       return NextResponse.json(
-        { error: 'Enqueteur not found' },
+        { error: "Enqueteur not found" },
         { status: 404 }
       );
     }
 
     // Check for unique fields
-    if (json.nom && json.nom !== enqueteurExists.nom) {
-      const existingByNom = await prisma.enqueteur.findUnique({
-        where: { nom: json.nom },
-      });
-      if (existingByNom) {
-        return NextResponse.json(
-          { error: 'Enqueteur with this name already exists' },
-          { status: 400 }
-        );
-      }
+    if (!json.code && !json.email) {
+      return NextResponse.json(
+        { error: "Code or email must be provided" },
+        { status: 400 }
+      );
     }
 
     if (json.code && json.code !== enqueteurExists.code) {
@@ -70,7 +70,7 @@ export async function PUT(
       });
       if (existingByCode) {
         return NextResponse.json(
-          { error: 'Enqueteur with this code already exists' },
+          { error: "Enqueteur with this code already exists" },
           { status: 400 }
         );
       }
@@ -82,7 +82,7 @@ export async function PUT(
       });
       if (existingByEmail) {
         return NextResponse.json(
-          { error: 'Enqueteur with this email already exists' },
+          { error: "Enqueteur with this email already exists" },
           { status: 400 }
         );
       }
@@ -97,12 +97,12 @@ export async function PUT(
     });
 
     return NextResponse.json({
-      message: 'Enqueteur updated successfully',
+      message: "Enqueteur updated successfully",
       data: updatedEnqueteur,
     });
   } catch {
     return NextResponse.json(
-      { error: 'Failed to update enqueteur' },
+      { error: "Failed to update enqueteur" },
       { status: 500 }
     );
   }
@@ -120,7 +120,7 @@ export async function DELETE(
 
     if (!enqueteur) {
       return NextResponse.json(
-        { error: 'Enqueteur not found' },
+        { error: "Enqueteur not found" },
         { status: 404 }
       );
     }
@@ -129,12 +129,21 @@ export async function DELETE(
       where: { id: id },
     });
 
+    if (enqueteur?.image) {
+      const imagePath = path.join(process.cwd(), "public", enqueteur.image);
+      try {
+        await unlink(imagePath);
+      } catch (err) {
+        console.error("Erreur lors de la suppression de l'image:", err);
+      }
+    }
+
     return NextResponse.json({
-      message: 'Enqueteur deleted successfully',
+      message: "Enqueteur deleted successfully",
     });
   } catch {
     return NextResponse.json(
-      { error: 'Failed to delete enqueteur' },
+      { error: "Failed to delete enqueteur" },
       { status: 500 }
     );
   }

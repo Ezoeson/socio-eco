@@ -1,18 +1,18 @@
-'use client';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import Wrapper from '@/components/Wrapper';
-import { Plus, Search, Edit, Trash2, MapPin } from 'lucide-react';
-import { useEffect, useState } from 'react';
-import { Label } from '@/components/ui/label';
+"use client";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import Wrapper from "@/components/Wrapper";
+import { Plus, Search, Edit, Trash2, MapPin } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Label } from "@/components/ui/label";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '@/components/ui/dialog';
+} from "@/components/ui/dialog";
 import {
   Table,
   TableBody,
@@ -20,14 +20,26 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
+} from "@/components/ui/table";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { toast } from "sonner";
 
 type District = {
   id: string;
@@ -44,31 +56,35 @@ type Region = {
 export default function Districts() {
   const [districts, setDistricts] = useState<District[]>([]);
   const [formData, setFormData] = useState<{ nom?: string; regionId: string }>({
-    regionId: '',
+    regionId: "",
   });
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
   const [regionOptions, setRegionOptions] = useState<Region[]>([]);
+  const [isDeleteModal, setIsDeleteModal] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const fetchDistrict = async () => {
       try {
-        const response = await fetch('/api/district');
+        const response = await fetch("/api/district");
         const data = await response.json();
         setDistricts(data);
       } catch (error) {
-        console.error('Error fetching districts:', error);
+        console.error("Error fetching districts:", error);
       }
     };
 
     const fetchRegions = async () => {
       try {
-        const response = await fetch('/api/region');
+        const response = await fetch("/api/region");
         const data = await response.json();
         setRegionOptions(data);
       } catch (error) {
-        console.error('Error fetching regions:', error);
+        console.error("Error fetching regions:", error);
       }
     };
 
@@ -83,19 +99,19 @@ export default function Districts() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.nom || !formData.regionId) {
-      alert('Veuillez remplir tous les champs obligatoires.');
+      alert("Veuillez remplir tous les champs obligatoires.");
       return;
     }
 
-    const method = editingId ? 'PUT' : 'POST';
-    const url = editingId ? `/api/district/${editingId}` : '/api/district';
+    const method = editingId ? "PUT" : "POST";
+    const url = editingId ? `/api/district/${editingId}` : "/api/district";
 
     try {
       // create
       fetch(url, {
         method,
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           nom: formData.nom,
@@ -113,18 +129,20 @@ export default function Districts() {
                   : district
               )
             );
+            setLoading(true);
           } else {
-            // create
             setDistricts([...districts, data]);
+            setLoading(true);
           }
           setIsDialogOpen(false);
-          setFormData({ regionId: '' });
+          setFormData({ regionId: "" });
           setEditingId(null);
+          setLoading(false);
         });
 
       // update
     } catch (error) {
-      console.error('Error submitting form:', error);
+      console.error("Error submitting form:", error);
     }
   };
 
@@ -134,67 +152,80 @@ export default function Districts() {
     setIsDialogOpen(true);
   };
 
-  const handleDelete = (id: string) => {
-    if (!confirm('Êtes-vous sûr de vouloir supprimer ce district ?')) return;
-
-    fetch(`/api/district/${id}`, {
-      method: 'DELETE',
+  const handleDelete = () => {
+    fetch(`/api/district/${deletingId}`, {
+      method: "DELETE",
     })
-      .then(() => {
-        setDistricts(districts.filter((district) => district.id !== id));
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error("Erreur lors de la suppression du district");
+        }
+        return response.json();
       })
-      .catch((error) => console.error('Error deleting district:', error));
+      .then(() => {
+        setDistricts((prev) =>
+          prev.filter((district) => district.id !== deletingId)
+        );
+        toast("Suppression réussie");
+      })
+      .catch((error) => {
+        console.error("Erreur:", error);
+      })
+      .finally(() => {
+        setIsDialogOpen(false);
+        setDeletingId(null);
+      });
   };
 
   return (
     <Wrapper>
-      <div className='space-y-6'>
-        <div className='flex justify-between items-center'>
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
           <div>
-            <h2 className='text-3xl font-bold flex items-center gap-2'>
-              <MapPin className='h-8 w-8 text-green-600' />
+            <h2 className="text-3xl font-bold flex items-center gap-2">
+              <MapPin className="h-8 w-8 text-green-600" />
               Gestion des Districts
             </h2>
-            <p className='text-gray-600'>
+            <p className="text-gray-600">
               Administration territoriale - Niveau district
             </p>
           </div>
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
-              <Button className=' cursor-pointer bg-blue-500 text-black dark:text-white '>
-                <div className='flex justify-center items-center'>
-                  <Plus className='h-4 w-4 mr-2' />
-                  <span className='hidden md:block'>Nouveau district</span>
+              <Button className=" cursor-pointer bg-blue-500 text-black dark:text-white ">
+                <div className="flex justify-center items-center">
+                  <Plus className="h-4 w-4 mr-2" />
+                  <span className="hidden md:block">Nouveau district</span>
                 </div>
               </Button>
             </DialogTrigger>
 
-            <DialogContent className='max-w-md' aria-description='formulaire'>
+            <DialogContent className="max-w-md" aria-description="formulaire">
               <DialogHeader>
                 <DialogTitle>
-                  {editingId ? 'Modifier un district' : 'Ajouter un district'}
+                  {editingId ? "Modifier un district" : "Ajouter un district"}
                 </DialogTitle>
               </DialogHeader>
-              <form onSubmit={handleSubmit} className='space-y-4'>
-                <div className='space-y-4'>
-                  <Label htmlFor='nom'>Nom du secteur</Label>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="space-y-4">
+                  <Label htmlFor="nom">Nom du secteur</Label>
                   <Input
-                    id='nom'
-                    value={formData.nom || ''}
+                    id="nom"
+                    value={formData.nom || ""}
                     onChange={(e) =>
                       setFormData((prev) => ({ ...prev, nom: e.target.value }))
                     }
                     required
                   />
                   <Select
-                    value={formData.regionId || ''}
+                    value={formData.regionId || ""}
                     onValueChange={(value) =>
                       setFormData((prev) => ({ ...prev, regionId: value }))
                     }
                     required
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder='Sélectionner une region' />
+                      <SelectValue placeholder="Sélectionner une region" />
                     </SelectTrigger>
                     <SelectContent>
                       {regionOptions.map((region) => (
@@ -205,31 +236,31 @@ export default function Districts() {
                     </SelectContent>
                   </Select>
                 </div>
-                <Button type='submit' className='w-full'>
-                  {editingId ? 'Modifier' : 'Ajouter'}
+                <Button type="submit" className="w-full">
+                  {loading ? "en cours..." : editingId ? "Modifier" : "Ajouter"}
                 </Button>
               </form>
             </DialogContent>
           </Dialog>
         </div>
 
-        <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
-          <div className='lg:col-span-2'>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="lg:col-span-2">
             <Card>
               <CardHeader>
-                <div className='flex justify-center md:justify-between items-center'>
+                <div className="flex justify-center md:justify-between items-center">
                   <CardTitle>
-                    <span className='hidden md:block'>
+                    <span className="hidden md:block">
                       Liste des Districts ({filteredDistricts.length})
                     </span>
                   </CardTitle>
-                  <div className='flex items-center gap-2'>
-                    <Search className='h-4 w-4 text-gray-400' />
+                  <div className="flex items-center gap-2">
+                    <Search className="h-4 w-4 text-gray-400" />
                     <Input
-                      placeholder='Rechercher un district...'
+                      placeholder="Rechercher un district..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
-                      className='w-64'
+                      className="w-64"
                     />
                   </div>
                 </div>
@@ -247,33 +278,64 @@ export default function Districts() {
                     {filteredDistricts
                       ? filteredDistricts?.map((district) => (
                           <TableRow key={district?.id}>
-                            <TableCell className='font-medium'>
+                            <TableCell className="font-medium">
                               {district?.nom}
                             </TableCell>
                             <TableCell>{district?.region.nom}</TableCell>
                             <TableCell>
-                              <div className='flex gap-2'>
+                              <div className="flex gap-2">
                                 <Button
-                                  className='cursor-pointer'
-                                  variant='outline'
-                                  size='sm'
+                                  className="cursor-pointer"
+                                  variant="outline"
+                                  size="sm"
                                   onClick={() => handleEdit(district)}
                                 >
-                                  <Edit className='h-3 w-3 text-green-500' />
+                                  <Edit className="h-3 w-3 text-green-500" />
                                 </Button>
-                                <Button
-                                  className=' cursor-pointer '
-                                  variant='outline'
-                                  size='sm'
-                                  onClick={() => handleDelete(district.id)}
+                                <AlertDialog
+                                  open={isDeleteModal}
+                                  onOpenChange={setIsDeleteModal}
                                 >
-                                  <Trash2 className='h-3 w-3 text-red-500' />
-                                </Button>
+                                  <AlertDialogTrigger asChild>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => {
+                                        setDeletingId(district.id);
+                                        setIsDeleteModal(true);
+                                      }}
+                                    >
+                                      <Trash2 className="h-3 w-3" />
+                                    </Button>
+                                  </AlertDialogTrigger>
+                                  <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                      <AlertDialogTitle>
+                                        Voulez-vous supprimer?
+                                      </AlertDialogTitle>
+                                      <AlertDialogDescription>
+                                        This action cannot be undone. This will
+                                        permanently delete your account and
+                                        remove your data from our servers.
+                                      </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                      <AlertDialogCancel>
+                                        Annuler
+                                      </AlertDialogCancel>
+                                      <AlertDialogAction
+                                        onClick={() => handleDelete()}
+                                      >
+                                        Continue
+                                      </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                  </AlertDialogContent>
+                                </AlertDialog>
                               </div>
                             </TableCell>
                           </TableRow>
                         ))
-                      : 'Loading'}
+                      : "Loading"}
                   </TableBody>
                 </Table>
               </CardContent>

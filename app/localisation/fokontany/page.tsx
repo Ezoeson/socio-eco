@@ -204,7 +204,7 @@ export default function Fokontanys() {
                 }}
               >
                 <Plus className="h-4 w-4 mr-2" />
-                Nouveau fokontany
+                <span className="hidden md:block"> Nouveau fokontany</span>
               </Button>
             </DialogTrigger>
 
@@ -256,9 +256,11 @@ export default function Fokontanys() {
           <div className="lg:col-span-2">
             <Card>
               <CardHeader>
-                <div className="flex justify-between items-center">
+                <div className="flex md:justify-between items-center">
                   <CardTitle>
-                    Liste des Fokontanys ({filteredFokontanys.length})
+                    <span className="hidden md:block">
+                      Liste des Fokontanys ({filteredFokontanys.length})
+                    </span>
                   </CardTitle>
                   <div className="flex items-center gap-2">
                     <Search className="h-4 w-4 text-gray-400" />

@@ -39,6 +39,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface Enqueteur {
   id: string;
@@ -87,12 +88,22 @@ export default function Enqueteur() {
   );
 
   const handleEdit = (enqueteur: Enqueteur) => {
-    console.log("Editing enqueteur:", enqueteur.id);
-    setFormData(enqueteur);
+    console.log("Editing enqueteur with ID:", enqueteur.id);
+    // Create a clean copy without any undefined values
+    const cleanData = {
+      nom: enqueteur.nom,
+      prenom: enqueteur.prenom ?? undefined,
+      code: enqueteur.code ?? undefined,
+      telephone: enqueteur.telephone ?? undefined,
+      image: enqueteur.image ?? undefined,
+      email: enqueteur.email ?? undefined,
+      actif: enqueteur.actif,
+    };
+
+    setFormData(cleanData);
     setEditingId(enqueteur.id);
     setIsDialogOpen(true);
   };
-
   const handleDelete = async () => {
     try {
       const response = await fetch(`/api/enqueteur/${deletingId}`, {
@@ -140,23 +151,23 @@ export default function Enqueteur() {
         body: JSON.stringify(requestBody),
       });
 
+      // First check if response is empty
+      const responseText = await response.text();
+      if (!responseText) {
+        throw new Error("Empty response from server");
+      }
+
+      // Try to parse as JSON
+      const data = responseText ? JSON.parse(responseText) : {};
+
       if (!response.ok) {
-        // Try to get more error details from the response
-        const errorData = await response.json().catch(() => ({}));
-        console.error("API Error:", {
-          status: response.status,
-          statusText: response.statusText,
-          errorData,
-        });
         throw new Error(
-          errorData.message ||
+          data.message ||
             (editingId
               ? "Erreur lors de la modification"
               : "Erreur lors de la création")
         );
       }
-
-      const data = await response.json();
 
       if (editingId) {
         setEnqueteurs((prev) =>
@@ -175,9 +186,9 @@ export default function Enqueteur() {
       setEditingId(null);
       setIsDialogOpen(false);
     } catch (error) {
-      console.error("Erreur:", error);
+      console.error("Erreur complète:", error);
       if (error instanceof Error) {
-        toast.error(error.message);
+        toast.error(error.message || "Erreur inconnue");
       } else {
         toast.error("Une erreur inconnue est survenue");
       }
@@ -219,37 +230,36 @@ export default function Enqueteur() {
               <User className="h-8 w-8 text-blue-600" />
               Gestion des Enquêteurs
             </h2>
-            <p className="text-gray-600">
-              Administration des enquêteurs terrain
-            </p>
+            <p className="">Administration des enquêteurs terrain</p>
           </div>
-
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
               <Button
-                className="cursor-pointer flex justify-center items-center gap-2"
+                className="cursor-pointer flex justify-center items-center gap-2 bg-primary hover:bg-primary/90"
                 onClick={() => {
                   setFormData({ actif: true });
                   setEditingId(null);
                 }}
               >
-                <Plus className="h-4 w-4 mr-2" />
-                <span className="hidden md:block"> Ajouter un enquêteur</span>
+                <Plus className="h-4 w-4" />
+                <span className="hidden md:block">Ajouter un enquêteur</span>
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-md">
+            <DialogContent className="max-w-md p-6 rounded-lg">
               <DialogHeader>
-                <DialogTitle>
+                <DialogTitle className="text-xl font-semibold  text-center">
                   {editingId ? "Modifier un enquêteur" : "Ajouter un enquêteur"}
                 </DialogTitle>
               </DialogHeader>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="space-y-2 flex flex-col items-center">
-                  <Label>Photo de profil</Label>
 
-                  {/* Conteneur principal */}
-                  <div className="relative">
-                    {/* Input fichier caché */}
+              <form onSubmit={handleSubmit} className="space-y-4">
+                {/* Section photo de profil */}
+                <div className="flex flex-col items-center space-y-3">
+                  <Label className="text-sm font-medium ">
+                    Photo de profil
+                  </Label>
+
+                  <div className="relative group">
                     <Input
                       id="image-upload"
                       type="file"
@@ -258,99 +268,117 @@ export default function Enqueteur() {
                       className="hidden"
                     />
 
-                    {/* Label déclencheur - visible par défaut */}
                     <label
                       htmlFor="image-upload"
-                      className={`cursor-pointer flex items-center justify-center h-32 w-32 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors ${
-                        formData.image ? "hidden" : "block"
+                      className={`cursor-pointer flex items-center justify-center h-24 w-24 rounded-full border-2 border-dashed border-gray-300 hover:border-primary transition-all ${
+                        formData.image ? "hidden" : "flex"
                       }`}
                     >
-                      <Camera className="h-8 w-8 text-gray-600" />
+                      <Camera className="h-6 w-6 text-gray-400 group-hover:text-primary" />
                     </label>
 
-                    {/* Prévisualisation image - visible seulement après upload */}
                     {formData.image && (
                       <label
                         htmlFor="image-upload"
-                        className="cursor-pointer block h-32 w-32 rounded-full overflow-hidden relative"
+                        className="cursor-pointer block h-24 w-24 rounded-full overflow-hidden relative group"
                       >
                         <Image
                           src={formData.image}
                           alt="Photo de profil"
                           fill
-                          sizes="128px"
+                          sizes="96px"
                           className="object-cover"
                           onError={(e) => {
                             (e.target as HTMLImageElement).style.display =
                               "none";
                           }}
                         />
-
-                        {/* Overlay avec icône caméra au survol */}
-                        {/* <div className="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-30 flex items-center justify-center transition-all">
-                          <Camera className="h-8 w-8 text-white opacity-0 hover:opacity-10 transition-opacity" />
-                        </div> */}
+                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 flex items-center justify-center transition-all">
+                          <Camera className="h-6 w-6 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                        </div>
                       </label>
                     )}
                   </div>
                 </div>
-                <div className="space-y-4">
-                  <Label>Nom *</Label>
-                  <Input
-                    value={formData.nom || ""}
-                    onChange={(e) =>
-                      setFormData({ ...formData, nom: e.target.value })
-                    }
-                    required
-                  />
 
-                  <Label>Prénom</Label>
-                  <Input
-                    value={formData.prenom || ""}
-                    onChange={(e) =>
-                      setFormData({ ...formData, prenom: e.target.value })
-                    }
-                  />
+                {/* Champs du formulaire */}
+                <div className="space-y-3">
+                  <div>
+                    <Label className="text-sm font-medium ">Nom *</Label>
+                    <Input
+                      value={formData.nom || ""}
+                      onChange={(e) =>
+                        setFormData({ ...formData, nom: e.target.value })
+                      }
+                      required
+                      className="mt-1"
+                    />
+                  </div>
 
-                  <Label>Code</Label>
-                  <Input
-                    value={formData.code || ""}
-                    onChange={(e) =>
-                      setFormData({ ...formData, code: e.target.value })
-                    }
-                  />
+                  <div>
+                    <Label className="text-sm font-medium ">Prénom</Label>
+                    <Input
+                      value={formData.prenom || ""}
+                      onChange={(e) =>
+                        setFormData({ ...formData, prenom: e.target.value })
+                      }
+                      className="mt-1"
+                    />
+                  </div>
 
-                  <Label>Téléphone</Label>
-                  <Input
-                    value={formData.telephone || ""}
-                    onChange={(e) =>
-                      setFormData({ ...formData, telephone: e.target.value })
-                    }
-                  />
+                  <div>
+                    <Label className="text-sm font-medium ">Code</Label>
+                    <Input
+                      value={formData.code || ""}
+                      onChange={(e) =>
+                        setFormData({ ...formData, code: e.target.value })
+                      }
+                      className="mt-1"
+                    />
+                  </div>
 
-                  <Label>Email</Label>
-                  <Input
-                    value={formData.email || ""}
-                    onChange={(e) =>
-                      setFormData({ ...formData, email: e.target.value })
-                    }
-                    type="email"
-                  />
+                  <div>
+                    <Label className="text-sm font-medium ">Téléphone</Label>
+                    <Input
+                      value={formData.telephone || ""}
+                      onChange={(e) =>
+                        setFormData({ ...formData, telephone: e.target.value })
+                      }
+                      className="mt-1"
+                    />
+                  </div>
 
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
+                  <div>
+                    <Label className="text-sm font-medium ">Email</Label>
+                    <Input
+                      value={formData.email || ""}
+                      onChange={(e) =>
+                        setFormData({ ...formData, email: e.target.value })
+                      }
+                      type="email"
+                      className="mt-1"
+                    />
+                  </div>
+
+                  <div className="flex items-center space-x-2 pt-2">
+                    <Checkbox
                       id="actif"
                       checked={formData.actif || false}
-                      onChange={(e) =>
-                        setFormData({ ...formData, actif: e.target.checked })
+                      onCheckedChange={(checked) =>
+                        setFormData({ ...formData, actif: checked as boolean })
                       }
-                      className="h-4 w-4"
+                      className="h-4 w-4 border-gray-300 data-[state=checked]:bg-primary"
                     />
-                    <Label htmlFor="actif">Actif</Label>
+                    <Label htmlFor="actif" className="text-sm font-medium ">
+                      Actif
+                    </Label>
                   </div>
                 </div>
-                <Button type="submit" className="w-full">
+
+                <Button
+                  type="submit"
+                  className="w-full mt-4 bg-primary hover:bg-primary/90"
+                >
                   {editingId ? "Modifier" : "Ajouter"}
                 </Button>
               </form>

@@ -192,7 +192,7 @@ export default function Districts() {
           </div>
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
-              <Button className=" cursor-pointer bg-blue-500 text-black dark:text-white ">
+              <Button className=" cursor-pointer  flex items-center gap-2 ">
                 <div className="flex justify-center items-center">
                   <Plus className="h-4 w-4 mr-2" />
                   <span className="hidden md:block">Nouveau district</span>
@@ -305,7 +305,7 @@ export default function Districts() {
                                         setIsDeleteModal(true);
                                       }}
                                     >
-                                      <Trash2 className="h-3 w-3" />
+                                      <Trash2 className="h-3 w-3 text-red-500" />
                                     </Button>
                                   </AlertDialogTrigger>
                                   <AlertDialogContent>
@@ -314,9 +314,9 @@ export default function Districts() {
                                         Voulez-vous supprimer?
                                       </AlertDialogTitle>
                                       <AlertDialogDescription>
-                                        This action cannot be undone. This will
-                                        permanently delete your account and
-                                        remove your data from our servers.
+                                        Êtes-vous sûr de vouloir supprimer le
+                                        district <strong>{district.nom}</strong>?
+                                        Cette action est irréversible.
                                       </AlertDialogDescription>
                                     </AlertDialogHeader>
                                     <AlertDialogFooter>

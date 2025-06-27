@@ -1,7 +1,7 @@
 // app/api/circuit-commercial/[id]/route.ts
 
-import { PrismaClient } from '@prisma/client';
-import { NextRequest, NextResponse } from 'next/server';
+import { PrismaClient } from "@prisma/client";
+import { NextRequest, NextResponse } from "next/server";
 
 const prisma = new PrismaClient();
 
@@ -14,14 +14,18 @@ export async function GET(
     const circuit = await prisma.circuitCommercialProduit.findUnique({
       where: { id },
       include: {
-        pecheur: true,
         destinations: true,
+        pecheur: {
+          include: {
+            enquete: true,
+          },
+        },
       },
     });
 
     if (!circuit) {
       return NextResponse.json(
-        { error: 'Commercial circuit not found' },
+        { error: "Commercial circuit not found" },
         { status: 404 }
       );
     }
@@ -29,7 +33,7 @@ export async function GET(
     return NextResponse.json(circuit);
   } catch {
     return NextResponse.json(
-      { error: 'Failed to fetch commercial circuit' },
+      { error: "Failed to fetch commercial circuit" },
       { status: 500 }
     );
   }
@@ -42,7 +46,7 @@ export async function PUT(
   try {
     const { id } = await params;
 
-    const json = await request.json();
+    const { pecheurId, destinations, ...circuitData } = await request.json();
 
     const circuitExists = await prisma.circuitCommercialProduit.findUnique({
       where: { id: id },
@@ -50,58 +54,55 @@ export async function PUT(
 
     if (!circuitExists) {
       return NextResponse.json(
-        { error: 'Commercial circuit not found' },
+        { error: "Commercial circuit not found" },
         { status: 404 }
       );
     }
 
-    if (json.pecheurId) {
+    if (pecheurId) {
       const pecheurExists = await prisma.pecheur.findUnique({
-        where: { id: json.pecheurId },
+        where: { id: pecheurId },
       });
 
       if (!pecheurExists) {
         return NextResponse.json(
-          { error: 'Pecheur not found' },
+          { error: "Pecheur not found" },
           { status: 404 }
         );
       }
     }
 
-    // Handle destinations update
-    if (json.destinations) {
-      // First delete existing destinations
+    const updatedCircuit = await prisma.$transaction(async (prisma) => {
+      await prisma.circuitCommercialProduit.update({
+        where: { id: id },
+        data: circuitData,
+      });
+
+      // 2. Supprimer les anciennes destinations
       await prisma.destinationCommerciale.deleteMany({
         where: { circuitId: id },
       });
 
-      // Then create new ones
-      await prisma.circuitCommercialProduit.update({
+      // 3. Ajouter les nouvelles destinations
+      if (destinations && destinations.length > 0) {
+        await prisma.destinationCommerciale.createMany({
+          data: destinations.map((dest: any) => ({
+            ...dest,
+            circuitId: id,
+          })),
+        });
+      }
+
+      return prisma.circuitCommercialProduit.findUnique({
         where: { id: id },
-        data: {
-          destinations: {
-            create: json.destinations,
-          },
-        },
+        include: { destinations: true },
       });
-    }
-
-    const updatedCircuit = await prisma.circuitCommercialProduit.update({
-      where: { id: id },
-      data: json,
-      include: {
-        pecheur: true,
-        destinations: true,
-      },
     });
 
-    return NextResponse.json({
-      message: 'Commercial circuit updated successfully',
-      data: updatedCircuit,
-    });
+    return NextResponse.json(updatedCircuit);
   } catch {
     return NextResponse.json(
-      { error: 'Failed to update commercial circuit' },
+      { error: "Failed to update commercial circuit" },
       { status: 500 }
     );
   }
@@ -119,7 +120,7 @@ export async function DELETE(
 
     if (!circuit) {
       return NextResponse.json(
-        { error: 'Commercial circuit not found' },
+        { error: "Commercial circuit not found" },
         { status: 404 }
       );
     }
@@ -129,11 +130,11 @@ export async function DELETE(
     });
 
     return NextResponse.json({
-      message: 'Commercial circuit deleted successfully',
+      message: "Commercial circuit deleted successfully",
     });
   } catch {
     return NextResponse.json(
-      { error: 'Failed to delete commercial circuit' },
+      { error: "Failed to delete commercial circuit" },
       { status: 500 }
     );
   }

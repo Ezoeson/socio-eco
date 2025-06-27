@@ -1,7 +1,7 @@
 // app/api/equipement-peche/route.ts
 
-import { PrismaClient } from '@prisma/client';
-import { NextResponse } from 'next/server';
+import { PrismaClient } from "@prisma/client";
+import { NextResponse } from "next/server";
 
 const prisma = new PrismaClient();
 
@@ -9,13 +9,17 @@ export async function GET() {
   try {
     const equipements = await prisma.equipementPeche.findMany({
       include: {
-        pecheur: true,
+        pecheur: {
+          include: {
+            enquete: true, // Include the related 'enquete' data
+          },
+        },
       },
     });
     return NextResponse.json(equipements);
   } catch {
     return NextResponse.json(
-      { error: 'Failed to fetch fishing equipment' },
+      { error: "Failed to fetch fishing equipment" },
       { status: 500 }
     );
   }
@@ -31,7 +35,7 @@ export async function POST(request: Request) {
     });
 
     if (!pecheurExists) {
-      return NextResponse.json({ error: 'Pecheur not found' }, { status: 404 });
+      return NextResponse.json({ error: "Pecheur not found" }, { status: 404 });
     }
 
     const equipement = await prisma.equipementPeche.create({
@@ -42,12 +46,12 @@ export async function POST(request: Request) {
     });
 
     return NextResponse.json({
-      message: 'Fishing equipment created successfully',
+      message: "Fishing equipment created successfully",
       data: equipement,
     });
   } catch {
     return NextResponse.json(
-      { error: 'Failed to create fishing equipment' },
+      { error: "Failed to create fishing equipment" },
       { status: 500 }
     );
   }

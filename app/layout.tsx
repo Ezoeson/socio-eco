@@ -3,7 +3,7 @@ import { Mooli } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
-
+import { ProgressBar } from "@/components/progressBar";
 
 const mooli = Mooli({
   weight: "400",
@@ -31,7 +31,8 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <Toaster />
+          <ProgressBar />
+          <Toaster richColors />
           {children}
         </ThemeProvider>
       </body>

@@ -205,7 +205,7 @@ export default function Secteurs() {
                 }}
               >
                 <Plus className="h-4 w-4 mr-2" />
-                Nouveau secteur
+                <span className="hidden md:block">Nouveau secteur</span>
               </Button>
             </DialogTrigger>
 
@@ -257,9 +257,11 @@ export default function Secteurs() {
           <div className="lg:col-span-2">
             <Card>
               <CardHeader>
-                <div className="flex justify-between items-center">
+                <div className="flex md:justify-between items-center">
                   <CardTitle>
-                    Liste des Secteurs ({filteredSecteurs.length})
+                    <span className="hidden md:block">
+                      Liste des Secteurs ({filteredSecteurs.length})
+                    </span>
                   </CardTitle>
                   <div className="flex items-center gap-2">
                     <Search className="h-4 w-4 text-gray-400" />

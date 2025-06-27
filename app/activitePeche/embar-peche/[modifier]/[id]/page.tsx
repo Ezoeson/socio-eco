@@ -44,13 +44,13 @@ type EmbarcationFormData = {
   dureeVieEstimee: number | null;
 };
 
-export default function AjoutEmbarcation() {
+export default function ModifEmbarcation() {
   const router = useRouter();
   const params = useParams();
   const id = params.id as string | undefined;
   const isEditMode = !!id;
 
-  const [formData, setFormData] = useState<EmbarcationFormData>({
+  const initialFormData: EmbarcationFormData = {
     pecheurId: "",
     typeEmbarcation: "",
     nombre: null,
@@ -71,8 +71,10 @@ export default function AjoutEmbarcation() {
     materiauxConstruction: "",
     typeBois: "",
     dureeVieEstimee: null,
-  });
+  };
 
+  const [formData, setFormData] =
+    useState<EmbarcationFormData>(initialFormData);
   const [pecheurOptions, setPecheurOptions] = useState<Pecheur[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -81,49 +83,73 @@ export default function AjoutEmbarcation() {
       try {
         const [pecheursRes, embarcationRes] = await Promise.all([
           fetch("/api/pecheur"),
-          fetch(`/api/embarcation_peche/${params.id}`),
+          isEditMode
+            ? fetch(`/api/embarc_peche/${params.id}`)
+            : Promise.resolve(null),
         ]);
 
-        setPecheurOptions(await pecheursRes.json());
-        setFormData(await embarcationRes.json());
+        const pecheurs = await pecheursRes.json();
+        setPecheurOptions(pecheurs);
+
+        if (isEditMode && embarcationRes) {
+          const embarcationData = await embarcationRes.json();
+          // Nettoyage des données pour ne garder que le pecheurId
+          const { pecheur, ...cleanData } = embarcationData;
+          setFormData({
+            ...cleanData,
+            pecheurId: pecheur?.id || "",
+          });
+        }
       } catch (error) {
-        console.error(error);
+        console.error("Erreur de chargement:", error);
+        toast.error("Erreur lors du chargement des données");
       }
     };
+
     fetchData();
-  }, [params.id]);
+  }, [params.id, isEditMode]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData) return;
+
+    if (!formData.pecheurId) {
+      toast.error("Veuillez sélectionner un pêcheur");
+      return;
+    }
 
     setIsLoading(true);
+
     try {
-      const response = await fetch(`/api/embarcation_peche/${params.id}`, {
+      // Création d'un objet de soumission propre
+      const submissionData = {
+        ...formData,
+        // Conversion des champs vides en null pour la cohérence
+        nombre: formData.nombre || null,
+        nombreEquipage: formData.nombreEquipage || null,
+        // ... autres champs numériques
+      };
+
+      const response = await fetch(`/api/embarc_peche/${params.id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(submissionData),
       });
 
-      if (!response.ok) throw new Error("Erreur lors de la modification");
+      if (!response.ok) {
+        throw new Error(`Erreur HTTP: ${response.status}`);
+      }
 
       toast.success("Modification réussie");
-      router.push("/embarcations-peche");
+      router.push("/activitePeche/embar-peche");
     } catch (error) {
-      console.error(error);
-      toast.error("Erreur lors de la modification");
+      console.error("Erreur de soumission:", error);
+      toast.error("Échec de la modification");
     } finally {
       setIsLoading(false);
     }
   };
-
-  useEffect(() => {
-    if (isEditMode && !formData.pecheurId) {
-      toast.error("Veuillez sélectionner un pêcheur");
-    }
-  }, [formData.pecheurId, isEditMode]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type } = e.target;
@@ -482,7 +508,7 @@ export default function AjoutEmbarcation() {
             <Button
               type="button"
               variant="outline"
-              onClick={() => router.push("/embarcations-peche")}
+              onClick={() => router.push("/activitePeche/embar-peche")}
             >
               Annuler
             </Button>

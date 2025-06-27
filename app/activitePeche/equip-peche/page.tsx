@@ -161,6 +161,7 @@ export default function EquipementsPeche() {
         });
     } catch (error) {
       console.error("Error submitting form:", error);
+      toast.error("Erreur lors de l'enregistrement de l'équipement");
     }
   };
 
@@ -191,7 +192,7 @@ export default function EquipementsPeche() {
         setEquipements((prev) =>
           prev.filter((equipement) => equipement.id !== deletingId)
         );
-        toast("Suppression réussie");
+        toast.success("Suppression réussie");
       })
       .catch((error) => {
         console.error("Erreur:", error);
@@ -218,13 +219,16 @@ export default function EquipementsPeche() {
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
               <Button
+                className="cursor-pointer"
+                disabled={isDialogOpen}
+                size="sm"
                 onClick={() => {
                   setFormData({ pecheurId: "" });
                   setEditingId(null);
                 }}
               >
                 <Plus className="h-4 w-4 mr-2" />
-                Nouvel équipement
+                <span className="hidden md:block">Nouvel équipement</span>
               </Button>
             </DialogTrigger>
 
@@ -362,9 +366,11 @@ export default function EquipementsPeche() {
           <div className="lg:col-span-2">
             <Card>
               <CardHeader>
-                <div className="flex justify-between items-center">
+                <div className="flex md:justify-between items-center">
                   <CardTitle>
-                    Liste des Équipements ({filteredEquipements.length})
+                    <span className="hidden md:block">
+                      Liste des Équipements ({filteredEquipements.length})
+                    </span>
                   </CardTitle>
                   <div className="flex items-center gap-2">
                     <Search className="h-4 w-4 text-gray-400" />

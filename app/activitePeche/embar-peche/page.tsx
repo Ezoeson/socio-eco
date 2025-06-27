@@ -68,7 +68,7 @@ export default function EmbarcationsPeche() {
   useEffect(() => {
     const fetchEmbarcations = async () => {
       try {
-        const response = await fetch("/api/embar_peche");
+        const response = await fetch("/api/embarc_peche");
         const data = await response.json();
         setEmbarcations(data);
       } catch (error) {

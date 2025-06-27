@@ -66,7 +66,7 @@ export default function AjoutEmbarcation() {
     setIsLoading(true);
 
     try {
-      const response = await fetch("/api/embarcation_peche", {
+      const response = await fetch("/api/embarc_peche", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -77,7 +77,7 @@ export default function AjoutEmbarcation() {
       if (!response.ok) throw new Error("Erreur lors de l'ajout");
 
       toast.success("Embarcation ajoutée avec succès");
-      router.push("/embarcations-peche");
+      router.push("/activitePeche/embar-peche");
     } catch (error) {
       console.error(error);
       toast.error("Erreur lors de l'ajout");
@@ -143,7 +143,9 @@ export default function AjoutEmbarcation() {
                 </div>
 
                 <div>
-                  <Label htmlFor="typeEmbarcation">Type d&rsquo;embarcation</Label>
+                  <Label htmlFor="typeEmbarcation">
+                    Type d&rsquo;embarcation
+                  </Label>
                   <Input
                     id="typeEmbarcation"
                     name="typeEmbarcation"
@@ -164,7 +166,9 @@ export default function AjoutEmbarcation() {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="nombreEquipage">Nombre d&apos;équipage</Label>
+                    <Label htmlFor="nombreEquipage">
+                      Nombre d&apos;équipage
+                    </Label>
                     <Input
                       id="nombreEquipage"
                       name="nombreEquipage"
@@ -315,7 +319,9 @@ export default function AjoutEmbarcation() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
-                  <Label htmlFor="coutAcquisition">Coût d&apos;acquisition</Label>
+                  <Label htmlFor="coutAcquisition">
+                    Coût d&apos;acquisition
+                  </Label>
                   <Input
                     id="coutAcquisition"
                     name="coutAcquisition"
@@ -326,7 +332,9 @@ export default function AjoutEmbarcation() {
                 </div>
 
                 <div>
-                  <Label htmlFor="modeAcquisition">Mode d&rsquo;acquisition</Label>
+                  <Label htmlFor="modeAcquisition">
+                    Mode d&rsquo;acquisition
+                  </Label>
                   <Input
                     id="modeAcquisition"
                     name="modeAcquisition"
@@ -399,7 +407,7 @@ export default function AjoutEmbarcation() {
                     id="partageCaptures"
                     name="partageCaptures"
                     type="number"
-                    step="0.1"
+                    step="0"
                     value={formData.partageCaptures || ""}
                     onChange={handleChange}
                   />

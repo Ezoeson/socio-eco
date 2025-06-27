@@ -1,7 +1,7 @@
 // app/api/equipement-peche/[id]/route.ts
 
-import { PrismaClient } from '@prisma/client';
-import { NextRequest, NextResponse } from 'next/server';
+import { PrismaClient } from "@prisma/client";
+import { NextRequest, NextResponse } from "next/server";
 
 const prisma = new PrismaClient();
 
@@ -20,7 +20,7 @@ export async function GET(
 
     if (!equipement) {
       return NextResponse.json(
-        { error: 'Fishing equipment not found' },
+        { error: "Fishing equipment not found" },
         { status: 404 }
       );
     }
@@ -28,7 +28,7 @@ export async function GET(
     return NextResponse.json(equipement);
   } catch {
     return NextResponse.json(
-      { error: 'Failed to fetch fishing equipment' },
+      { error: "Failed to fetch fishing equipment" },
       { status: 500 }
     );
   }
@@ -48,7 +48,7 @@ export async function PUT(
 
     if (!equipementExists) {
       return NextResponse.json(
-        { error: 'Fishing equipment not found' },
+        { error: "Fishing equipment not found" },
         { status: 404 }
       );
     }
@@ -60,7 +60,7 @@ export async function PUT(
 
       if (!pecheurExists) {
         return NextResponse.json(
-          { error: 'Pecheur not found' },
+          { error: "Pecheur not found" },
           { status: 404 }
         );
       }
@@ -75,12 +75,12 @@ export async function PUT(
     });
 
     return NextResponse.json({
-      message: 'Fishing equipment updated successfully',
+      message: "Fishing equipment updated successfully",
       data: updatedEquipement,
     });
   } catch {
     return NextResponse.json(
-      { error: 'Failed to update fishing equipment' },
+      { error: "Failed to update fishing equipment" },
       { status: 500 }
     );
   }
@@ -98,7 +98,7 @@ export async function DELETE(
 
     if (!equipement) {
       return NextResponse.json(
-        { error: 'Fishing equipment not found' },
+        { error: "Fishing equipment not found" },
         { status: 404 }
       );
     }
@@ -108,11 +108,11 @@ export async function DELETE(
     });
 
     return NextResponse.json({
-      message: 'Fishing equipment deleted successfully',
+      message: "Fishing equipment deleted successfully",
     });
   } catch {
     return NextResponse.json(
-      { error: 'Failed to delete fishing equipment' },
+      { error: "Failed to delete fishing equipment" },
       { status: 500 }
     );
   }

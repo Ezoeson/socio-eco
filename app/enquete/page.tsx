@@ -26,7 +26,6 @@ import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import Image from "next/image";
 
-
 type Enquete = {
   id: string;
   nomEnquete: string;
@@ -125,7 +124,7 @@ export default function ListeEnquetes() {
     return (
       <Wrapper>
         <div className="flex justify-center h-screen items-center">
-            <Image src={loader} width={150} height={150} alt='Loading ...' />
+          <Image src={loader} width={150} height={150} alt="Loading ..." />
         </div>
       </Wrapper>
     );
@@ -142,7 +141,7 @@ export default function ListeEnquetes() {
             </p>
           </div>
           <Link href="/formulaire/ajout-enquete">
-            <Button className="cursor-pointer bg-blue-500 text-black dark:text-white">
+            <Button className="cursor-pointer">
               <div className="flex justify-center items-center">
                 <Plus className="h-4 w-4 mr-2" />
                 <span className="hidden md:block">Nouvelle enquête</span>

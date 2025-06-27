@@ -107,7 +107,7 @@ const data = {
         },
         {
           title: "Circuits commerciaux",
-          url: "/activitePeche/circuits-commerciaux",
+          url: "/activitePeche/circuit-peche",
         },
       ],
     },

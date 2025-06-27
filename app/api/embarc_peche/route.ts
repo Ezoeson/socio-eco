@@ -1,7 +1,7 @@
 // app/api/embarcation-peche/route.ts
 
-import { PrismaClient } from '@prisma/client';
-import { NextResponse } from 'next/server';
+import { PrismaClient } from "@prisma/client";
+import { NextResponse } from "next/server";
 
 const prisma = new PrismaClient();
 
@@ -15,7 +15,7 @@ export async function GET() {
     return NextResponse.json(embarcations);
   } catch {
     return NextResponse.json(
-      { error: 'Failed to fetch fishing boats' },
+      { error: "Failed to fetch fishing boats" },
       { status: 500 }
     );
   }
@@ -31,23 +31,20 @@ export async function POST(request: Request) {
     });
 
     if (!pecheurExists) {
-      return NextResponse.json({ error: 'Pecheur not found' }, { status: 404 });
+      return NextResponse.json({ error: "Pecheur not found" }, { status: 404 });
     }
 
     const embarcation = await prisma.embarcationPeche.create({
       data: json,
-      include: {
-        pecheur: true,
-      },
     });
 
     return NextResponse.json({
-      message: 'Fishing boat created successfully',
+      message: "Fishing boat created successfully",
       data: embarcation,
     });
   } catch {
     return NextResponse.json(
-      { error: 'Failed to create fishing boat' },
+      { error: "Failed to create fishing boat" },
       { status: 500 }
     );
   }

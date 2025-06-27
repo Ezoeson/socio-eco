@@ -230,13 +230,14 @@ export default function PratiquesPeche() {
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
               <Button
+                className=" cursor-pointer"
                 onClick={() => {
                   setFormData({ pecheurId: "" });
                   setEditingId(null);
                 }}
               >
                 <Plus className="h-4 w-4 mr-2" />
-                Nouvelle pratique
+                <span className="hidden md:block">Nouvelle pratique</span>
               </Button>
             </DialogTrigger>
 
@@ -431,9 +432,11 @@ export default function PratiquesPeche() {
           <div className="lg:col-span-2">
             <Card>
               <CardHeader>
-                <div className="flex justify-between items-center">
+                <div className="flex md:justify-between items-center">
                   <CardTitle>
-                    Liste des Pratiques de Pêche ({filteredPratiques.length})
+                    <span className="hidden md:block">
+                      Liste des Pratiques de Pêche ({filteredPratiques.length})
+                    </span>
                   </CardTitle>
                   <div className="flex items-center gap-2">
                     <Search className="h-4 w-4 text-gray-400" />

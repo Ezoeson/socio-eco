@@ -202,7 +202,7 @@ export default function Communes() {
                 }}
               >
                 <Plus className="h-4 w-4 mr-2" />
-                Nouveau commune
+                <span className="hidden md:block">Nouveau commune</span>
               </Button>
             </DialogTrigger>
 
@@ -254,9 +254,9 @@ export default function Communes() {
           <div className="lg:col-span-2">
             <Card>
               <CardHeader>
-                <div className="flex justify-between items-center">
-                  <CardTitle>
-                    Liste des Communes ({filteredCommunes.length})
+                <div className="flex md:justify-between items-center">
+                  <CardTitle className="hidden md:block">
+                    <span>Liste des Communes ({filteredCommunes.length})</span>
                   </CardTitle>
                   <div className="flex items-center gap-2">
                     <Search className="h-4 w-4 text-gray-400" />

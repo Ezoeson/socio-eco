@@ -1,7 +1,7 @@
 // app/api/circuit-commercial/route.ts
 
-import { PrismaClient } from '@prisma/client';
-import { NextResponse } from 'next/server';
+import { PrismaClient } from "@prisma/client";
+import { NextResponse } from "next/server";
 
 const prisma = new PrismaClient();
 
@@ -9,14 +9,18 @@ export async function GET() {
   try {
     const circuits = await prisma.circuitCommercialProduit.findMany({
       include: {
-        pecheur: true,
         destinations: true,
+        pecheur: {
+          include: {
+            enquete: true,
+          },
+        },
       },
     });
     return NextResponse.json(circuits);
-  } catch  {
+  } catch {
     return NextResponse.json(
-      { error: 'Failed to fetch commercial circuits' },
+      { error: "Failed to fetch commercial circuits" },
       { status: 500 }
     );
   }
@@ -24,39 +28,44 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const json = await request.json();
+    const { pecheurId, destinations, ...circuitData } = await request.json();
 
     // Validate pecheur exists
     const pecheurExists = await prisma.pecheur.findUnique({
-      where: { id: json.pecheurId },
+      where: { id: pecheurId },
     });
 
     if (!pecheurExists) {
-      return NextResponse.json({ error: 'Pecheur not found' }, { status: 404 });
+      return NextResponse.json({ error: "Pecheur not found" }, { status: 404 });
     }
 
-    const circuit = await prisma.circuitCommercialProduit.create({
-      data: {
-        ...json,
-        destinations: json.destinations
-          ? {
-              create: json.destinations,
-            }
-          : undefined,
-      },
-      include: {
-        pecheur: true,
-        destinations: true,
-      },
+    const newCircuit = await prisma.$transaction(async (prisma) => {
+      const circuit = await prisma.circuitCommercialProduit.create({
+        data: {
+          ...circuitData,
+          pecheurId,
+        },
+      });
+
+      if (destinations && destinations.length > 0) {
+        await prisma.destinationCommerciale.createMany({
+          data: destinations.map((dest: any) => ({
+            ...dest,
+            circuitId: circuit.id,
+          })),
+        });
+      }
+
+      return prisma.circuitCommercialProduit.findUnique({
+        where: { id: circuit.id },
+        include: { destinations: true },
+      });
     });
 
-    return NextResponse.json({
-      message: 'Commercial circuit created successfully',
-      data: circuit,
-    });
-  } catch  {
+    return NextResponse.json(newCircuit, { status: 201 });
+  } catch {
     return NextResponse.json(
-      { error: 'Failed to create commercial circuit' },
+      { error: "Failed to create commercial circuit" },
       { status: 500 }
     );
   }

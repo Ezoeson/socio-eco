@@ -100,7 +100,7 @@ model Enqueteur {
   email     String?   @unique
   actif     Boolean   @default(true)
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+
   enquetes  Enquete[]
 
   @@map("enqueteurs")
@@ -155,7 +155,7 @@ model MembreFamille {
 }
 
 model Pecheur {
-  id                 String                     @id @default(uuid())
+  id                 String                     @id @default(uuid()) @unique
   enquete            Enquete                    @relation(fields: [enqueteId], references: [id], onDelete: Cascade)
   enqueteId          String                     @unique
   anneeDebut         Int?
@@ -202,7 +202,7 @@ model EquipementPeche {
 model EmbarcationPeche {
   id                   String             @id @default(uuid())
   pecheur              Pecheur            @relation(fields: [pecheurId], references: [id], onDelete: Cascade)
-  pecheurId            String
+  pecheurId            String @unique
   nombre               Int?
   proprietaire         Boolean?
   statutPropriete      String?
@@ -230,7 +230,7 @@ model EmbarcationPeche {
 model CircuitCommercialProduit {
   id                    String  @id @default(uuid())
   pecheur               Pecheur @relation(fields: [pecheurId], references: [id], onDelete: Cascade)
-  pecheurId             String
+  pecheurId             String 
   typeProduit           String?
   modeLivraison         String?
   dureeDeplacement      Int?

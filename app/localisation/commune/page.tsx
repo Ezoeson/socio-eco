@@ -40,6 +40,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { toast } from "sonner";
+import { Skeleton } from "@/components/ui/skeleton";
 
 type Commune = {
   id: string;
@@ -67,6 +68,7 @@ export default function Communes() {
   const [districtOptions, setDistrictOptions] = useState<District[]>([]);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [isDeleteModal, setIsDeleteModal] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchCommune = async () => {
@@ -76,6 +78,8 @@ export default function Communes() {
         setCommunes(data);
       } catch (error) {
         console.error("Error fetching communes:", error);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -86,6 +90,8 @@ export default function Communes() {
         setDistrictOptions(data);
       } catch (error) {
         console.error("Error fetching districts:", error);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -279,62 +285,90 @@ export default function Communes() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredCommunes.map((commune) => (
-                      <TableRow key={commune?.id}>
-                        <TableCell className="font-medium">
-                          {commune?.nom}
-                        </TableCell>
-                        <TableCell>{commune?.district.nom}</TableCell>
-                        <TableCell>
-                          <div className="flex gap-2">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleEdit(commune)}
-                            >
-                              <Edit className="h-3 w-3 text-green-500" />
-                            </Button>
-                            <AlertDialog
-                              open={isDeleteModal}
-                              onOpenChange={setIsDeleteModal}
-                            >
-                              <AlertDialogTrigger asChild>
+                    {loading
+                      ? Array.from({
+                          length:
+                            filteredCommunes.length > 0
+                              ? filteredCommunes.length
+                              : 5,
+                        }).map((_, index) => (
+                          <TableRow key={`skeleton-${index}`}>
+                            <TableCell>
+                              <Skeleton className="h-[20px] w-1/2 rounded" />
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex flex-col gap-2">
+                                <Skeleton className="h-[16px] w-full rounded" />
+                                <Skeleton className="h-[16px] w-3/4 rounded" />
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex gap-2">
+                                <Skeleton className="h-[32px] w-[32px] rounded" />
+                                <Skeleton className="h-[32px] w-[32px] rounded" />
+                                <Skeleton className="h-[32px] w-[32px] rounded" />
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      : filteredCommunes.map((commune) => (
+                          <TableRow key={commune?.id}>
+                            <TableCell className="font-medium">
+                              {commune?.nom}
+                            </TableCell>
+                            <TableCell>{commune?.district.nom}</TableCell>
+                            <TableCell>
+                              <div className="flex gap-2">
                                 <Button
                                   variant="outline"
                                   size="sm"
-                                  onClick={() => {
-                                    setDeletingId(commune.id);
-                                    setIsDeleteModal(true);
-                                  }}
+                                  onClick={() => handleEdit(commune)}
                                 >
-                                  <Trash2 className="h-3 w-3 text-red-500" />
+                                  <Edit className="h-3 w-3 text-green-500" />
                                 </Button>
-                              </AlertDialogTrigger>
-                              <AlertDialogContent>
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>
-                                    Voulez-vous supprimer?
-                                  </AlertDialogTitle>
-                                  <AlertDialogDescription>
-                                    This action cannot be undone. This will
-                                    permanently delete your account and remove
-                                    your data from our servers.
-                                  </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel>Annuler</AlertDialogCancel>
-                                  <AlertDialogAction
-                                    onClick={() => handleDelete()}
-                                  >
-                                    Continue
-                                  </AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
+                                <AlertDialog
+                                  open={isDeleteModal}
+                                  onOpenChange={setIsDeleteModal}
+                                >
+                                  <AlertDialogTrigger asChild>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => {
+                                        setDeletingId(commune.id);
+                                        setIsDeleteModal(true);
+                                      }}
+                                    >
+                                      <Trash2 className="h-3 w-3 text-red-500" />
+                                    </Button>
+                                  </AlertDialogTrigger>
+                                  <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                      <AlertDialogTitle>
+                                        Voulez-vous supprimer?
+                                      </AlertDialogTitle>
+                                      <AlertDialogDescription>
+                                        This action cannot be undone. This will
+                                        permanently delete your account and
+                                        remove your data from our servers.
+                                      </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                      <AlertDialogCancel>
+                                        Annuler
+                                      </AlertDialogCancel>
+                                      <AlertDialogAction
+                                        onClick={() => handleDelete()}
+                                      >
+                                        Continue
+                                      </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                  </AlertDialogContent>
+                                </AlertDialog>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))}
                   </TableBody>
                 </Table>
               </CardContent>

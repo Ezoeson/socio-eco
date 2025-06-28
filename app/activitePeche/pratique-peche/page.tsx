@@ -41,6 +41,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
+import { Skeleton } from "@/components/ui/skeleton";
 
 type PratiquePeche = {
   id: string;
@@ -83,6 +84,7 @@ export default function PratiquesPeche() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [isDeleteModal, setIsDeleteModal] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchPratiques = async () => {
@@ -92,6 +94,8 @@ export default function PratiquesPeche() {
         setPratiques(data);
       } catch (error) {
         console.error("Error fetching pratiques:", error);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -102,6 +106,8 @@ export default function PratiquesPeche() {
         setPecheurOptions(data);
       } catch (error) {
         console.error("Error fetching pecheurs:", error);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -463,78 +469,126 @@ export default function PratiquesPeche() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredPratiques.map((pratique) => (
-                      <TableRow key={pratique?.id}>
-                        <TableCell className="font-medium">
-                          {pratique?.especeCible}
-                        </TableCell>
-                        <TableCell>
-                          {pratique?.pecheur?.enquete?.nomEnquete}
-                        </TableCell>
-                        <TableCell>
-                          {pratique?.dureeSaisonHaute}/
-                          {pratique?.dureeSaisonBasse}
-                        </TableCell>
-                        <TableCell>
-                          {pratique?.frequenceSortiesSaisonHaute?.toFixed(1)}/
-                          {pratique?.frequenceSortiesSaisonBasse?.toFixed(1)}
-                        </TableCell>
-                        <TableCell>
-                          {pratique?.capturesMoyennesSaisonHaute?.toFixed(1)}/
-                          {pratique?.capturesMoyennesSaisonBasse?.toFixed(1)}
-                        </TableCell>
-                        <TableCell>
-                          {pratique?.classificationActivite}
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex gap-2">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleEdit(pratique)}
-                            >
-                              <Edit className="h-3 w-3 text-green-500" />
-                            </Button>
-                            <AlertDialog
-                              open={isDeleteModal}
-                              onOpenChange={setIsDeleteModal}
-                            >
-                              <AlertDialogTrigger asChild>
+                    {loading
+                      ? Array.from({
+                          length:
+                            filteredPratiques.length > 0
+                              ? filteredPratiques.length
+                              : 5,
+                        }).map((_, index) => (
+                          <TableRow key={`skeleton-${index}`}>
+                            <TableCell>
+                              <Skeleton className="h-[20px] w-full rounded" />
+                            </TableCell>
+                            <TableCell>
+                              <Skeleton className="h-[20px] w-3/4 rounded" />
+                            </TableCell>
+                            <TableCell>
+                              <Skeleton className="h-[20px] w-2/3 rounded" />
+                            </TableCell>
+                            <TableCell>
+                              <Skeleton className="h-[20px] w-1/2 rounded" />
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex flex-col gap-2">
+                                <Skeleton className="h-[16px] w-full rounded" />
+                                <Skeleton className="h-[16px] w-3/4 rounded" />
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex gap-2">
+                                <Skeleton className="h-[32px] w-[32px] rounded" />
+                                <Skeleton className="h-[32px] w-[32px] rounded" />
+                                <Skeleton className="h-[32px] w-[32px] rounded" />
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      : filteredPratiques.map((pratique) => (
+                          <TableRow key={pratique?.id}>
+                            <TableCell className="font-medium">
+                              {pratique?.especeCible}
+                            </TableCell>
+                            <TableCell>
+                              {pratique?.pecheur?.enquete?.nomEnquete}
+                            </TableCell>
+                            <TableCell>
+                              {pratique?.dureeSaisonHaute}/
+                              {pratique?.dureeSaisonBasse}
+                            </TableCell>
+                            <TableCell>
+                              {pratique?.frequenceSortiesSaisonHaute?.toFixed(
+                                1
+                              )}
+                              /
+                              {pratique?.frequenceSortiesSaisonBasse?.toFixed(
+                                1
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              {pratique?.capturesMoyennesSaisonHaute?.toFixed(
+                                1
+                              )}
+                              /
+                              {pratique?.capturesMoyennesSaisonBasse?.toFixed(
+                                1
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              {pratique?.classificationActivite}
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex gap-2">
                                 <Button
                                   variant="outline"
                                   size="sm"
-                                  onClick={() => {
-                                    setDeletingId(pratique.id);
-                                    setIsDeleteModal(true);
-                                  }}
+                                  onClick={() => handleEdit(pratique)}
                                 >
-                                  <Trash2 className="h-3 w-3 text-red-500" />
+                                  <Edit className="h-3 w-3 text-green-500" />
                                 </Button>
-                              </AlertDialogTrigger>
-                              <AlertDialogContent>
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>
-                                    Voulez-vous supprimer cette pratique?
-                                  </AlertDialogTitle>
-                                  <AlertDialogDescription>
-                                    Cette action est irréversible. La pratique
-                                    de pêche sera définitivement supprimée.
-                                  </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel>Annuler</AlertDialogCancel>
-                                  <AlertDialogAction
-                                    onClick={() => handleDelete()}
-                                  >
-                                    Confirmer
-                                  </AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
+                                <AlertDialog
+                                  open={isDeleteModal}
+                                  onOpenChange={setIsDeleteModal}
+                                >
+                                  <AlertDialogTrigger asChild>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => {
+                                        setDeletingId(pratique.id);
+                                        setIsDeleteModal(true);
+                                      }}
+                                    >
+                                      <Trash2 className="h-3 w-3 text-red-500" />
+                                    </Button>
+                                  </AlertDialogTrigger>
+                                  <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                      <AlertDialogTitle>
+                                        Voulez-vous supprimer cette pratique?
+                                      </AlertDialogTitle>
+                                      <AlertDialogDescription>
+                                        Cette action est irréversible. La
+                                        pratique de pêche sera définitivement
+                                        supprimée.
+                                      </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                      <AlertDialogCancel>
+                                        Annuler
+                                      </AlertDialogCancel>
+                                      <AlertDialogAction
+                                        onClick={() => handleDelete()}
+                                      >
+                                        Confirmer
+                                      </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                  </AlertDialogContent>
+                                </AlertDialog>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))}
                   </TableBody>
                 </Table>
               </CardContent>

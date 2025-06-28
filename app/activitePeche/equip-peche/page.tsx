@@ -41,6 +41,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
+import { Skeleton } from "@/components/ui/skeleton";
 
 type EquipementPeche = {
   id: string;
@@ -77,6 +78,7 @@ export default function EquipementsPeche() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [isDeleteModal, setIsDeleteModal] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchEquipements = async () => {
@@ -86,6 +88,8 @@ export default function EquipementsPeche() {
         setEquipements(data);
       } catch (error) {
         console.error("Error fetching equipements:", error);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -96,6 +100,8 @@ export default function EquipementsPeche() {
         setPecheurOptions(data);
       } catch (error) {
         console.error("Error fetching pecheurs:", error);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -397,70 +403,109 @@ export default function EquipementsPeche() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredEquipements.map((equipement) => (
-                      <TableRow key={equipement?.id}>
-                        <TableCell className="font-medium">
-                          {equipement?.typeEquipement}
-                        </TableCell>
-                        <TableCell>
-                          {equipement?.pecheur?.enquete?.nomEnquete}
-                        </TableCell>
-                        <TableCell>{equipement?.quantite}</TableCell>
-                        <TableCell>
-                          {equipement?.utilisationHebdomadaire}
-                        </TableCell>
-                        <TableCell>{equipement?.dureeUtilisation}</TableCell>
-                        <TableCell>{equipement?.rendementEstime}</TableCell>
-                        <TableCell>
-                          <div className="flex gap-2">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleEdit(equipement)}
-                            >
-                              <Edit className="h-3 w-3 text-green-500" />
-                            </Button>
-                            <AlertDialog
-                              open={isDeleteModal}
-                              onOpenChange={setIsDeleteModal}
-                            >
-                              <AlertDialogTrigger asChild>
+                    {loading
+                      ? Array.from({
+                          length:
+                            filteredEquipements.length > 0
+                              ? filteredEquipements.length
+                              : 5,
+                        }).map((_, index) => (
+                          <TableRow key={`skeleton-${index}`}>
+                            <TableCell>
+                              <Skeleton className="h-[20px] w-full rounded" />
+                            </TableCell>
+                            <TableCell>
+                              <Skeleton className="h-[20px] w-3/4 rounded" />
+                            </TableCell>
+                            <TableCell>
+                              <Skeleton className="h-[20px] w-2/3 rounded" />
+                            </TableCell>
+                            <TableCell>
+                              <Skeleton className="h-[20px] w-1/2 rounded" />
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex flex-col gap-2">
+                                <Skeleton className="h-[16px] w-full rounded" />
+                                <Skeleton className="h-[16px] w-3/4 rounded" />
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex gap-2">
+                                <Skeleton className="h-[32px] w-[32px] rounded" />
+                                <Skeleton className="h-[32px] w-[32px] rounded" />
+                                <Skeleton className="h-[32px] w-[32px] rounded" />
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      : filteredEquipements.map((equipement) => (
+                          <TableRow key={equipement?.id}>
+                            <TableCell className="font-medium">
+                              {equipement?.typeEquipement}
+                            </TableCell>
+                            <TableCell>
+                              {equipement?.pecheur?.enquete?.nomEnquete}
+                            </TableCell>
+                            <TableCell>{equipement?.quantite}</TableCell>
+                            <TableCell>
+                              {equipement?.utilisationHebdomadaire}
+                            </TableCell>
+                            <TableCell>
+                              {equipement?.dureeUtilisation}
+                            </TableCell>
+                            <TableCell>{equipement?.rendementEstime}</TableCell>
+                            <TableCell>
+                              <div className="flex gap-2">
                                 <Button
                                   variant="outline"
                                   size="sm"
-                                  onClick={() => {
-                                    setDeletingId(equipement.id);
-                                    setIsDeleteModal(true);
-                                  }}
+                                  onClick={() => handleEdit(equipement)}
                                 >
-                                  <Trash2 className="h-3 w-3 text-red-500" />
+                                  <Edit className="h-3 w-3 text-green-500" />
                                 </Button>
-                              </AlertDialogTrigger>
-                              <AlertDialogContent>
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>
-                                    Voulez-vous supprimer cet équipement?
-                                  </AlertDialogTitle>
-                                  <AlertDialogDescription>
-                                    Cette action est irréversible.
-                                    L&apos;équipement sera définitivement
-                                    supprimé.
-                                  </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel>Annuler</AlertDialogCancel>
-                                  <AlertDialogAction
-                                    onClick={() => handleDelete()}
-                                  >
-                                    Confirmer
-                                  </AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
+                                <AlertDialog
+                                  open={isDeleteModal}
+                                  onOpenChange={setIsDeleteModal}
+                                >
+                                  <AlertDialogTrigger asChild>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => {
+                                        setDeletingId(equipement.id);
+                                        setIsDeleteModal(true);
+                                      }}
+                                    >
+                                      <Trash2 className="h-3 w-3 text-red-500" />
+                                    </Button>
+                                  </AlertDialogTrigger>
+                                  <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                      <AlertDialogTitle>
+                                        Voulez-vous supprimer cet équipement?
+                                      </AlertDialogTitle>
+                                      <AlertDialogDescription>
+                                        Cette action est irréversible.
+                                        L&apos;équipement sera définitivement
+                                        supprimé.
+                                      </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                      <AlertDialogCancel>
+                                        Annuler
+                                      </AlertDialogCancel>
+                                      <AlertDialogAction
+                                        onClick={() => handleDelete()}
+                                      >
+                                        Confirmer
+                                      </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                  </AlertDialogContent>
+                                </AlertDialog>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))}
                   </TableBody>
                 </Table>
               </CardContent>

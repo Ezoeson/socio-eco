@@ -38,6 +38,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface Region {
   id: string;
@@ -56,6 +57,7 @@ export default function Region() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeleteModal, setIsDeleteModal] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchRegion = async () => {
@@ -69,6 +71,8 @@ export default function Region() {
         console.log(data);
       } catch (error) {
         console.error("Erreur:", error);
+      } finally {
+        setLoading(false);
       }
     };
     fetchRegion();
@@ -230,64 +234,101 @@ export default function Region() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredRegions?.map((region) => (
-                      <TableRow key={region.id}>
-                        <TableCell className="font-medium">
-                          {region.nom}
-                        </TableCell>
-                        <TableCell>{region.districts}</TableCell>
-                        <TableCell>{region.communes}</TableCell>
-                        <TableCell>{region.fokontany}</TableCell>
-                        <TableCell>
-                          <div className="flex gap-2">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleEdit(region)}
-                            >
-                              <Edit className="h-3 w-3 text-green-500" />
-                            </Button>
-                            <AlertDialog
-                              open={isDeleteModal}
-                              onOpenChange={setIsDeleteModal}
-                            >
-                              <AlertDialogTrigger asChild>
+                    {loading
+                      ? Array.from({
+                          length:
+                            filteredRegions.length > 0
+                              ? filteredRegions.length
+                              : 5,
+                        }).map((_, index) => (
+                          <TableRow key={`skeleton-${index}`}>
+                            <TableCell>
+                              <Skeleton className="h-[20px] w-full rounded" />
+                            </TableCell>
+                            <TableCell>
+                              <Skeleton className="h-[20px] w-3/4 rounded" />
+                            </TableCell>
+                            <TableCell>
+                              <Skeleton className="h-[20px] w-2/3 rounded" />
+                            </TableCell>
+                            <TableCell>
+                              <Skeleton className="h-[20px] w-1/2 rounded" />
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex flex-col gap-2">
+                                <Skeleton className="h-[16px] w-full rounded" />
+                                <Skeleton className="h-[16px] w-3/4 rounded" />
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex gap-2">
+                                <Skeleton className="h-[32px] w-[32px] rounded" />
+                                <Skeleton className="h-[32px] w-[32px] rounded" />
+                                <Skeleton className="h-[32px] w-[32px] rounded" />
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      : filteredRegions?.map((region) => (
+                          <TableRow key={region.id}>
+                            <TableCell className="font-medium">
+                              {region.nom}
+                            </TableCell>
+                            <TableCell>{region.districts}</TableCell>
+                            <TableCell>{region.communes}</TableCell>
+                            <TableCell>{region.fokontany}</TableCell>
+                            <TableCell>
+                              <div className="flex gap-2">
                                 <Button
                                   variant="outline"
                                   size="sm"
-                                  onClick={() => {
-                                    setDeletingId(region.id);
-                                    setIsDeleteModal(true);
-                                  }}
+                                  onClick={() => handleEdit(region)}
                                 >
-                                  <Trash2 className="h-3 w-3 text-red-500" />
+                                  <Edit className="h-3 w-3 text-green-500" />
                                 </Button>
-                              </AlertDialogTrigger>
-                              <AlertDialogContent>
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>
-                                    Voulez-vous supprimer?
-                                  </AlertDialogTitle>
-                                  <AlertDialogDescription>
-                                    This action cannot be undone. This will
-                                    permanently delete your account and remove
-                                    your data from our servers.
-                                  </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel>Annuler</AlertDialogCancel>
-                                  <AlertDialogAction
-                                    onClick={() => handleDelete()}
-                                  >
-                                    Continue
-                                  </AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
+                                <AlertDialog
+                                  open={isDeleteModal}
+                                  onOpenChange={setIsDeleteModal}
+                                >
+                                  <AlertDialogTrigger asChild>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => {
+                                        setDeletingId(region.id);
+                                        setIsDeleteModal(true);
+                                      }}
+                                    >
+                                      <Trash2 className="h-3 w-3 text-red-500" />
+                                    </Button>
+                                  </AlertDialogTrigger>
+                                  <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                      <AlertDialogTitle>
+                                        Voulez-vous supprimer?
+                                      </AlertDialogTitle>
+                                      <AlertDialogDescription>
+                                        This action cannot be undone. This will
+                                        permanently delete your account and
+                                        remove your data from our servers.
+                                      </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                      <AlertDialogCancel>
+                                        Annuler
+                                      </AlertDialogCancel>
+                                      <AlertDialogAction
+                                        onClick={() => handleDelete()}
+                                      >
+                                        Continue
+                                      </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                  </AlertDialogContent>
+                                </AlertDialog>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))}
                   </TableBody>
                 </Table>
               </CardContent>

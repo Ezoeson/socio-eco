@@ -41,6 +41,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
+import { Skeleton } from "@/components/ui/skeleton";
 
 type Secteur = {
   id: string;
@@ -69,6 +70,7 @@ export default function Secteurs() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [isDeleteModal, setIsDeleteModal] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchSecteur = async () => {
@@ -78,6 +80,8 @@ export default function Secteurs() {
         setSecteurs(data);
       } catch (error) {
         console.error("Error fetching secteur:", error);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -88,6 +92,8 @@ export default function Secteurs() {
         setFokontanyOptions(data);
       } catch (error) {
         console.error("Error fetching fokontanys:", error);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -284,62 +290,90 @@ export default function Secteurs() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredSecteurs.map((secteur) => (
-                      <TableRow key={secteur?.id}>
-                        <TableCell className="font-medium">
-                          {secteur?.nom}
-                        </TableCell>
-                        <TableCell>{secteur?.fokontany.nom}</TableCell>
-                        <TableCell>
-                          <div className="flex gap-2">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleEdit(secteur)}
-                            >
-                              <Edit className="h-3 w-3 text-green-500" />
-                            </Button>
-                            <AlertDialog
-                              open={isDeleteModal}
-                              onOpenChange={setIsDeleteModal}
-                            >
-                              <AlertDialogTrigger asChild>
+                    {loading
+                      ? Array.from({
+                          length:
+                            filteredSecteurs.length > 0
+                              ? filteredSecteurs.length
+                              : 5,
+                        }).map((_, index) => (
+                          <TableRow key={`skeleton-${index}`}>
+                            <TableCell>
+                              <Skeleton className="h-[20px] w-1/2 rounded" />
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex flex-col gap-2">
+                                <Skeleton className="h-[16px] w-full rounded" />
+                                <Skeleton className="h-[16px] w-3/4 rounded" />
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex gap-2">
+                                <Skeleton className="h-[32px] w-[32px] rounded" />
+                                <Skeleton className="h-[32px] w-[32px] rounded" />
+                                <Skeleton className="h-[32px] w-[32px] rounded" />
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      : filteredSecteurs.map((secteur) => (
+                          <TableRow key={secteur?.id}>
+                            <TableCell className="font-medium">
+                              {secteur?.nom}
+                            </TableCell>
+                            <TableCell>{secteur?.fokontany.nom}</TableCell>
+                            <TableCell>
+                              <div className="flex gap-2">
                                 <Button
                                   variant="outline"
                                   size="sm"
-                                  onClick={() => {
-                                    setDeletingId(secteur.id);
-                                    setIsDeleteModal(true);
-                                  }}
+                                  onClick={() => handleEdit(secteur)}
                                 >
-                                  <Trash2 className="h-3 w-3 text-red-500" />
+                                  <Edit className="h-3 w-3 text-green-500" />
                                 </Button>
-                              </AlertDialogTrigger>
-                              <AlertDialogContent>
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>
-                                    Voulez-vous supprimer?
-                                  </AlertDialogTitle>
-                                  <AlertDialogDescription>
-                                    This action cannot be undone. This will
-                                    permanently delete your account and remove
-                                    your data from our servers.
-                                  </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel>Annuler</AlertDialogCancel>
-                                  <AlertDialogAction
-                                    onClick={() => handleDelete()}
-                                  >
-                                    Continue
-                                  </AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
+                                <AlertDialog
+                                  open={isDeleteModal}
+                                  onOpenChange={setIsDeleteModal}
+                                >
+                                  <AlertDialogTrigger asChild>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => {
+                                        setDeletingId(secteur.id);
+                                        setIsDeleteModal(true);
+                                      }}
+                                    >
+                                      <Trash2 className="h-3 w-3 text-red-500" />
+                                    </Button>
+                                  </AlertDialogTrigger>
+                                  <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                      <AlertDialogTitle>
+                                        Voulez-vous supprimer?
+                                      </AlertDialogTitle>
+                                      <AlertDialogDescription>
+                                        This action cannot be undone. This will
+                                        permanently delete your account and
+                                        remove your data from our servers.
+                                      </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                      <AlertDialogCancel>
+                                        Annuler
+                                      </AlertDialogCancel>
+                                      <AlertDialogAction
+                                        onClick={() => handleDelete()}
+                                      >
+                                        Continue
+                                      </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                  </AlertDialogContent>
+                                </AlertDialog>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))}
                   </TableBody>
                 </Table>
               </CardContent>

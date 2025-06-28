@@ -40,6 +40,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface Enqueteur {
   id: string;
@@ -64,6 +65,8 @@ export default function Enqueteur() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeleteModal, setIsDeleteModal] = useState(false);
 
+  const [loading, setLoading] = useState(true);
+
   useEffect(() => {
     const fetchEnqueteurs = async () => {
       try {
@@ -76,6 +79,8 @@ export default function Enqueteur() {
       } catch (error) {
         console.error("Erreur:", error);
         toast.error("Erreur lors de la récupération des enquêteurs");
+      } finally {
+        setLoading(false);
       }
     };
     fetchEnqueteurs();
@@ -422,98 +427,136 @@ export default function Enqueteur() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredEnqueteurs?.map((enqueteur) => (
-                      <TableRow key={enqueteur.id}>
-                        <TableCell>
-                          {enqueteur.image ? (
-                            <div className="h-10 w-10 rounded-full overflow-hidden">
-                              <Image
-                                src={enqueteur.image}
-                                alt={`${enqueteur.nom} ${enqueteur.prenom}`}
-                                width={40}
-                                height={40}
-                                className="h-full w-full object-cover"
-                                onError={(e) => {
-                                  // Fallback si l'image ne charge pas
-                                  (e.target as HTMLImageElement).style.display =
-                                    "none";
-                                }}
-                              />
-                            </div>
-                          ) : (
-                            <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center">
-                              <User className="h-5 w-5 text-gray-500" />
-                            </div>
-                          )}
-                        </TableCell>
-                        <TableCell className="font-medium">
-                          {enqueteur.nom}
-                        </TableCell>
-                        <TableCell>{enqueteur.prenom || "-"}</TableCell>
-                        <TableCell>{enqueteur.code || "-"}</TableCell>
-                        <TableCell>{enqueteur.telephone || "-"}</TableCell>
-                        <TableCell>{enqueteur.email || "-"}</TableCell>
-                        <TableCell>
-                          <span
-                            className={`px-2 py-1 rounded-full text-xs ${
-                              enqueteur.actif
-                                ? "bg-green-100 text-green-800"
-                                : "bg-red-100 text-red-800"
-                            }`}
-                          >
-                            {enqueteur.actif ? "Actif" : "Inactif"}
-                          </span>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex gap-2">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleEdit(enqueteur)}
-                            >
-                              <Edit className="h-3 w-3" />
-                            </Button>
-                            <AlertDialog
-                              open={isDeleteModal}
-                              onOpenChange={setIsDeleteModal}
-                            >
-                              <AlertDialogTrigger asChild>
+                    {loading
+                      ? Array.from({
+                          length:
+                            filteredEnqueteurs.length > 0
+                              ? filteredEnqueteurs.length
+                              : 5,
+                        }).map((_, index) => (
+                          <TableRow key={`skeleton-${index}`}>
+                            <TableCell>
+                              <Skeleton className="h-[20px] w-full rounded" />
+                            </TableCell>
+                            <TableCell>
+                              <Skeleton className="h-[20px] w-3/4 rounded" />
+                            </TableCell>
+                            <TableCell>
+                              <Skeleton className="h-[20px] w-2/3 rounded" />
+                            </TableCell>
+                            <TableCell>
+                              <Skeleton className="h-[20px] w-1/2 rounded" />
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex flex-col gap-2">
+                                <Skeleton className="h-[16px] w-full rounded" />
+                                <Skeleton className="h-[16px] w-3/4 rounded" />
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex gap-2">
+                                <Skeleton className="h-[32px] w-[32px] rounded" />
+                                <Skeleton className="h-[32px] w-[32px] rounded" />
+                                <Skeleton className="h-[32px] w-[32px] rounded" />
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      : filteredEnqueteurs?.map((enqueteur) => (
+                          <TableRow key={enqueteur.id}>
+                            <TableCell>
+                              {enqueteur.image ? (
+                                <div className="h-10 w-10 rounded-full overflow-hidden">
+                                  <Image
+                                    src={enqueteur.image}
+                                    alt={`${enqueteur.nom} ${enqueteur.prenom}`}
+                                    width={40}
+                                    height={40}
+                                    className="h-full w-full object-cover"
+                                    onError={(e) => {
+                                      // Fallback si l'image ne charge pas
+                                      (
+                                        e.target as HTMLImageElement
+                                      ).style.display = "none";
+                                    }}
+                                  />
+                                </div>
+                              ) : (
+                                <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center">
+                                  <User className="h-5 w-5 text-gray-500" />
+                                </div>
+                              )}
+                            </TableCell>
+                            <TableCell className="font-medium">
+                              {enqueteur.nom}
+                            </TableCell>
+                            <TableCell>{enqueteur.prenom || "-"}</TableCell>
+                            <TableCell>{enqueteur.code || "-"}</TableCell>
+                            <TableCell>{enqueteur.telephone || "-"}</TableCell>
+                            <TableCell>{enqueteur.email || "-"}</TableCell>
+                            <TableCell>
+                              <span
+                                className={`px-2 py-1 rounded-full text-xs ${
+                                  enqueteur.actif
+                                    ? "bg-green-100 text-green-800"
+                                    : "bg-red-100 text-red-800"
+                                }`}
+                              >
+                                {enqueteur.actif ? "Actif" : "Inactif"}
+                              </span>
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex gap-2">
                                 <Button
                                   variant="outline"
                                   size="sm"
-                                  onClick={() => {
-                                    setDeletingId(enqueteur.id);
-                                    setIsDeleteModal(true);
-                                  }}
+                                  onClick={() => handleEdit(enqueteur)}
                                 >
-                                  <Trash2 className="h-3 w-3" />
+                                  <Edit className="h-3 w-3" />
                                 </Button>
-                              </AlertDialogTrigger>
-                              <AlertDialogContent>
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>
-                                    Voulez-vous supprimer cet enquêteur?
-                                  </AlertDialogTitle>
-                                  <AlertDialogDescription>
-                                    Cette action est irréversible.
-                                    L&apos;enquêteur sera définitivement
-                                    supprimé du système.
-                                  </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel>Annuler</AlertDialogCancel>
-                                  <AlertDialogAction
-                                    onClick={() => handleDelete()}
-                                  >
-                                    Confirmer
-                                  </AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
+                                <AlertDialog
+                                  open={isDeleteModal}
+                                  onOpenChange={setIsDeleteModal}
+                                >
+                                  <AlertDialogTrigger asChild>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => {
+                                        setDeletingId(enqueteur.id);
+                                        setIsDeleteModal(true);
+                                      }}
+                                    >
+                                      <Trash2 className="h-3 w-3" />
+                                    </Button>
+                                  </AlertDialogTrigger>
+                                  <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                      <AlertDialogTitle>
+                                        Voulez-vous supprimer cet enquêteur?
+                                      </AlertDialogTitle>
+                                      <AlertDialogDescription>
+                                        Cette action est irréversible.
+                                        L&apos;enquêteur sera définitivement
+                                        supprimé du système.
+                                      </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                      <AlertDialogCancel>
+                                        Annuler
+                                      </AlertDialogCancel>
+                                      <AlertDialogAction
+                                        onClick={() => handleDelete()}
+                                      >
+                                        Confirmer
+                                      </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                  </AlertDialogContent>
+                                </AlertDialog>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))}
                   </TableBody>
                 </Table>
               </CardContent>

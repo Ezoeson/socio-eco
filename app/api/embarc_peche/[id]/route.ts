@@ -14,7 +14,11 @@ export async function GET(
     const embarcation = await prisma.embarcationPeche.findUnique({
       where: { id: id },
       include: {
-        pecheur: true,
+        pecheur: {
+          include: {
+            enquete: true,
+          },
+        },
       },
     });
 

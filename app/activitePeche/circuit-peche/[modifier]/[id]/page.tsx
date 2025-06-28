@@ -1,4 +1,5 @@
 "use client";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Wrapper from "@/components/Wrapper";
@@ -15,6 +16,7 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 
 type CircuitCommercial = {
   pecheurId: string;
@@ -46,42 +48,70 @@ type Pecheur = {
   enquete: { nomEnquete: string };
 };
 
+const initialFormData: CircuitCommercial = {
+  pecheurId: "",
+  typeProduit: null,
+  modeLivraison: null,
+  dureeDeplacement: null,
+  prixAvantCorona: null,
+  prixApresCorona: null,
+  prixPendantCorona: null,
+  methodeDeconservation: null,
+  avanceFinanciere: false,
+  montantAvance: null,
+  determinePrix: false,
+  prixUnitaire: null,
+  restrictionQuantite: false,
+  quantiteLivree: null,
+  modePaiement: null,
+  periodeDemandeElevee: null,
+  periodeDemandeFaible: null,
+  partMarche: null,
+  destinations: [],
+};
+
 export default function ModifierCircuitCommercial() {
   const router = useRouter();
   const params = useParams();
-
-  const [formData, setFormData] = useState<CircuitCommercial | null>(null);
-  const [pecheurOptions, setPecheurOptions] = useState<Pecheur[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-
   const id = params.id as string | undefined;
   const isEditMode = !!id;
+
+  const [formData, setFormData] = useState<CircuitCommercial>(initialFormData);
+  const [pecheurOptions, setPecheurOptions] = useState<Pecheur[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
+        setIsLoading(true);
         const [pecheursRes, circuitCommerceRes] = await Promise.all([
           fetch("/api/pecheur"),
-          isEditMode
-            ? fetch(`/api/circ_commerc/${params.id}`)
-            : Promise.resolve(null),
+          isEditMode ? fetch(`/api/circ_commerc/${params.id}`) : null,
         ]);
 
-        const pecheurs = await pecheursRes.json();
+        const [pecheurs, circuitCommerceData] = await Promise.all([
+          pecheursRes.json(),
+          circuitCommerceRes?.json(),
+        ]);
+
         setPecheurOptions(pecheurs);
 
-        if (isEditMode && circuitCommerceRes) {
-          const circuitCommerceData = await circuitCommerceRes.json();
-          // Nettoyage des données pour ne garder que le pecheurId
+        if (isEditMode && circuitCommerceData) {
           const { pecheur, ...cleanData } = circuitCommerceData;
           setFormData({
             ...cleanData,
             pecheurId: pecheur?.id || "",
+            destinations: cleanData.destinations || [],
           });
+        } else {
+          setFormData(initialFormData);
         }
       } catch (error) {
         console.error("Erreur de chargement:", error);
         toast.error("Erreur lors du chargement des données");
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -90,36 +120,42 @@ export default function ModifierCircuitCommercial() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData) return;
+    setIsSubmitting(true);
 
-    setIsLoading(true);
     try {
-      const response = await fetch(`/api/circ_commerc/${params.id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(formData),
-      });
+      const response = await fetch(
+        isEditMode ? `/api/circ_commerc/${params.id}` : "/api/circ_commerc",
+        {
+          method: isEditMode ? "PUT" : "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(formData),
+        }
+      );
 
-      if (!response.ok) throw new Error("Erreur lors de la modification");
+      if (!response.ok) throw new Error("Erreur lors de la soumission");
 
-      toast.success("Circuit modifié avec succès");
+      toast.success(
+        isEditMode ? "Circuit modifié avec succès" : "Circuit créé avec succès"
+      );
       router.push("/activitePeche/circuit-peche");
     } catch (error) {
       console.error(error);
-      toast.error("Erreur lors de la modification");
+      toast.error(
+        isEditMode
+          ? "Erreur lors de la modification"
+          : "Erreur lors de la création"
+      );
     } finally {
-      setIsLoading(false);
+      setIsSubmitting(false);
     }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!formData) return;
-
     const { name, value, type, checked } = e.target;
     setFormData((prev) => ({
-      ...prev!,
+      ...prev,
       [name]:
         type === "checkbox"
           ? checked
@@ -134,41 +170,55 @@ export default function ModifierCircuitCommercial() {
   const handleDestinationChange = (
     index: number,
     field: keyof CircuitCommercial["destinations"][0],
-    value: string | number
+    value: string | number | null
   ) => {
-    if (!formData) return;
-
     const newDestinations = [...formData.destinations];
     newDestinations[index] = {
       ...newDestinations[index],
-      [field]: field === "pourcentage" ? Number(value) : (value as string),
+      [field]: field === "pourcentage" ? Number(value) : value,
     };
-    setFormData((prev) => ({ ...prev!, destinations: newDestinations }));
+    setFormData((prev) => ({ ...prev, destinations: newDestinations }));
   };
 
   const addDestination = () => {
-    if (!formData) return;
-
     setFormData((prev) => ({
-      ...prev!,
-      destinations: [...prev!.destinations, { nom: "", pourcentage: 0 }],
+      ...prev,
+      destinations: [...prev.destinations, { nom: null, pourcentage: 0 }],
     }));
   };
 
   const removeDestination = (index: number) => {
-    if (!formData) return;
-
     setFormData((prev) => ({
-      ...prev!,
-      destinations: prev!.destinations.filter((_, i) => i !== index),
+      ...prev,
+      destinations: prev.destinations.filter((_, i) => i !== index),
     }));
   };
 
-  if (!formData) {
+  if (isLoading) {
     return (
       <Wrapper>
-        <div className="flex items-center justify-center h-64">
-          <p>Chargement en cours...</p>
+        <div className="space-y-6">
+          <div className="flex items-center gap-4">
+            <Skeleton className="h-10 w-10 rounded-md" />
+            <Skeleton className="h-9 w-64" />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {[...Array(4)].map((_, i) => (
+              <Card key={i}>
+                <CardHeader>
+                  <Skeleton className="h-6 w-32" />
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {[...Array(4)].map((_, j) => (
+                    <div key={j} className="space-y-2">
+                      <Skeleton className="h-4 w-24" />
+                      <Skeleton className="h-9 w-full" />
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         </div>
       </Wrapper>
     );
@@ -181,7 +231,9 @@ export default function ModifierCircuitCommercial() {
           <Button variant="outline" size="icon" onClick={() => router.back()}>
             <ChevronLeft className="h-4 w-4" />
           </Button>
-          <h2 className="text-3xl font-bold">Modifier le circuit commercial</h2>
+          <h2 className="text-3xl font-bold">
+            {isEditMode ? "Modifier" : "Créer"} un circuit commercial
+          </h2>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -197,7 +249,7 @@ export default function ModifierCircuitCommercial() {
                   <Select
                     value={formData.pecheurId}
                     onValueChange={(value) =>
-                      setFormData((prev) => ({ ...prev!, pecheurId: value }))
+                      setFormData((prev) => ({ ...prev, pecheurId: value }))
                     }
                     required
                   >
@@ -433,7 +485,12 @@ export default function ModifierCircuitCommercial() {
               <CardHeader>
                 <div className="flex justify-between items-center">
                   <CardTitle>Destinations commerciales</CardTitle>
-                  <Button type="button" size="sm" onClick={addDestination}>
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={addDestination}
+                    variant="outline"
+                  >
                     <Plus className="h-4 w-4 mr-2" />
                     Ajouter destination
                   </Button>
@@ -458,7 +515,9 @@ export default function ModifierCircuitCommercial() {
                       <Label>Pourcentage (%)</Label>
                       <Input
                         type="number"
-                        value={dest.pourcentage || 0}
+                        min="0"
+                        max="100"
+                        value={dest.pourcentage || ""}
                         onChange={(e) =>
                           handleDestinationChange(
                             index,
@@ -492,9 +551,15 @@ export default function ModifierCircuitCommercial() {
             >
               Annuler
             </Button>
-            <Button type="submit" disabled={isLoading}>
+            <Button type="submit" disabled={isSubmitting}>
               <Save className="h-4 w-4 mr-2" />
-              {isLoading ? "Modification..." : "Modifier le circuit"}
+              {isSubmitting
+                ? isEditMode
+                  ? "Modification..."
+                  : "Création..."
+                : isEditMode
+                ? "Modifier"
+                : "Créer"}
             </Button>
           </div>
         </form>

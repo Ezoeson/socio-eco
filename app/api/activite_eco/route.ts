@@ -1,7 +1,7 @@
- // app/api/activite-economique/route.ts
+// app/api/activite-economique/route.ts
 
-import { PrismaClient } from '@prisma/client';
-import { NextResponse } from 'next/server';
+import { PrismaClient } from "@prisma/client";
+import { NextResponse } from "next/server";
 
 const prisma = new PrismaClient();
 
@@ -15,7 +15,7 @@ export async function GET() {
       },
     });
     return NextResponse.json(activites);
-  } catch  {
+  } catch {
     return NextResponse.json(
       { error: "Failed to fetch economic activities" },
       { status: 500 }
@@ -26,17 +26,14 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const json = await request.json();
-    
+
     // Validate enquete exists
     const enqueteExists = await prisma.enquete.findUnique({
       where: { id: json.enqueteId },
     });
-    
+
     if (!enqueteExists) {
-      return NextResponse.json(
-        { error: "Enquete not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Enquete not found" }, { status: 404 });
     }
 
     // Validate pecheur exists if provided
@@ -72,8 +69,12 @@ export async function POST(request: Request) {
     const activite = await prisma.activiteEconomique.create({
       data: {
         ...json,
-        pecheur: json.pecheur ? { connect: json.pecheur.map((id: string) => ({ id })) } : undefined,
-        collecteur: json.collecteur ? { connect: json.collecteur.map((id: string) => ({ id })) } : undefined,
+        pecheur: json.pecheur
+          ? { connect: json.pecheur.map((id: string) => ({ id })) }
+          : undefined,
+        collecteur: json.collecteur
+          ? { connect: json.collecteur.map((id: string) => ({ id })) }
+          : undefined,
       },
       include: {
         enquete: true,
@@ -86,7 +87,7 @@ export async function POST(request: Request) {
       message: "Economic activity created successfully",
       data: activite,
     });
-  } catch  {
+  } catch {
     return NextResponse.json(
       { error: "Failed to create economic activity" },
       { status: 500 }

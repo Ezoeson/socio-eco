@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,6 +17,9 @@ import {
 import { Checkbox } from "../ui/checkbox";
 import { Button } from "../ui/button";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import { SelectItem } from "@radix-ui/react-select";
 
 interface MembreFamille {
   id: string;
@@ -44,18 +47,52 @@ interface EnqueteFormData {
   possessionAncienMetier?: boolean;
   ancienMetier?: string;
   dateEnquete?: Date;
+  enqueteurId?: string;
+  secteurId?: string;
   membresFamille: MembreFamille[];
 }
 
 export function ActeurForm() {
+  const router = useRouter();
+
+  const [enqueteurs, setEnqueteurs] = useState<{ id: string; nom: string }[]>(
+    []
+  );
+  const [secteurs, setSecteurs] = useState<{ id: string; nom: string }[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const [formData, setFormData] = useState<EnqueteFormData>({
-    id: "", // Généré automatiquement normalement
+    id: "",
+    nomRepondant: "",
     nomEnquete: "",
     estPecheur: false,
     estCollecteur: false,
     touteActivite: false,
     membresFamille: [],
   });
+  useEffect(() => {
+    // Charger les enquêteurs et secteurs
+    const fetchData = async () => {
+      try {
+        const [enqRes, secRes] = await Promise.all([
+          fetch("/api/enqueteur"),
+          fetch("/api/secteur"),
+        ]);
+
+        const [enqData, secData] = await Promise.all([
+          enqRes.json(),
+          secRes.json(),
+        ]);
+
+        setEnqueteurs(enqData);
+        setSecteurs(secData);
+      } catch (error) {
+        console.error("Erreur de chargement:", error);
+      }
+    };
+
+    fetchData();
+  }, []);
 
   const handleInputChange = (
     field: keyof EnqueteFormData,
@@ -67,10 +104,30 @@ export function ActeurForm() {
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Données du formulaire:", formData);
-    // Traitement des données
+    setIsSubmitting(true);
+
+    try {
+      const response = await fetch("/api/enquetes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...formData,
+          dateEnquete: new Date().toISOString(),
+        }),
+      });
+
+      if (!response.ok) throw new Error(await response.text());
+
+      toast.success("Enquête enregistrée avec succès");
+      router.push("/enquete");
+    } catch (error) {
+      console.error("Erreur:", error);
+      toast.error("Erreur lors de l'enregistrement");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -112,14 +169,47 @@ export function ActeurForm() {
                 <CardTitle>Informations de base</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label>Secteur</Label>
-                  <Select>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Sélectionner son secteur " />
-                    </SelectTrigger>
-                    <SelectContent></SelectContent>
-                  </Select>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Enquêteur</Label>
+                    <Select
+                      value={formData.enqueteurId || ""}
+                      onValueChange={(value) =>
+                        handleInputChange("enqueteurId", value)
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Sélectionner un enquêteur" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {enqueteurs.map((enq) => (
+                          <SelectItem key={enq.id} value={enq.id}>
+                            {enq.nom}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Secteur</Label>
+                    <Select
+                      value={formData.secteurId || ""}
+                      onValueChange={(value) =>
+                        handleInputChange("secteurId", value)
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Sélectionner un secteur" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {secteurs.map((sec) => (
+                          <SelectItem key={sec.id} value={sec.id}>
+                            {sec.nom}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
@@ -276,10 +366,16 @@ export function ActeurForm() {
         </Tabs>
 
         <div className="flex justify-end space-x-4 pt-6">
-          <Button type="button" variant="outline">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => router.push("/enquete")}
+          >
             Annuler
           </Button>
-          <Button type="submit">Enregistrer l&rsquo;enquête</Button>
+          <Button type="submit" disabled={isSubmitting}>
+            {isSubmitting ? "Enregistrement..." : "Enregistrer l'enquête"}
+          </Button>
         </div>
       </form>
     </div>

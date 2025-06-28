@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import Wrapper from "@/components/Wrapper";
 import { Plus, Search, Users } from "lucide-react";
 import { useEffect, useState } from "react";
-import loader from "@/assets/loader.gif";
+
 import {
   Dialog,
   DialogContent,
@@ -24,7 +24,8 @@ import {
 import Link from "next/link";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
-import Image from "next/image";
+
+import { Skeleton } from "@/components/ui/skeleton";
 
 type Enquete = {
   id: string;
@@ -92,10 +93,10 @@ export default function ListeEnquetes() {
           const familleData = await familleResponse.json();
           setMembresFamille(familleData);
           console.log("Membres de famille:", familleData);
-
-          setLoading(false);
         } catch (error) {
           console.error("Error fetching data:", error);
+          setLoading(false);
+        } finally {
           setLoading(false);
         }
       };
@@ -120,16 +121,6 @@ export default function ListeEnquetes() {
     return format(new Date(date), "PPP", { locale: fr });
   };
 
-  if (loading) {
-    return (
-      <Wrapper>
-        <div className="flex justify-center h-screen items-center">
-          <Image src={loader} width={150} height={150} alt="Loading ..." />
-        </div>
-      </Wrapper>
-    );
-  }
-
   return (
     <Wrapper>
       <div className="space-y-6">
@@ -140,7 +131,7 @@ export default function ListeEnquetes() {
               Liste des enquêtes en cours et passées
             </p>
           </div>
-          <Link href="/formulaire/ajout-enquete">
+          <Link href="/enquete/ajout">
             <Button className="cursor-pointer">
               <div className="flex justify-center items-center">
                 <Plus className="h-4 w-4 mr-2" />
@@ -185,107 +176,152 @@ export default function ListeEnquetes() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredEnquetes.map((enquete) => {
-                      const membres = getMembresByEnqueteId(enquete.id);
-                      return (
-                        <TableRow key={enquete.id}>
-                          <TableCell className="font-medium">
-                            {enquete.nomEnquete}
-                          </TableCell>
-                          <TableCell>
-                            {enquete.estPecheur && "Pêcheur "}
-                            {enquete.estCollecteur && "Collecteur "}
-                            {enquete.touteActivite && "Toute activité"}
-                          </TableCell>
-                          <TableCell>{enquete.nomRepondant || "-"}</TableCell>
-                          <TableCell>
-                            {formatDate(enquete.dateEnquete)}
-                          </TableCell>
-                          <TableCell>{enquete.secteur?.nom || "-"}</TableCell>
-                          <TableCell>{enquete.enqueteur?.nom || "-"}</TableCell>
-                          <TableCell>
-                            <Dialog>
-                              <DialogTrigger asChild>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  // onClick={() =>
-                                  //   setSelectedEnqueteId(enquete.id)
-                                  // }
-                                >
-                                  <Users className="h-4 w-4" />
-                                  <span className="ml-2">{membres.length}</span>
-                                </Button>
-                              </DialogTrigger>
-                              <DialogContent className="min-w-4xl overflow-auto">
-                                <DialogHeader>
-                                  <DialogTitle>
-                                    Membres de la famille
-                                  </DialogTitle>
-                                  <p className="text-sm text-gray-500">
-                                    Enquête: {enquete.nomEnquete}
-                                  </p>
-                                </DialogHeader>
-                                <div className="space-y-4">
-                                  <Table>
-                                    <TableHeader>
-                                      <TableRow>
-                                        <TableHead>Nom</TableHead>
-                                        <TableHead>Âge</TableHead>
-                                        <TableHead>Sexe</TableHead>
-                                        <TableHead>
-                                          Niveau d&apos;éducation
-                                        </TableHead>
-                                        <TableHead>
-                                          Niveau d&apos;éducation
-                                        </TableHead>
-                                        <TableHead>Lien familial</TableHead>
-                                        <TableHead>
-                                          Fréquentation école
-                                        </TableHead>
-                                      </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                      {membres.map((membre) => (
-                                        <TableRow key={membre.id}>
-                                          <TableCell>{membre.nom}</TableCell>
-                                          <TableCell>
-                                            {membre.age || "-"}
-                                          </TableCell>
-                                          <TableCell>
-                                            {membre.sexe === "MASCCULIN"
-                                              ? "Homme"
-                                              : membre.sexe === "FEMININ"
-                                              ? "Femme"
-                                              : "-"}
-                                          </TableCell>
-                                          <TableCell>
-                                            {membre.lienFamilial || "-"}
-                                          </TableCell>
-                                          <TableCell>
-                                            {membre.frequentationEcole
-                                              ? "Oui"
-                                              : "Non"}
-                                          </TableCell>
-                                          <TableCell>
-                                            {membre.niveauEducation || "-"}
-                                          </TableCell>
-                                          <TableCell>
-                                            {membre.estChefMenage
-                                              ? "Oui"
-                                              : "Non"}
-                                          </TableCell>
-                                        </TableRow>
-                                      ))}
-                                    </TableBody>
-                                  </Table>
-                                </div>
-                              </DialogContent>
-                            </Dialog>
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
+                    {loading
+                      ? Array.from({
+                          length:
+                            filteredEnquetes?.length > 0
+                              ? filteredEnquetes?.length
+                              : 5,
+                        }).map((_, index) => (
+                          <TableRow key={`skeleton-${index}`}>
+                            <TableCell>
+                              <Skeleton className="h-[20px] w-full rounded" />
+                            </TableCell>
+                            <TableCell>
+                              <Skeleton className="h-[20px] w-3/4 rounded" />
+                            </TableCell>
+                            <TableCell>
+                              <Skeleton className="h-[20px] w-2/3 rounded" />
+                            </TableCell>
+                            <TableCell>
+                              <Skeleton className="h-[20px] w-1/2 rounded" />
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex flex-col gap-2">
+                                <Skeleton className="h-[16px] w-full rounded" />
+                                <Skeleton className="h-[16px] w-3/4 rounded" />
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex gap-2">
+                                <Skeleton className="h-[32px] w-[32px] rounded" />
+                                <Skeleton className="h-[32px] w-[32px] rounded" />
+                                <Skeleton className="h-[32px] w-[32px] rounded" />
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      : filteredEnquetes.map((enquete) => {
+                          const membres = getMembresByEnqueteId(enquete.id);
+                          return (
+                            <TableRow key={enquete.id}>
+                              <TableCell className="font-medium">
+                                {enquete.nomEnquete}
+                              </TableCell>
+                              <TableCell>
+                                {enquete.estPecheur && "Pêcheur "}
+                                {enquete.estCollecteur && "Collecteur "}
+                                {enquete.touteActivite && "Toute activité"}
+                              </TableCell>
+                              <TableCell>
+                                {enquete.nomRepondant || "-"}
+                              </TableCell>
+                              <TableCell>
+                                {formatDate(enquete.dateEnquete)}
+                              </TableCell>
+                              <TableCell>
+                                {enquete.secteur?.nom || "-"}
+                              </TableCell>
+                              <TableCell>
+                                {enquete.enqueteur?.nom || "-"}
+                              </TableCell>
+                              <TableCell>
+                                <Dialog>
+                                  <DialogTrigger asChild>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      // onClick={() =>
+                                      //   setSelectedEnqueteId(enquete.id)
+                                      // }
+                                    >
+                                      <Users className="h-4 w-4" />
+                                      <span className="ml-2">
+                                        {membres.length}
+                                      </span>
+                                    </Button>
+                                  </DialogTrigger>
+                                  <DialogContent className="min-w-4xl overflow-auto">
+                                    <DialogHeader>
+                                      <DialogTitle>
+                                        Membres de la famille
+                                      </DialogTitle>
+                                      <p className="text-sm text-gray-500">
+                                        Enquête: {enquete.nomEnquete}
+                                      </p>
+                                    </DialogHeader>
+                                    <div className="space-y-4">
+                                      <Table>
+                                        <TableHeader>
+                                          <TableRow>
+                                            <TableHead>Nom</TableHead>
+                                            <TableHead>Âge</TableHead>
+                                            <TableHead>Sexe</TableHead>
+                                            <TableHead>
+                                              Niveau d&apos;éducation
+                                            </TableHead>
+                                            <TableHead>
+                                              Niveau d&apos;éducation
+                                            </TableHead>
+                                            <TableHead>Lien familial</TableHead>
+                                            <TableHead>
+                                              Fréquentation école
+                                            </TableHead>
+                                          </TableRow>
+                                        </TableHeader>
+                                        <TableBody>
+                                          {membres.map((membre) => (
+                                            <TableRow key={membre.id}>
+                                              <TableCell>
+                                                {membre.nom}
+                                              </TableCell>
+                                              <TableCell>
+                                                {membre.age || "-"}
+                                              </TableCell>
+                                              <TableCell>
+                                                {membre.sexe === "MASCCULIN"
+                                                  ? "Homme"
+                                                  : membre.sexe === "FEMININ"
+                                                  ? "Femme"
+                                                  : "-"}
+                                              </TableCell>
+                                              <TableCell>
+                                                {membre.lienFamilial || "-"}
+                                              </TableCell>
+                                              <TableCell>
+                                                {membre.frequentationEcole
+                                                  ? "Oui"
+                                                  : "Non"}
+                                              </TableCell>
+                                              <TableCell>
+                                                {membre.niveauEducation || "-"}
+                                              </TableCell>
+                                              <TableCell>
+                                                {membre.estChefMenage
+                                                  ? "Oui"
+                                                  : "Non"}
+                                              </TableCell>
+                                            </TableRow>
+                                          ))}
+                                        </TableBody>
+                                      </Table>
+                                    </div>
+                                  </DialogContent>
+                                </Dialog>
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })}
                   </TableBody>
                 </Table>
               </CardContent>

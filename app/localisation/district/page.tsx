@@ -40,6 +40,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
+import { Skeleton } from "@/components/ui/skeleton";
 
 type District = {
   id: string;
@@ -65,7 +66,7 @@ export default function Districts() {
   const [isDeleteModal, setIsDeleteModal] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchDistrict = async () => {
@@ -75,6 +76,8 @@ export default function Districts() {
         setDistricts(data);
       } catch (error) {
         console.error("Error fetching districts:", error);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -85,6 +88,8 @@ export default function Districts() {
         setRegionOptions(data);
       } catch (error) {
         console.error("Error fetching regions:", error);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -275,7 +280,33 @@ export default function Districts() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredDistricts
+                    {loading
+                      ? Array.from({
+                          length:
+                            filteredDistricts.length > 0
+                              ? filteredDistricts.length
+                              : 5,
+                        }).map((_, index) => (
+                          <TableRow key={`skeleton-${index}`}>
+                            <TableCell>
+                              <Skeleton className="h-[20px] w-1/2 rounded" />
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex flex-col gap-2">
+                                <Skeleton className="h-[16px] w-full rounded" />
+                                <Skeleton className="h-[16px] w-3/4 rounded" />
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex gap-2">
+                                <Skeleton className="h-[32px] w-[32px] rounded" />
+                                <Skeleton className="h-[32px] w-[32px] rounded" />
+                                <Skeleton className="h-[32px] w-[32px] rounded" />
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      : filteredDistricts
                       ? filteredDistricts?.map((district) => (
                           <TableRow key={district?.id}>
                             <TableCell className="font-medium">
@@ -315,8 +346,8 @@ export default function Districts() {
                                       </AlertDialogTitle>
                                       <AlertDialogDescription>
                                         Êtes-vous sûr de vouloir supprimer le
-                                        district <strong>{district.nom}</strong>?
-                                        Cette action est irréversible.
+                                        district <strong>{district.nom}</strong>
+                                        ? Cette action est irréversible.
                                       </AlertDialogDescription>
                                     </AlertDialogHeader>
                                     <AlertDialogFooter>

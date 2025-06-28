@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import Wrapper from "@/components/Wrapper";
-import { Plus, Search, Edit, Trash2, Ship } from "lucide-react";
+import { Plus, Search, Edit, Trash2, Ship, Eye } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import Link from "next/link";
@@ -27,6 +27,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { toast } from "sonner";
+import { Skeleton } from "@/components/ui/skeleton";
 
 type EmbarcationPeche = {
   id: string;
@@ -64,6 +65,7 @@ export default function EmbarcationsPeche() {
   const [pecheurOptions, setPecheurOptions] = useState<Pecheur[]>([]);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [isDeleteModal, setIsDeleteModal] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchEmbarcations = async () => {
@@ -83,6 +85,8 @@ export default function EmbarcationsPeche() {
         setPecheurOptions(data);
       } catch (error) {
         console.error("Error fetching pecheurs:", error);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -92,12 +96,14 @@ export default function EmbarcationsPeche() {
 
   const filteredEmbarcations = embarcations.filter(
     (embarcation) =>
-      embarcation?.pecheur?.enquete?.nomEnquete
-        ?.toLowerCase()
-        .includes(searchTerm.toLowerCase()) ||
-      embarcation?.typeEmbarcation
-        ?.toLowerCase()
-        .includes(searchTerm.toLowerCase())
+      (embarcation?.pecheur?.enquete?.nomEnquete &&
+        embarcation.pecheur.enquete.nomEnquete
+          .toLowerCase()
+          .includes(searchTerm.toLowerCase())) ||
+      (embarcation?.typeEmbarcation &&
+        embarcation.typeEmbarcation
+          .toLowerCase()
+          .includes(searchTerm.toLowerCase()))
   );
 
   const handleDelete = () => {
@@ -189,84 +195,132 @@ export default function EmbarcationsPeche() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredEmbarcations.map((embarcation) => (
-                      <TableRow key={embarcation?.id}>
-                        <TableCell className="font-medium">
-                          {embarcation?.typeEmbarcation}
-                        </TableCell>
-                        <TableCell>
-                          {embarcation?.pecheur?.enquete?.nomEnquete ||
-                            getPecheurName(embarcation.pecheurId)}
-                        </TableCell>
-                        <TableCell>{embarcation?.nombre}</TableCell>
-                        <TableCell>
-                          {embarcation?.proprietaire ? "Oui" : "Non"}
-                        </TableCell>
-                        <TableCell>
-                          {embarcation?.longueur
-                            ? `${embarcation.longueur}m`
-                            : "-"}
-                        </TableCell>
-                        <TableCell>
-                          {embarcation?.capacitePassagers || "-"}
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex gap-2">
-                            <Link
-                              href={`/activitePeche/embar-peche/modifier/${embarcation.id}`}
-                            >
-                              <Button variant="outline" size="sm">
-                                <Edit className="h-3 w-3 text-green-500" />
-                              </Button>
-                            </Link>
-                            <AlertDialog
-                              open={
-                                isDeleteModal && deletingId === embarcation.id
-                              }
-                              onOpenChange={(open) => {
-                                if (!open) {
-                                  setIsDeleteModal(false);
-                                  setDeletingId(null);
-                                }
-                              }}
-                            >
-                              <AlertDialogTrigger asChild>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => {
-                                    setDeletingId(embarcation.id);
-                                    setIsDeleteModal(true);
+                    {loading
+                      ? Array.from({
+                          length:
+                            filteredEmbarcations.length > 0
+                              ? filteredEmbarcations.length
+                              : 5,
+                        }).map((_, index) => (
+                          <TableRow key={`skeleton-${index}`}>
+                            <TableCell>
+                              <Skeleton className="h-[20px] w-full rounded" />
+                            </TableCell>
+                            <TableCell>
+                              <Skeleton className="h-[20px] w-full rounded" />
+                            </TableCell>
+                            <TableCell>
+                              <Skeleton className="h-[20px] w-3/4 rounded" />
+                            </TableCell>
+                            <TableCell>
+                              <Skeleton className="h-[20px] w-2/3 rounded" />
+                            </TableCell>
+                            <TableCell>
+                              <Skeleton className="h-[20px] w-1/2 rounded" />
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex flex-col gap-2">
+                                <Skeleton className="h-[16px] w-full rounded" />
+                                <Skeleton className="h-[16px] w-3/4 rounded" />
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex gap-2">
+                                <Skeleton className="h-[32px] w-[32px] rounded" />
+                                <Skeleton className="h-[32px] w-[32px] rounded" />
+                                <Skeleton className="h-[32px] w-[32px] rounded" />
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      : filteredEmbarcations.map((embarcation) => (
+                          <TableRow key={embarcation?.id}>
+                            <TableCell className="font-medium">
+                              {embarcation?.typeEmbarcation}
+                            </TableCell>
+                            <TableCell>
+                              {embarcation?.pecheur?.enquete?.nomEnquete ||
+                                getPecheurName(embarcation.pecheurId)}
+                            </TableCell>
+                            <TableCell>{embarcation?.nombre}</TableCell>
+                            <TableCell>
+                              {embarcation?.proprietaire ? "Oui" : "Non"}
+                            </TableCell>
+                            <TableCell>
+                              {embarcation?.longueur
+                                ? `${embarcation.longueur}m`
+                                : "-"}
+                            </TableCell>
+                            <TableCell>
+                              {embarcation?.capacitePassagers || "-"}
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex gap-2">
+                                <Link
+                                  href={`/activitePeche/embar-peche/details/${embarcation.id}`}
+                                >
+                                  <Button variant="outline" size="sm">
+                                    <Eye className="h-3 w-3 text-blue-500" />
+                                  </Button>
+                                </Link>
+                                <Link
+                                  href={`/activitePeche/embar-peche/modifier/${embarcation.id}`}
+                                >
+                                  <Button variant="outline" size="sm">
+                                    <Edit className="h-3 w-3 text-green-500" />
+                                  </Button>
+                                </Link>
+                                <AlertDialog
+                                  open={
+                                    isDeleteModal &&
+                                    deletingId === embarcation.id
+                                  }
+                                  onOpenChange={(open) => {
+                                    if (!open) {
+                                      setIsDeleteModal(false);
+                                      setDeletingId(null);
+                                    }
                                   }}
                                 >
-                                  <Trash2 className="h-3 w-3 text-red-500" />
-                                </Button>
-                              </AlertDialogTrigger>
-                              <AlertDialogContent>
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>
-                                    Voulez-vous supprimer cette embarcation?
-                                  </AlertDialogTitle>
-                                  <AlertDialogDescription>
-                                    Cette action est irréversible.
-                                    L&apos;embarcation sera définitivement
-                                    supprimée.
-                                  </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel>Annuler</AlertDialogCancel>
-                                  <AlertDialogAction
-                                    onClick={() => handleDelete()}
-                                  >
-                                    Confirmer
-                                  </AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
+                                  <AlertDialogTrigger asChild>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => {
+                                        setDeletingId(embarcation.id);
+                                        setIsDeleteModal(true);
+                                      }}
+                                    >
+                                      <Trash2 className="h-3 w-3 text-red-500" />
+                                    </Button>
+                                  </AlertDialogTrigger>
+                                  <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                      <AlertDialogTitle>
+                                        Voulez-vous supprimer cette embarcation?
+                                      </AlertDialogTitle>
+                                      <AlertDialogDescription>
+                                        Cette action est irréversible.
+                                        L&apos;embarcation sera définitivement
+                                        supprimée.
+                                      </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                      <AlertDialogCancel>
+                                        Annuler
+                                      </AlertDialogCancel>
+                                      <AlertDialogAction
+                                        onClick={() => handleDelete()}
+                                      >
+                                        Confirmer
+                                      </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                  </AlertDialogContent>
+                                </AlertDialog>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))}
                   </TableBody>
                 </Table>
               </CardContent>

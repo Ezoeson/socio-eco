@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 
 type Pecheur = {
   id: string;
@@ -76,7 +77,7 @@ export default function ModifEmbarcation() {
   const [formData, setFormData] =
     useState<EmbarcationFormData>(initialFormData);
   const [pecheurOptions, setPecheurOptions] = useState<Pecheur[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -103,6 +104,8 @@ export default function ModifEmbarcation() {
       } catch (error) {
         console.error("Erreur de chargement:", error);
         toast.error("Erreur lors du chargement des données");
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -166,7 +169,35 @@ export default function ModifEmbarcation() {
       ...(value === false ? { statutPropriete: "" } : {}),
     }));
   };
-
+  if (isLoading) {
+    return (
+      <Wrapper>
+        <div className="space-y-6">
+          <div className="flex items-center gap-4">
+            <Skeleton className="h-10 w-10 rounded-md" />
+            <Skeleton className="h-9 w-64" />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {[...Array(4)].map((_, i) => (
+              <Card key={i}>
+                <CardHeader>
+                  <Skeleton className="h-6 w-32" />
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {[...Array(4)].map((_, j) => (
+                    <div key={j} className="space-y-2">
+                      <Skeleton className="h-4 w-24" />
+                      <Skeleton className="h-9 w-full" />
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </Wrapper>
+    );
+  }
   return (
     <Wrapper>
       <div className="space-y-6">

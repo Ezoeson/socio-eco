@@ -18,7 +18,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 type Pecheur = {
   id: string;
-  enquete: { nomEnquete: string };
+  enquete: { nomRepondant: string };
 };
 
 type Destination = {
@@ -46,7 +46,7 @@ export default function AjoutCircuitCommercial() {
     modePaiement: "",
     periodeDemandeElevee: "",
     periodeDemandeFaible: "",
-    partMarche: null as number | null,
+
     destinations: [] as Destination[],
   });
   const [pecheurOptions, setPecheurOptions] = useState<Pecheur[]>([]);
@@ -150,7 +150,7 @@ export default function AjoutCircuitCommercial() {
                 <CardTitle>Informations de base</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div>
+                <div className="space-y-2">
                   <Label htmlFor="pecheurId">Pêcheur *</Label>
                   <Select
                     value={formData.pecheurId}
@@ -165,14 +165,14 @@ export default function AjoutCircuitCommercial() {
                     <SelectContent>
                       {pecheurOptions.map((pecheur) => (
                         <SelectItem key={pecheur.id} value={pecheur.id}>
-                          {pecheur.enquete.nomEnquete}
+                          {pecheur.enquete.nomRepondant}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
 
-                <div>
+                <div className="space-y-2">
                   <Label htmlFor="typeProduit">Type de produit</Label>
                   <Input
                     id="typeProduit"
@@ -181,8 +181,136 @@ export default function AjoutCircuitCommercial() {
                     onChange={handleChange}
                   />
                 </div>
+              </CardContent>
+            </Card>
+            {/* Section Financement */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Financement</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center space-x-2 space-y-2">
+                  <input
+                    type="checkbox"
+                    id="avanceFinanciere"
+                    name="avanceFinanciere"
+                    checked={formData.avanceFinanciere}
+                    onChange={handleChange}
+                  />
+                  <Label htmlFor="avanceFinanciere">Avance financière</Label>
+                </div>
 
-                <div>
+                {formData.avanceFinanciere && (
+                  <div className="space-y-2">
+                    <Label htmlFor="montantAvance">Montant avance</Label>
+                    <Input
+                      id="montantAvance"
+                      name="montantAvance"
+                      type="number"
+                      value={formData.montantAvance || ""}
+                      onChange={handleChange}
+                    />
+                  </div>
+                )}
+
+                <div className="flex items-center space-x-2 space-y-2">
+                  <input
+                    type="checkbox"
+                    id="determinePrix"
+                    name="determinePrix"
+                    checked={formData.determinePrix}
+                    onChange={handleChange}
+                  />
+                  <Label htmlFor="determinePrix">Faiseur de prix</Label>
+                </div>
+                {formData.determinePrix && (
+                  <div className="space-y-2">
+                    <Label htmlFor="prixUnitaire">Prix unitaire</Label>
+                    <input
+                      id="prixUnitaire"
+                      name="prixUnitaire"
+                      type="number"
+                      value={formData.prixUnitaire || ""}
+                      onChange={handleChange}
+                    />
+                  </div>
+                )}
+
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="restrictionQuantite"
+                    name="restrictionQuantite"
+                    checked={formData.restrictionQuantite}
+                    onChange={handleChange}
+                  />
+                  <Label htmlFor="restrictionQuantite">
+                    Limitation quantité
+                  </Label>
+                </div>
+
+                {formData.restrictionQuantite && (
+                  <div className="space-y-2">
+                    <Label htmlFor="quantiteLivree">Quantité livrée</Label>
+                    <Input
+                      id="quantiteLivree"
+                      name="quantiteLivree"
+                      type="number"
+                      step="0.1"
+                      value={formData.quantiteLivree || ""}
+                      onChange={handleChange}
+                    />
+                  </div>
+                )}
+                <div className="space-y-2">
+                  <Label htmlFor="modePaiement">Mode de paiement</Label>
+                  <Input
+                    id="modePaiement"
+                    name="modePaiement"
+                    value={formData.modePaiement}
+                    onChange={handleChange}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+            {/* Section Périodes */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Périodes de demande</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="periodeDemandeElevee">
+                    Période demande élevée
+                  </Label>
+                  <Input
+                    id="periodeDemandeElevee"
+                    name="periodeDemandeElevee"
+                    value={formData.periodeDemandeElevee}
+                    onChange={handleChange}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="periodeDemandeFaible">
+                    Période demande faible
+                  </Label>
+                  <Input
+                    id="periodeDemandeFaible"
+                    name="periodeDemandeFaible"
+                    value={formData.periodeDemandeFaible}
+                    onChange={handleChange}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Section Prix et mode livraison et stockage */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Prix et mode de livraison</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
                   <Label htmlFor="modeLivraison">Mode de livraison</Label>
                   <Input
                     id="modeLivraison"
@@ -192,7 +320,7 @@ export default function AjoutCircuitCommercial() {
                   />
                 </div>
 
-                <div>
+                <div className="space-y-2">
                   <Label htmlFor="methodeDeconservation">
                     Méthode de conservation
                   </Label>
@@ -204,8 +332,8 @@ export default function AjoutCircuitCommercial() {
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
+                <div className=" gap-4">
+                  <div className="space-y-2">
                     <Label htmlFor="dureeDeplacement">
                       Durée de déplacement (jours)
                     </Label>
@@ -217,28 +345,9 @@ export default function AjoutCircuitCommercial() {
                       onChange={handleChange}
                     />
                   </div>
-                  <div>
-                    <Label htmlFor="prixUnitaire">Prix unitaire</Label>
-                    <Input
-                      id="prixUnitaire"
-                      name="prixUnitaire"
-                      type="number"
-                      value={formData.prixUnitaire || ""}
-                      onChange={handleChange}
-                    />
-                  </div>
                 </div>
-              </CardContent>
-            </Card>
-
-            {/* Section Prix */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Prix</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
-                  <div>
+                  <div className="space-y-2">
                     <Label htmlFor="prixAvantCorona">Prix avant COVID</Label>
                     <Input
                       id="prixAvantCorona"
@@ -248,7 +357,7 @@ export default function AjoutCircuitCommercial() {
                       onChange={handleChange}
                     />
                   </div>
-                  <div>
+                  <div className="space-y-2">
                     <Label htmlFor="prixPendantCorona">
                       Prix pendant COVID
                     </Label>
@@ -261,125 +370,13 @@ export default function AjoutCircuitCommercial() {
                     />
                   </div>
                 </div>
-                <div>
+                <div className="space-y-2">
                   <Label htmlFor="prixApresCorona">Prix après COVID</Label>
                   <Input
                     id="prixApresCorona"
                     name="prixApresCorona"
                     type="number"
                     value={formData.prixApresCorona || ""}
-                    onChange={handleChange}
-                  />
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Section Financement */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Financement</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    id="avanceFinanciere"
-                    name="avanceFinanciere"
-                    checked={formData.avanceFinanciere}
-                    onChange={handleChange}
-                  />
-                  <Label htmlFor="avanceFinanciere">Avance financière</Label>
-                </div>
-
-                {formData.avanceFinanciere && (
-                  <div>
-                    <Label htmlFor="montantAvance">Montant avance</Label>
-                    <Input
-                      id="montantAvance"
-                      name="montantAvance"
-                      type="number"
-                      value={formData.montantAvance || ""}
-                      onChange={handleChange}
-                    />
-                  </div>
-                )}
-
-                <div className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    id="determinePrix"
-                    name="determinePrix"
-                    checked={formData.determinePrix}
-                    onChange={handleChange}
-                  />
-                  <Label htmlFor="determinePrix">Prix déterminé</Label>
-                </div>
-
-                <div className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    id="restrictionQuantite"
-                    name="restrictionQuantite"
-                    checked={formData.restrictionQuantite}
-                    onChange={handleChange}
-                  />
-                  <Label htmlFor="restrictionQuantite">
-                    Restriction quantité
-                  </Label>
-                </div>
-
-                {formData.restrictionQuantite && (
-                  <div>
-                    <Label htmlFor="quantiteLivree">Quantité livrée</Label>
-                    <Input
-                      id="quantiteLivree"
-                      name="quantiteLivree"
-                      type="number"
-                      step="0.1"
-                      value={formData.quantiteLivree || ""}
-                      onChange={handleChange}
-                    />
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Section Périodes */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Périodes de demande</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <Label htmlFor="periodeDemandeElevee">
-                    Période demande élevée
-                  </Label>
-                  <Input
-                    id="periodeDemandeElevee"
-                    name="periodeDemandeElevee"
-                    value={formData.periodeDemandeElevee}
-                    onChange={handleChange}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="periodeDemandeFaible">
-                    Période demande faible
-                  </Label>
-                  <Input
-                    id="periodeDemandeFaible"
-                    name="periodeDemandeFaible"
-                    value={formData.periodeDemandeFaible}
-                    onChange={handleChange}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="partMarche">Part de marché (%)</Label>
-                  <Input
-                    id="partMarche"
-                    name="partMarche"
-                    type="number"
-                    step="0.1"
-                    value={formData.partMarche || ""}
                     onChange={handleChange}
                   />
                 </div>
@@ -403,7 +400,7 @@ export default function AjoutCircuitCommercial() {
                     key={index}
                     className="grid grid-cols-12 gap-4 items-end"
                   >
-                    <div className="col-span-5">
+                    <div className="col-span-5  space-y-2 ">
                       <Label>Nom destination</Label>
                       <Input
                         value={dest.nom}
@@ -412,7 +409,7 @@ export default function AjoutCircuitCommercial() {
                         }
                       />
                     </div>
-                    <div className="col-span-5">
+                    <div className="col-span-5 space-y-2">
                       <Label>Pourcentage (%)</Label>
                       <Input
                         type="number"

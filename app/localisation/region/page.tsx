@@ -233,7 +233,15 @@ export default function Region() {
                       <TableHead>Actions</TableHead>
                     </TableRow>
                   </TableHeader>
+
                   <TableBody>
+                    {!loading && filteredRegions.length === 0 && (
+                      <TableRow>
+                        <TableCell colSpan={5} className="text-center text-2xl">
+                          Aucune région trouvée
+                        </TableCell>
+                      </TableRow>
+                    )}
                     {loading
                       ? Array.from({
                           length:

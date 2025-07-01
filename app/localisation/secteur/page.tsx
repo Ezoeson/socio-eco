@@ -290,6 +290,13 @@ export default function Secteurs() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
+                    {filteredSecteurs.length === 0 && !loading ? (
+                      <TableRow>
+                        <TableCell colSpan={3} className="text-center text-2xl">
+                          Aucune secteur trouvé
+                        </TableCell>
+                      </TableRow>
+                    ) : null}
                     {loading
                       ? Array.from({
                           length:

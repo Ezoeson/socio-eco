@@ -15,8 +15,8 @@ interface MembreFamille {
 }
 
 interface EnqueteData {
-  nomEnquete: string;
-  nomRepondant?: string;
+  nomPerscible: string;
+  nomRepondant: string;
   estPecheur: boolean;
   estCollecteur: boolean;
   touteActivite: boolean;
@@ -31,26 +31,72 @@ interface EnqueteData {
   membresFamille: MembreFamille[];
 }
 
+export async function GET() {
+  try {
+    const enquetes = await prisma.enquete.findMany({
+      include: {
+        enqueteur: {
+          select: {
+            id: true,
+            nom: true,
+            prenom: true,
+          },
+        },
+        secteur: true,
+        pecheur: true,
+        collecteur: true,
+        membresFamille: true,
+        activites: true,
+      },
+    });
+    return NextResponse.json(enquetes);
+  } catch {
+    return NextResponse.json(
+      { error: "Failed to fetch enquetes" },
+      { status: 500 }
+    );
+  }
+}
 export async function POST(request: Request) {
   const data: EnqueteData = await request.json();
 
-  // Validation requise
-  if (!data.nomEnquete) {
+  if (!data.nomRepondant) {
     return NextResponse.json(
-      { message: "Le nom de l'enquête est requis" },
+      { message: "Le nom du répondant est requis" },
       { status: 400 }
     );
   }
+  if (data.enqueteurId) {
+    const enqueteurExists = await prisma.enqueteur.findUnique({
+      where: { id: data.enqueteurId },
+    });
+    if (!enqueteurExists) {
+      return NextResponse.json(
+        { message: "L'enquêteur spécifié n'existe pas" },
+        { status: 400 }
+      );
+    }
+  }
 
-  // Conversion de la date si nécessaire
+  if (data.secteurId) {
+    const secteurExists = await prisma.secteur.findUnique({
+      where: { id: data.secteurId },
+    });
+    if (!secteurExists) {
+      return NextResponse.json(
+        { message: "Le secteur spécifié n'existe pas" },
+        { status: 400 }
+      );
+    }
+  }
+
   const dateEnquete = data.dateEnquete
     ? new Date(data.dateEnquete)
     : new Date();
 
-  // Création de l'enquête
   const newEnquete = await prisma.enquete.create({
     data: {
-      nomEnquete: data.nomEnquete,
+      nomPerscible: data.nomPerscible || "Enquête Famille",
       nomRepondant: data.nomRepondant,
       estPecheur: data.estPecheur,
       estCollecteur: data.estCollecteur,
@@ -79,7 +125,6 @@ export async function POST(request: Request) {
           })) || [],
       },
       ...(data.estPecheur && { pecheur: { create: {} } }),
-      ...(data.estCollecteur && { collecteur: { create: {} } }),
     },
     include: {
       membresFamille: true,
@@ -98,57 +143,3 @@ export async function POST(request: Request) {
     { status: 201 }
   );
 }
-
-// export async function POST(request: Request) {
-//   try {
-//     const { membresFamille, estPecheur, estCollecteur, ...enqueteData } =
-//       await request.json();
-
-//     // Création de l'enquête avec les membres de famille
-//     const newEnquete = await prisma.enquete.create({
-//       data: {
-//         ...enqueteData,
-//         membresFamille: {
-//           create: membresFamille.map((membre: MembreFamille) => ({
-//             nom: membre.nom,
-//             age: membre.age,
-//             ancienLieuResidence: membre.ancienLieuResidence,
-//             villageOrigine: membre.villageOrigine,
-//             anneeArrivee: membre.anneeArrivee,
-//             niveauEducation: membre.niveauEducation,
-//             lienFamilial: membre.lienFamilial,
-//             sexe: membre.sexe,
-//             frequentationEcole: membre.frequentationEcole,
-//           })),
-//         },
-//         // Gestion des relations conditionnelles
-//         ...(estPecheur && { pecheur: { create: {} } }),
-//         ...(estCollecteur && { collecteur: { create: {} } }),
-//       },
-//       include: {
-//         membresFamille: true,
-//         pecheur: true,
-//         collecteur: true,
-//       },
-//     });
-
-//     return NextResponse.json(
-//       {
-//         message: "Enquête créée avec succès",
-//         data: newEnquete,
-//       },
-//       { status: 201 }
-//     );
-//   } catch (error) {
-//     console.error("Error creating enquete:", error);
-//     return NextResponse.json(
-//       {
-//         message: "Erreur interne du serveur",
-//         error: error instanceof Error ? error.message : "Erreur inconnue",
-//       },
-//       { status: 500 }
-//     );
-//   } finally {
-//     await prisma.$disconnect();
-//   }
-// }

@@ -34,7 +34,7 @@ interface EmbarcationDetails {
     id: string;
     enquete: {
       id: string;
-      nomEnquete: string;
+      nomRepondant: string;
     };
   };
 }
@@ -148,11 +148,7 @@ export default function EmbarcationDetailPage() {
           <CardContent className="space-y-4">
             <DetailItem
               label="Pêcheur"
-              value={embarcation.pecheur.enquete.nomEnquete}
-            />
-            <DetailItem
-              label="Type d'embarcation"
-              value={embarcation.typeEmbarcation}
+              value={embarcation.pecheur.enquete.nomRepondant}
             />
 
             <div className="grid grid-cols-2 gap-4">
@@ -176,6 +172,18 @@ export default function EmbarcationDetailPage() {
             )}
           </CardContent>
         </Card>
+        {/* Section Partage des captures */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Partage des captures</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <DetailItem
+              label="Partage des captures (%)"
+              value={embarcation.partageCaptures}
+            />
+          </CardContent>
+        </Card>
 
         {/* Section Caractéristiques techniques */}
         <Card>
@@ -183,6 +191,10 @@ export default function EmbarcationDetailPage() {
             <CardTitle>Caractéristiques techniques</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
+            <DetailItem
+              label="Type d'embarcation"
+              value={embarcation.typeEmbarcation}
+            />
             <DetailItem
               label="Système de propulsion"
               value={embarcation.systemePropulsion}
@@ -224,7 +236,7 @@ export default function EmbarcationDetailPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             <DetailItem
-              label="Coût d'acquisition"
+              label="Prix d'achat"
               value={embarcation.coutAcquisition}
             />
             <DetailItem
@@ -232,13 +244,13 @@ export default function EmbarcationDetailPage() {
               value={embarcation.modeAcquisition}
             />
             <DetailItem
-              label="Type de financement"
+              label="Type de Prêt"
               value={embarcation.typeFinancement}
             />
 
             <div className="grid grid-cols-2 gap-4">
               <DetailItem
-                label="Montant financement"
+                label="Montant prêt"
                 value={embarcation.montantFinancement}
               />
               <DetailItem
@@ -250,19 +262,6 @@ export default function EmbarcationDetailPage() {
             <DetailItem
               label="Remboursement mensuel"
               value={embarcation.remboursementMensuel}
-            />
-          </CardContent>
-        </Card>
-
-        {/* Section Partage des captures */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Partage des captures</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <DetailItem
-              label="Partage des captures (%)"
-              value={embarcation.partageCaptures}
             />
           </CardContent>
         </Card>

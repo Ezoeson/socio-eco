@@ -19,7 +19,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 type Pecheur = {
   id: string;
-  enquete: { nomEnquete: string };
+  enquete: { nomRepondant: string };
 };
 
 type EmbarcationFormData = {
@@ -78,6 +78,7 @@ export default function ModifEmbarcation() {
     useState<EmbarcationFormData>(initialFormData);
   const [pecheurOptions, setPecheurOptions] = useState<Pecheur[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -114,13 +115,16 @@ export default function ModifEmbarcation() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSubmitting(true);
 
     if (!formData.pecheurId) {
       toast.error("Veuillez sélectionner un pêcheur");
       return;
     }
-
-    setIsLoading(true);
+    if (formData.proprietaire === null) {
+      toast.error("Veuillez indiquer si l'embarcation est propriétaire");
+      return;
+    }
 
     try {
       // Création d'un objet de soumission propre
@@ -150,7 +154,7 @@ export default function ModifEmbarcation() {
       console.error("Erreur de soumission:", error);
       toast.error("Échec de la modification");
     } finally {
-      setIsLoading(false);
+      setIsSubmitting(false);
     }
   };
 
@@ -202,14 +206,15 @@ export default function ModifEmbarcation() {
     <Wrapper>
       <div className="space-y-6">
         <div className="flex items-center gap-4">
-          <Button variant="outline" size="icon" onClick={() => router.back()}>
+          <Button
+            className="cursor-pointer"
+            variant="outline"
+            size="icon"
+            onClick={() => router.back()}
+          >
             <ChevronLeft className="h-4 w-4" />
           </Button>
-          <h2 className="text-3xl font-bold">
-            {isEditMode
-              ? "Modifier une embarcation"
-              : "Ajouter une embarcation"}
-          </h2>
+          <h2 className="text-3xl font-bold">Modifier une embarcation</h2>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -220,7 +225,7 @@ export default function ModifEmbarcation() {
                 <CardTitle>Informations de base</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div>
+                <div className="space-y-2">
                   <Label htmlFor="pecheurId">Pêcheur *</Label>
                   <Select
                     value={formData.pecheurId}
@@ -235,57 +240,39 @@ export default function ModifEmbarcation() {
                     <SelectContent>
                       {pecheurOptions.map((pecheur) => (
                         <SelectItem key={pecheur.id} value={pecheur.id}>
-                          {pecheur.enquete.nomEnquete}
+                          {pecheur.enquete.nomRepondant}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
 
-                <div>
-                  <Label htmlFor="typeEmbarcation">
-                    Type d&apos;embarcation
-                  </Label>
+                <div className="space-y-2">
+                  <Label htmlFor="nombre">Nombre</Label>
                   <Input
-                    id="typeEmbarcation"
-                    name="typeEmbarcation"
-                    value={formData.typeEmbarcation}
+                    id="nombre"
+                    name="nombre"
+                    type="number"
+                    value={formData.nombre || ""}
                     onChange={handleChange}
-                    placeholder="Ex: Pirogue, Chalutier..."
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="nombreEquipage">Nombre d&apos;équipage</Label>
+                  <Input
+                    id="nombreEquipage"
+                    name="nombreEquipage"
+                    type="number"
+                    value={formData.nombreEquipage || ""}
+                    onChange={handleChange}
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="nombre">Nombre</Label>
-                    <Input
-                      id="nombre"
-                      name="nombre"
-                      type="number"
-                      min="1"
-                      value={formData.nombre || ""}
-                      onChange={handleChange}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="nombreEquipage">
-                      Nombre d&apos;équipage
-                    </Label>
-                    <Input
-                      id="nombreEquipage"
-                      name="nombreEquipage"
-                      type="number"
-                      min="0"
-                      value={formData.nombreEquipage || ""}
-                      onChange={handleChange}
-                    />
-                  </div>
-                </div>
-
-                <div>
+                <div className="space-y-2">
                   <Label>Propriétaire</Label>
                   <div className="flex gap-4 mt-2">
                     <Button
+                      className="cursor-pointer"
                       type="button"
                       variant={formData.proprietaire ? "default" : "outline"}
                       onClick={() => handleBooleanChange(true)}
@@ -294,6 +281,7 @@ export default function ModifEmbarcation() {
                     </Button>
                     <Button
                       type="button"
+                      className="cursor-pointer"
                       variant={
                         formData.proprietaire === false ? "default" : "outline"
                       }
@@ -305,27 +293,134 @@ export default function ModifEmbarcation() {
                 </div>
 
                 {formData.proprietaire === false && (
-                  <div>
+                  <div className="space-y-2">
                     <Label htmlFor="statutPropriete">Statut de propriété</Label>
                     <Input
                       id="statutPropriete"
                       name="statutPropriete"
                       value={formData.statutPropriete}
                       onChange={handleChange}
-                      placeholder="Ex: Location, Prêt..."
                     />
                   </div>
                 )}
               </CardContent>
             </Card>
+            {/* Section Partage des captures */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Partage des captures</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="partageCaptures">
+                    Partage des captures (%)
+                  </Label>
+                  <Input
+                    id="partageCaptures"
+                    name="partageCaptures"
+                    type="number"
+                    step="0"
+                    value={formData.partageCaptures || ""}
+                    onChange={handleChange}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+            {/* Section Financement */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Financement</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="prixAcquisition">Prix d&apos;achat</Label>
+                  <Input
+                    id="coutAcquisition"
+                    name="coutAcquisition"
+                    type="number"
+                    value={formData.coutAcquisition || ""}
+                    onChange={handleChange}
+                  />
+                </div>
 
+                <div className="space-y-2">
+                  <Label htmlFor="modeAcquisition">
+                    Mode d&rsquo;acquisition
+                  </Label>
+                  <Input
+                    id="modeAcquisition"
+                    name="modeAcquisition"
+                    value={formData.modeAcquisition}
+                    onChange={handleChange}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="typeFinancement">Type de Prêt</Label>
+                  <Input
+                    id="typeFinancement"
+                    name="typeFinancement"
+                    value={formData.typeFinancement}
+                    onChange={handleChange}
+                    className="uppercase"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="montantFinancement">Montant Prêt</Label>
+                    <Input
+                      id="montantFinancement"
+                      name="montantFinancement"
+                      type="number"
+                      value={formData.montantFinancement || ""}
+                      onChange={handleChange}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="dureeFinancement">Durée (mois)</Label>
+                    <Input
+                      id="dureeFinancement"
+                      name="dureeFinancement"
+                      type="number"
+                      value={formData.dureeFinancement || ""}
+                      onChange={handleChange}
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="remboursementMensuel">
+                    Remboursement mensuel
+                  </Label>
+                  <Input
+                    id="remboursementMensuel"
+                    name="remboursementMensuel"
+                    type="number"
+                    value={formData.remboursementMensuel || ""}
+                    onChange={handleChange}
+                  />
+                </div>
+              </CardContent>
+            </Card>
             {/* Section Caractéristiques techniques */}
             <Card>
               <CardHeader>
                 <CardTitle>Caractéristiques techniques</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div>
+                <div className="space-y-2">
+                  <Label htmlFor="typeEmbarcation">
+                    Type d&rsquo;embarcation
+                  </Label>
+                  <Input
+                    id="typeEmbarcation"
+                    name="typeEmbarcation"
+                    value={formData.typeEmbarcation}
+                    onChange={handleChange}
+                  />
+                </div>
+                <div className="space-y-2">
                   <Label htmlFor="systemePropulsion">
                     Système de propulsion
                   </Label>
@@ -334,24 +429,22 @@ export default function ModifEmbarcation() {
                     name="systemePropulsion"
                     value={formData.systemePropulsion}
                     onChange={handleChange}
-                    placeholder="Ex: Moteur, Voile, Rame..."
                   />
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
-                  <div>
+                  <div className="space-y-2">
                     <Label htmlFor="longueur">Longueur (m)</Label>
                     <Input
                       id="longueur"
                       name="longueur"
                       type="number"
                       step="0.1"
-                      min="0"
                       value={formData.longueur || ""}
                       onChange={handleChange}
                     />
                   </div>
-                  <div>
+                  <div className="space-y-2">
                     <Label htmlFor="capacitePassagers">
                       Capacité passagers
                     </Label>
@@ -359,7 +452,6 @@ export default function ModifEmbarcation() {
                       id="capacitePassagers"
                       name="capacitePassagers"
                       type="number"
-                      min="1"
                       value={formData.capacitePassagers || ""}
                       onChange={handleChange}
                     />
@@ -367,18 +459,17 @@ export default function ModifEmbarcation() {
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
-                  <div>
+                  <div className="space-y-2">
                     <Label htmlFor="ageMois">Âge (mois)</Label>
                     <Input
                       id="ageMois"
                       name="ageMois"
                       type="number"
-                      min="0"
                       value={formData.ageMois || ""}
                       onChange={handleChange}
                     />
                   </div>
-                  <div>
+                  <div className="space-y-2">
                     <Label htmlFor="dureeVieEstimee">
                       Durée de vie estimée (ans)
                     </Label>
@@ -386,14 +477,13 @@ export default function ModifEmbarcation() {
                       id="dureeVieEstimee"
                       name="dureeVieEstimee"
                       type="number"
-                      min="1"
                       value={formData.dureeVieEstimee || ""}
                       onChange={handleChange}
                     />
                   </div>
                 </div>
 
-                <div>
+                <div className="space-y-2">
                   <Label htmlFor="materiauxConstruction">
                     Matériaux de construction
                   </Label>
@@ -402,156 +492,45 @@ export default function ModifEmbarcation() {
                     name="materiauxConstruction"
                     value={formData.materiauxConstruction}
                     onChange={handleChange}
-                    placeholder="Ex: Bois, Fibre de verre, Métal..."
                   />
                 </div>
 
                 {formData.materiauxConstruction
                   ?.toLowerCase()
                   .includes("bois") && (
-                  <div>
+                  <div className="space-y-2">
                     <Label htmlFor="typeBois">Type de bois</Label>
                     <Input
                       id="typeBois"
                       name="typeBois"
                       value={formData.typeBois}
                       onChange={handleChange}
-                      placeholder="Ex: Acajou, Teak..."
                     />
                   </div>
                 )}
-              </CardContent>
-            </Card>
-
-            {/* Section Financement */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Financement</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <Label htmlFor="coutAcquisition">
-                    Coût d&lsquo;acquisition
-                  </Label>
-                  <Input
-                    id="coutAcquisition"
-                    name="coutAcquisition"
-                    type="number"
-                    min="0"
-                    value={formData.coutAcquisition || ""}
-                    onChange={handleChange}
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="modeAcquisition">
-                    Mode d&lsquo;acquisition
-                  </Label>
-                  <Input
-                    id="modeAcquisition"
-                    name="modeAcquisition"
-                    value={formData.modeAcquisition}
-                    onChange={handleChange}
-                    placeholder="Ex: Achat neuf, Occasion..."
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="typeFinancement">Type de financement</Label>
-                  <Input
-                    id="typeFinancement"
-                    name="typeFinancement"
-                    value={formData.typeFinancement}
-                    onChange={handleChange}
-                    placeholder="Ex: Prêt bancaire, Autofinancement..."
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="montantFinancement">
-                      Montant financement
-                    </Label>
-                    <Input
-                      id="montantFinancement"
-                      name="montantFinancement"
-                      type="number"
-                      min="0"
-                      value={formData.montantFinancement || ""}
-                      onChange={handleChange}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="dureeFinancement">Durée (mois)</Label>
-                    <Input
-                      id="dureeFinancement"
-                      name="dureeFinancement"
-                      type="number"
-                      min="1"
-                      value={formData.dureeFinancement || ""}
-                      onChange={handleChange}
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <Label htmlFor="remboursementMensuel">
-                    Remboursement mensuel
-                  </Label>
-                  <Input
-                    id="remboursementMensuel"
-                    name="remboursementMensuel"
-                    type="number"
-                    min="0"
-                    value={formData.remboursementMensuel || ""}
-                    onChange={handleChange}
-                  />
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Section Partage des captures */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Partage des captures</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <Label htmlFor="partageCaptures">
-                    Partage des captures (%)
-                  </Label>
-                  <Input
-                    id="partageCaptures"
-                    name="partageCaptures"
-                    type="number"
-                    step="0.1"
-                    min="0"
-                    max="100"
-                    value={formData.partageCaptures || ""}
-                    onChange={handleChange}
-                  />
-                </div>
               </CardContent>
             </Card>
           </div>
 
           <div className="flex justify-end gap-4">
             <Button
+              className="cursor-pointer"
               type="button"
               variant="outline"
               onClick={() => router.push("/activitePeche/embar-peche")}
+              disabled={isLoading}
             >
               Annuler
             </Button>
-            <Button type="submit" disabled={isLoading}>
+            <Button
+              className="cursor-pointer"
+              type="submit"
+              disabled={isLoading}
+            >
               <Save className="h-4 w-4 mr-2" />
-              {isLoading
-                ? isEditMode
-                  ? "Modification..."
-                  : "Enregistrement..."
-                : isEditMode
-                ? "Modifier"
-                : "Enregistrer"}
+              {isSubmitting
+                ? "Modification en cours..."
+                : "Modifier l'embarcation"}
             </Button>
           </div>
         </form>

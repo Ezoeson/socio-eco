@@ -34,7 +34,7 @@ type CircuitCommercial = {
   modeLivraison: string | null;
   prixUnitaire: number | null;
   pecheurId: string;
-  pecheur: { id: string; enquete: { nomEnquete: string } };
+  pecheur: { id: string; enquete: { nomRepondant: string } };
   destinations: {
     nom: string | null;
     pourcentage: number | null;
@@ -66,7 +66,7 @@ export default function CircuitsCommerciaux() {
   const filteredCircuits = circuits.filter(
     (circuit) =>
       circuit.typeProduit?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      circuit.pecheur.enquete.nomEnquete
+      circuit.pecheur.enquete.nomRepondant
         .toLowerCase()
         .includes(searchTerm.toLowerCase())
   );
@@ -143,6 +143,14 @@ export default function CircuitsCommerciaux() {
                 </TableRow>
               </TableHeader>
               <TableBody>
+                {filteredCircuits.length === 0 && !loading ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center text-2xl">
+                      Aucune circuit trouvé
+                    </TableCell>
+                  </TableRow>
+                ) : null}
+
                 {loading
                   ? Array.from({
                       length:
@@ -181,7 +189,7 @@ export default function CircuitsCommerciaux() {
                   : filteredCircuits.map((circuit) => (
                       <TableRow key={circuit.id}>
                         <TableCell>
-                          {circuit.pecheur.enquete.nomEnquete}
+                          {circuit.pecheur.enquete.nomRepondant}
                         </TableCell>
                         <TableCell>{circuit.typeProduit || "-"}</TableCell>
                         <TableCell>{circuit.modeLivraison || "-"}</TableCell>

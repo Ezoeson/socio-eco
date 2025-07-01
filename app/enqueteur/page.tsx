@@ -16,7 +16,7 @@ import {
 
 import Wrapper from "@/components/Wrapper";
 
-import { Plus, Search, Edit, Trash2, User, Camera } from "lucide-react";
+import { Plus, Search, Edit, Trash2, User, Camera, CircleAlert } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Label } from "@/components/ui/label";
 import {
@@ -427,6 +427,14 @@ export default function Enqueteur() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
+                    {filteredEnqueteurs.length === 0 && !loading ? (
+                      <TableRow>
+                        <TableCell colSpan={8} className="text-center text-2xl">
+                          Aucune enquêteur trouvé
+                        </TableCell>
+                      </TableRow>
+                    ) : null}
+
                     {loading
                       ? Array.from({
                           length:
@@ -512,7 +520,7 @@ export default function Enqueteur() {
                                   size="sm"
                                   onClick={() => handleEdit(enqueteur)}
                                 >
-                                  <Edit className="h-3 w-3" />
+                                  <Edit className="h-3 w-3 text-green-500" />
                                 </Button>
                                 <AlertDialog
                                   open={isDeleteModal}
@@ -527,7 +535,7 @@ export default function Enqueteur() {
                                         setIsDeleteModal(true);
                                       }}
                                     >
-                                      <Trash2 className="h-3 w-3" />
+                                      <Trash2 className="h-3 w-3 text-red-500" />
                                     </Button>
                                   </AlertDialogTrigger>
                                   <AlertDialogContent>
@@ -539,6 +547,7 @@ export default function Enqueteur() {
                                         Cette action est irréversible.
                                         L&apos;enquêteur sera définitivement
                                         supprimé du système.
+                                         <CircleAlert className="h-12 w-12 text-red-500 inline-block ml-2  animate-pulse" />
                                       </AlertDialogDescription>
                                     </AlertDialogHeader>
                                     <AlertDialogFooter>

@@ -4,21 +4,22 @@ import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { MembreFamilleForm } from "./MembreFamilleForm";
+
 import { ChevronLeft, User, Users } from "lucide-react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
+import { useRouter, useParams } from "next/navigation";
+import { toast } from "sonner";
+import { MembreFamilleForm } from "@/components/forms/MembreFamilleForm";
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "../ui/select";
-import { Checkbox } from "../ui/checkbox";
-import { Button } from "../ui/button";
-
-import { useRouter } from "next/navigation";
-import { toast } from "sonner";
+} from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Skeleton } from "../ui/skeleton";
 
 interface MembreFamille {
@@ -52,8 +53,11 @@ interface EnqueteFormData {
   membresFamille: MembreFamille[];
 }
 
-export function ActeurForm() {
+export function ActeurEditForm() {
   const router = useRouter();
+  const params = useParams();
+  const id = params.id as string | undefined;
+
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [enqueteurs, setEnqueteurs] = useState<{ id: string; nom: string }[]>(
@@ -93,16 +97,32 @@ export function ActeurForm() {
 
         setEnqueteurs(enqueteursData);
         setSecteurs(secteursData);
+
+        // Charger les données de l'enquête seulement si on est en mode édition
+        if (id) {
+          const enqueteRes = await fetch(`/api/enquete_famille/${id}`);
+          if (!enqueteRes.ok) {
+            throw new Error("Enquête non trouvée");
+          }
+          const enqueteData = await enqueteRes.json();
+          setFormData({
+            ...enqueteData,
+            dateEnquete: enqueteData.dateEnquete.split("T")[0],
+          });
+        }
       } catch (error) {
         console.error("Erreur:", error);
         toast.error("Erreur lors du chargement des données initiales");
+        if (id) {
+          router.push("/enquete");
+        }
       } finally {
         setLoading(false);
       }
     };
 
     fetchInitialData();
-  }, []);
+  }, [id, router]);
 
   const handleInputChange = (
     field: keyof EnqueteFormData,
@@ -124,6 +144,30 @@ export function ActeurForm() {
     }));
   };
 
+  const handleUpdateEnquete = async () => {
+    if (!id) return;
+
+    try {
+      const response = await fetch(`/api/enquete_famille/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...formData,
+          // On peut ajouter ici des champs spécifiques pour la modification si nécessaire
+          // Par exemple, on pourrait vouloir suivre qui a modifié l'enquête
+          //   updatedAt: new Date().toISOString(),
+        }),
+      });
+
+      if (!response.ok) throw new Error(await response.text());
+
+      return response.json();
+    } catch (error) {
+      console.error("Erreur lors de la modification:", error);
+      throw error;
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -140,21 +184,29 @@ export function ActeurForm() {
     }
 
     try {
-      const response = await fetch("/api/enquete_famille", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...formData,
-        }),
-      });
+      if (id) {
+        // Mode modification
+        await handleUpdateEnquete();
+        toast.success("Enquête mise à jour avec succès");
+      } else {
+        // Mode création
+        const response = await fetch("/api/enquete_famille", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(formData),
+        });
 
-      if (!response.ok) throw new Error(await response.text());
+        if (!response.ok) throw new Error(await response.text());
 
-      toast.success("Enquête enregistrée avec succès");
+        toast.success("Enquête enregistrée avec succès");
+      }
+
       router.push("/enquete");
     } catch (error) {
       console.error("Erreur:", error);
-      toast.error("Erreur lors de l'enregistrement");
+      toast.error(
+        `Erreur lors de ${id ? "la mise à jour" : "l'enregistrement"}`
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -259,14 +311,22 @@ export function ActeurForm() {
         <Button variant="outline" size="icon" onClick={() => router.back()}>
           <ChevronLeft className="h-4 w-4" />
         </Button>
-        <h2 className="text-3xl font-bold">Enquête</h2>
+        <h2 className="text-3xl font-bold">
+          {id ? "Modifier" : "Nouvelle"} Enquête
+        </h2>
       </div>
 
       <div className="flex items-center gap-3 mb-6">
         <User className="h-8 w-8 text-blue-600" />
         <div>
-          <h1 className="text-2xl font-bold">Nouvelle Enquête</h1>
-          <p className="text-gray-600">Enregistrer une nouvelle enquête</p>
+          <h1 className="text-2xl font-bold">
+            {id ? "Modifier l'enquête" : "Nouvelle Enquête"}
+          </h1>
+          <p className="text-gray-600">
+            {id
+              ? "Modifier les détails de l'enquête"
+              : "Enregistrer une nouvelle enquête"}
+          </p>
         </div>
       </div>
 
@@ -528,7 +588,7 @@ export function ActeurForm() {
             Annuler
           </Button>
           <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? "Enregistrement..." : "Enregistrer l'enquête"}
+            {isSubmitting ? "Modification en cours..." : "Modifier l'enquête"}
           </Button>
         </div>
       </form>

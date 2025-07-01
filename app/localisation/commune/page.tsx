@@ -285,6 +285,14 @@ export default function Communes() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
+                    {filteredCommunes.length === 0 && !loading ? (
+                      <TableRow>
+                        <TableCell colSpan={3} className="text-center text-2xl">
+                          Aucune commune trouvée
+                        </TableCell>
+                      </TableRow>
+                    ) : null}
+
                     {loading
                       ? Array.from({
                           length:

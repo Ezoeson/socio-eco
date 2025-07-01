@@ -3,7 +3,15 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import Wrapper from "@/components/Wrapper";
-import { Plus, Search, Users } from "lucide-react";
+import {
+  CircleAlert,
+  Edit,
+  Eye,
+  Plus,
+  Search,
+  Trash2,
+  Users,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 
 import {
@@ -26,10 +34,22 @@ import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { toast } from "sonner";
 
 type Enquete = {
   id: string;
-  nomEnquete: string;
+  nomPerscible: string;
   estPecheur: boolean;
   estCollecteur: boolean;
   touteActivite: boolean;
@@ -47,7 +67,7 @@ type Enquete = {
     id: string;
     nom: string;
     age?: number;
-    sexe?: "M" | "F";
+    sexe?: "MASCULIN" | "FEMININ";
     estChefMenage?: boolean;
     lienFamilial?: string;
     frequentationEcole?: boolean;
@@ -56,24 +76,13 @@ type Enquete = {
   }[];
 };
 
-type MembreFamille = {
-  id: string;
-  nom: string;
-  age?: number;
-  sexe?: "MASCCULIN" | "FEMININ" | "AUTRE";
-  estChefMenage?: boolean;
-  lienFamilial?: string;
-  frequentationEcole?: boolean;
-  niveauEducation?: string;
-
-  enqueteId: string;
-};
-
 export default function ListeEnquetes() {
   const [enquetes, setEnquetes] = useState<Enquete[]>([]);
-  const [membresFamille, setMembresFamille] = useState<MembreFamille[]>([]);
+
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [isDeleteModal, setIsDeleteModal] = useState(false);
   // const [selectedEnqueteId, setSelectedEnqueteId] = useState<string | null>(
   //   null
   // );
@@ -83,16 +92,10 @@ export default function ListeEnquetes() {
       const fetchData = async () => {
         try {
           // Fetch enquetes
-          const enqueteResponse = await fetch("/api/enquetes");
+          const enqueteResponse = await fetch("/api/enquete_famille");
           const enqueteData = await enqueteResponse.json();
           setEnquetes(enqueteData);
           console.log("Enquêtes:", enqueteData);
-
-          // Fetch membres famille
-          const familleResponse = await fetch("/api/membre-famille");
-          const familleData = await familleResponse.json();
-          setMembresFamille(familleData);
-          console.log("Membres de famille:", familleData);
         } catch (error) {
           console.error("Error fetching data:", error);
           setLoading(false);
@@ -109,16 +112,39 @@ export default function ListeEnquetes() {
   );
 
   const filteredEnquetes = enquetes.filter((enquete) =>
-    enquete.nomEnquete.toLowerCase().includes(searchTerm.toLowerCase())
+    enquete.nomPerscible.toLowerCase().includes(searchTerm.toLowerCase())
   );
-
-  const getMembresByEnqueteId = (enqueteId: string) => {
-    return membresFamille.filter((membre) => membre.enqueteId === enqueteId);
-  };
 
   const formatDate = (date?: Date) => {
     if (!date) return "Non spécifiée";
     return format(new Date(date), "PPP", { locale: fr });
+  };
+  const handleDelete = () => {
+    if (!deletingId) return;
+
+    fetch(`/api/enquete_famille/${deletingId}`, {
+      method: "DELETE",
+    })
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error("Erreur lors de la suppression de l'enquête");
+        }
+        return response.json();
+      })
+      .then(() => {
+        setEnquetes((prev) =>
+          prev.filter((enquete) => enquete.id !== deletingId)
+        );
+        toast.success("Suppression réussie");
+      })
+      .catch((error) => {
+        console.error("Erreur:", error);
+        toast("Erreur lors de la suppression");
+      })
+      .finally(() => {
+        setIsDeleteModal(false);
+        setDeletingId(null);
+      });
   };
 
   return (
@@ -166,16 +192,25 @@ export default function ListeEnquetes() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Nom enquête</TableHead>
-                      <TableHead>Type</TableHead>
                       <TableHead>Répondant</TableHead>
+                      <TableHead>Personne cible</TableHead>
+                      <TableHead>Type</TableHead>
                       <TableHead>Date</TableHead>
                       <TableHead>Secteur</TableHead>
                       <TableHead>Enquêteur</TableHead>
                       <TableHead>Famille</TableHead>
+                      <TableHead>Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
+                    {filteredEnquetes.length === 0 && !loading ? (
+                      <TableRow>
+                        <TableCell colSpan={7} className="text-center text-2xl">
+                          Aucune enquête trouvée
+                        </TableCell>
+                      </TableRow>
+                    ) : null}
+
                     {loading
                       ? Array.from({
                           length:
@@ -197,11 +232,15 @@ export default function ListeEnquetes() {
                               <Skeleton className="h-[20px] w-1/2 rounded" />
                             </TableCell>
                             <TableCell>
-                              <div className="flex flex-col gap-2">
-                                <Skeleton className="h-[16px] w-full rounded" />
-                                <Skeleton className="h-[16px] w-3/4 rounded" />
-                              </div>
+                              <Skeleton className="h-[20px] w-full rounded" />
                             </TableCell>
+                            <TableCell>
+                              <Skeleton className="h-[20px] w-3/4 rounded" />
+                            </TableCell>
+                            <TableCell>
+                              <Skeleton className="h-[20px] w-2/3 rounded" />
+                            </TableCell>
+
                             <TableCell>
                               <div className="flex gap-2">
                                 <Skeleton className="h-[32px] w-[32px] rounded" />
@@ -212,11 +251,14 @@ export default function ListeEnquetes() {
                           </TableRow>
                         ))
                       : filteredEnquetes.map((enquete) => {
-                          const membres = getMembresByEnqueteId(enquete.id);
+                          const membres = enquete.membresFamille || [];
                           return (
                             <TableRow key={enquete.id}>
+                              <TableCell>
+                                {enquete.nomRepondant || "Non spécifié"}
+                              </TableCell>
                               <TableCell className="font-medium">
-                                {enquete.nomEnquete}
+                                {enquete.nomPerscible}
                               </TableCell>
                               <TableCell>
                                 {enquete.estPecheur && "Pêcheur "}
@@ -224,26 +266,23 @@ export default function ListeEnquetes() {
                                 {enquete.touteActivite && "Toute activité"}
                               </TableCell>
                               <TableCell>
-                                {enquete.nomRepondant || "-"}
-                              </TableCell>
-                              <TableCell>
                                 {formatDate(enquete.dateEnquete)}
                               </TableCell>
                               <TableCell>
-                                {enquete.secteur?.nom || "-"}
+                                {enquete.secteur
+                                  ? enquete.secteur.nom
+                                  : "Non spécifié"}
                               </TableCell>
                               <TableCell>
-                                {enquete.enqueteur?.nom || "-"}
+                                {enquete.enqueteur?.nom || "Non spécifié"}
                               </TableCell>
                               <TableCell>
                                 <Dialog>
                                   <DialogTrigger asChild>
                                     <Button
+                                      className="cursor-pointer"
                                       variant="outline"
                                       size="sm"
-                                      // onClick={() =>
-                                      //   setSelectedEnqueteId(enquete.id)
-                                      // }
                                     >
                                       <Users className="h-4 w-4" />
                                       <span className="ml-2">
@@ -251,13 +290,13 @@ export default function ListeEnquetes() {
                                       </span>
                                     </Button>
                                   </DialogTrigger>
-                                  <DialogContent className="min-w-4xl overflow-auto">
+                                  <DialogContent className="md:min-w-4xl overflow-auto">
                                     <DialogHeader>
                                       <DialogTitle>
                                         Membres de la famille
                                       </DialogTitle>
                                       <p className="text-sm text-gray-500">
-                                        Enquête: {enquete.nomEnquete}
+                                        Enquête: {enquete.nomPerscible}
                                       </p>
                                     </DialogHeader>
                                     <div className="space-y-4">
@@ -267,16 +306,7 @@ export default function ListeEnquetes() {
                                             <TableHead>Nom</TableHead>
                                             <TableHead>Âge</TableHead>
                                             <TableHead>Sexe</TableHead>
-                                            <TableHead>
-                                              Niveau d&apos;éducation
-                                            </TableHead>
-                                            <TableHead>
-                                              Niveau d&apos;éducation
-                                            </TableHead>
                                             <TableHead>Lien familial</TableHead>
-                                            <TableHead>
-                                              Fréquentation école
-                                            </TableHead>
                                           </TableRow>
                                         </TableHeader>
                                         <TableBody>
@@ -286,30 +316,18 @@ export default function ListeEnquetes() {
                                                 {membre.nom}
                                               </TableCell>
                                               <TableCell>
-                                                {membre.age || "-"}
+                                                {membre.age || "Non spécifié"}
                                               </TableCell>
                                               <TableCell>
-                                                {membre.sexe === "MASCCULIN"
+                                                {membre.sexe === "MASCULIN"
                                                   ? "Homme"
                                                   : membre.sexe === "FEMININ"
                                                   ? "Femme"
                                                   : "-"}
                                               </TableCell>
                                               <TableCell>
-                                                {membre.lienFamilial || "-"}
-                                              </TableCell>
-                                              <TableCell>
-                                                {membre.frequentationEcole
-                                                  ? "Oui"
-                                                  : "Non"}
-                                              </TableCell>
-                                              <TableCell>
-                                                {membre.niveauEducation || "-"}
-                                              </TableCell>
-                                              <TableCell>
-                                                {membre.estChefMenage
-                                                  ? "Oui"
-                                                  : "Non"}
+                                                {membre.lienFamilial ||
+                                                  "Non spécifié"}
                                               </TableCell>
                                             </TableRow>
                                           ))}
@@ -318,6 +336,84 @@ export default function ListeEnquetes() {
                                     </div>
                                   </DialogContent>
                                 </Dialog>
+                              </TableCell>
+                              <TableCell>
+                                <div className="flex gap-2">
+                                  <Link href={`/enquete/details/${enquete.id}`}>
+                                    <Button
+                                      className="cursor-pointer"
+                                      variant="outline"
+                                      size="sm"
+                                    >
+                                      <Eye className="h-3 w-3 text-blue-500" />
+                                    </Button>
+                                  </Link>
+                                  <Link
+                                    href={`/enquete/modifier/${enquete.id}`}
+                                  >
+                                    <Button
+                                      className="cursor-pointer"
+                                      variant="outline"
+                                      size="sm"
+                                    >
+                                      <Edit className="h-3 w-3 text-green-500" />
+                                    </Button>
+                                  </Link>
+                                  <AlertDialog
+                                    open={
+                                      isDeleteModal && deletingId === enquete.id
+                                    }
+                                    onOpenChange={(open) => {
+                                      if (!open) {
+                                        setIsDeleteModal(false);
+                                        setDeletingId(null);
+                                      }
+                                    }}
+                                  >
+                                    <AlertDialogTrigger asChild>
+                                      <Button
+                                        className="cursor-pointer"
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => {
+                                          setDeletingId(enquete.id);
+                                          setIsDeleteModal(true);
+                                        }}
+                                      >
+                                        <Trash2 className="h-3 w-3 text-red-500" />
+                                      </Button>
+                                    </AlertDialogTrigger>
+                                    <AlertDialogContent>
+                                      <AlertDialogHeader>
+                                        <AlertDialogTitle>
+                                          Voulez-vous supprimer cette enquête ?
+                                        </AlertDialogTitle>
+                                        <AlertDialogDescription>
+                                          Cette action est irréversible.
+                                          Êtes-vous sûr de vouloir supprimer
+                                          cette enquête et toutes les données
+                                          associées ?
+                                          <br />
+                                          <strong>
+                                            Nom de l&apos;enquête :{" "}
+                                            {enquete.nomPerscible}
+                                          </strong>
+                                          <CircleAlert className="h-12 w-12 text-red-500 inline-block ml-2  animate-pulse" />
+                                        </AlertDialogDescription>
+                                      </AlertDialogHeader>
+                                      <AlertDialogFooter>
+                                        <AlertDialogCancel>
+                                          Annuler
+                                        </AlertDialogCancel>
+                                        <AlertDialogAction
+                                          onClick={() => handleDelete()}
+                                        >
+                                          Confirmer
+                                        </AlertDialogAction>
+                                      </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                  </AlertDialog>
+                                </div>
                               </TableCell>
                             </TableRow>
                           );

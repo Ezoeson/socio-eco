@@ -196,7 +196,7 @@ export default function Fokontanys() {
           <div>
             <h2 className="text-3xl font-bold flex items-center gap-2">
               <MapPin className="h-8 w-8 text-green-600" />
-              Gestion des Fokontanys
+              Gestion des Fokontany
             </h2>
             <p className="text-gray-600">
               Administration territoriale - Niveau fokontany
@@ -265,9 +265,9 @@ export default function Fokontanys() {
               <CardHeader>
                 <div className="flex md:justify-between items-center">
                   <CardTitle>
-                    <span className="hidden md:block">
-                      Liste des Fokontanys ({filteredFokontanys.length})
-                    </span>
+                    <p className="hidden md:block">
+                      Liste des Fokontany ({filteredFokontanys.length})
+                    </p>
                   </CardTitle>
                   <div className="flex items-center gap-2">
                     <Search className="h-4 w-4 text-gray-400" />
@@ -291,6 +291,14 @@ export default function Fokontanys() {
                   </TableHeader>
 
                   <TableBody>
+                    {filteredFokontanys.length === 0 && !loading ? (
+                      <TableRow>
+                        <TableCell colSpan={3} className="text-center text-2xl">
+                          Aucune fokontany trouvée
+                        </TableCell>
+                      </TableRow>
+                    ) : null}
+
                     {loading
                       ? Array.from({
                           length:

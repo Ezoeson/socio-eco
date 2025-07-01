@@ -51,12 +51,12 @@ type EmbarcationPeche = {
   typeBois: string | null;
   dureeVieEstimee: number | null;
   pecheurId: string;
-  pecheur: { id: string; enquete: { nomEnquete: string } } | null;
+  pecheur: { id: string; enquete: { nomRepondant: string } } | null;
 };
 
 type Pecheur = {
   id: string;
-  enquete: { nomEnquete: string };
+  enquete: { nomRepondant: string };
 };
 
 export default function EmbarcationsPeche() {
@@ -96,8 +96,8 @@ export default function EmbarcationsPeche() {
 
   const filteredEmbarcations = embarcations.filter(
     (embarcation) =>
-      (embarcation?.pecheur?.enquete?.nomEnquete &&
-        embarcation.pecheur.enquete.nomEnquete
+      (embarcation?.pecheur?.enquete?.nomRepondant &&
+        embarcation.pecheur.enquete.nomRepondant
           .toLowerCase()
           .includes(searchTerm.toLowerCase())) ||
       (embarcation?.typeEmbarcation &&
@@ -136,7 +136,7 @@ export default function EmbarcationsPeche() {
 
   const getPecheurName = (pecheurId: string) => {
     const pecheur = pecheurOptions.find((p) => p.id === pecheurId);
-    return pecheur?.enquete?.nomEnquete || "Inconnu";
+    return pecheur?.enquete?.nomRepondant || "Inconnu";
   };
 
   return (
@@ -154,7 +154,7 @@ export default function EmbarcationsPeche() {
           </div>
           <div>
             <Link href="/activitePeche/embar-peche/ajout">
-              <Button>
+              <Button className="cursor-pointer">
                 <Plus className="h-4 w-4 mr-2" />
                 Nouvelle embarcation
               </Button>
@@ -195,6 +195,14 @@ export default function EmbarcationsPeche() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
+                    {filteredEmbarcations.length === 0 && !loading ? (
+                      <TableRow>
+                        <TableCell colSpan={7} className="text-center text-2xl">
+                          Aucune embarcation trouvée
+                        </TableCell>
+                      </TableRow>
+                    ) : null}
+
                     {loading
                       ? Array.from({
                           length:
@@ -236,11 +244,13 @@ export default function EmbarcationsPeche() {
                       : filteredEmbarcations.map((embarcation) => (
                           <TableRow key={embarcation?.id}>
                             <TableCell className="font-medium">
-                              {embarcation?.typeEmbarcation}
+                              {embarcation?.typeEmbarcation ||
+                                "Inconnu"}
                             </TableCell>
                             <TableCell>
-                              {embarcation?.pecheur?.enquete?.nomEnquete ||
-                                getPecheurName(embarcation.pecheurId)}
+                              {embarcation?.pecheur
+                                ? getPecheurName(embarcation.pecheur.id)
+                                : "Inconnu"}
                             </TableCell>
                             <TableCell>{embarcation?.nombre}</TableCell>
                             <TableCell>
@@ -248,25 +258,35 @@ export default function EmbarcationsPeche() {
                             </TableCell>
                             <TableCell>
                               {embarcation?.longueur
-                                ? `${embarcation.longueur}m`
-                                : "-"}
+                                ? `${embarcation.longueur} m`
+                                : "Non renseignée"}
                             </TableCell>
                             <TableCell>
-                              {embarcation?.capacitePassagers || "-"}
+                              {embarcation?.capacitePassagers
+                                ? `${embarcation.capacitePassagers} passagers`
+                                : "Non renseignée"}
                             </TableCell>
                             <TableCell>
                               <div className="flex gap-2">
                                 <Link
                                   href={`/activitePeche/embar-peche/details/${embarcation.id}`}
                                 >
-                                  <Button variant="outline" size="sm">
+                                  <Button
+                                    className="cursor-pointer"
+                                    variant="outline"
+                                    size="sm"
+                                  >
                                     <Eye className="h-3 w-3 text-blue-500" />
                                   </Button>
                                 </Link>
                                 <Link
                                   href={`/activitePeche/embar-peche/modifier/${embarcation.id}`}
                                 >
-                                  <Button variant="outline" size="sm">
+                                  <Button
+                                    className="cursor-pointer"
+                                    variant="outline"
+                                    size="sm"
+                                  >
                                     <Edit className="h-3 w-3 text-green-500" />
                                   </Button>
                                 </Link>
@@ -284,6 +304,7 @@ export default function EmbarcationsPeche() {
                                 >
                                   <AlertDialogTrigger asChild>
                                     <Button
+                                      className="cursor-pointer"
                                       variant="outline"
                                       size="sm"
                                       onClick={() => {

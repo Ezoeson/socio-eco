@@ -18,11 +18,7 @@ enum NiveauEducation {
   SECONDAIRE_COMPLET
 }
 
-enum SourceFinancement {
-  PROPRE
-  EMPRUNT
-  DON
-}
+
 
 enum Sexe {
   MASCULIN
@@ -111,14 +107,16 @@ model Enquete {
   estPecheur             Boolean   @default(false)
   estCollecteur          Boolean   @default(false)
   touteActivite          Boolean   @default(false)
-  nomRepondant           String?
-  nomEnquete             String
+  nomRepondant           String
+  nomPerscible           String?
   ethnie                 String?
   districtOrigine        String?
   anneeArriveeVillage    Int?
   possessionAncienMetier Boolean?
   ancienMetier           String?
   dateEnquete            DateTime?
+  updateDate             DateTime @updatedAt
+  creationDate           DateTime @default(now())
 
   enqueteur   Enqueteur? @relation(fields: [enqueteurId], references: [id], onDelete: SetNull)
   enqueteurId String?
@@ -138,9 +136,7 @@ model MembreFamille {
   enquete   Enquete @relation(fields: [enqueteId], references: [id], onDelete: Cascade)
   enqueteId String
   nom       String
-
   age Int?
-
   ancienLieuResidence String?
   villageOrigine      String?
   anneeArrivee        Int?
@@ -149,7 +145,8 @@ model MembreFamille {
   sexe                Sexe?
   frequentationEcole  Boolean?
 
-  estChefMenage Boolean? @default(false)
+  
+
 
   @@map("membres_famille")
 }
@@ -158,7 +155,9 @@ model Pecheur {
   id                 String                     @id @default(uuid()) @unique
   enquete            Enquete                    @relation(fields: [enqueteId], references: [id], onDelete: Cascade)
   enqueteId          String                     @unique
-  anneeDebut         Int?
+  creationDate       DateTime                   @default(now())
+  updateDate         DateTime                   @updatedAt
+
   pratiquesPeche     PratiquePeche[]
   equipementsPeche   EquipementPeche[]
   embarcations       EmbarcationPeche[]
@@ -172,6 +171,7 @@ model PratiquePeche {
   id          String  @id @default(uuid())
   pecheur     Pecheur @relation(fields: [pecheurId], references: [id], onDelete: Cascade)
   pecheurId   String
+  anneeDebut  Int?
   especeCible String?
 
   dureeSaisonHaute            Int?
@@ -210,7 +210,7 @@ model EmbarcationPeche {
   partageCaptures      Float?
   coutAcquisition      Float?
   modeAcquisition      String?
-  typeFinancement      SourceFinancement?
+  typeFinancement      String?
   montantFinancement   Float?
   dureeFinancement     Int?
   remboursementMensuel Float?
@@ -238,6 +238,7 @@ model CircuitCommercialProduit {
   prixApresCorona       Float?
   prixPendantCorona     Float?
   methodeDeconservation String?
+ 
 
   avanceFinanciere     Boolean?
   montantAvance        Int?
@@ -248,7 +249,7 @@ model CircuitCommercialProduit {
   modePaiement         String?
   periodeDemandeElevee String?
   periodeDemandeFaible String?
-  partMarche           Float?
+
 
   destinations DestinationCommerciale[]
 

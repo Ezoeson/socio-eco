@@ -2,16 +2,27 @@
 
 import * as React from "react";
 import {
-  Frame,
-  // AudioWaveform,
-  // Command,
+  Briefcase,
+  Building,
+  ClipboardList,
   GalleryVerticalEnd,
+  Globe,
+  Home,
+  Layers,
+  Map,
+  MapPin,
   PieChart,
-  SquareTerminal,
-  Store,
-  UserCheck2Icon,
+  RefreshCw,
+  Settings,
+  Ship,
+  UserSearch,
   Waves,
-  Workflow,
+  Fish,
+  ShoppingCart,
+  Warehouse,
+  Package,
+  Archive,
+  Truck,
 } from "lucide-react";
 
 import { NavMain } from "@/components/nav-main";
@@ -51,121 +62,134 @@ const data = {
   ],
   navMain: [
     {
-      title: "Enqueteur",
+      title: "Enquêteur",
       url: "/enqueteur",
-      icon: Store,
+      icon: UserSearch,
     },
     {
-      title: "Enquetes",
+      title: "Enquête",
       url: "/enquete",
-      icon: UserCheck2Icon,
+      icon: ClipboardList,
     },
     {
       title: "Localisation",
       url: "",
-      icon: SquareTerminal,
-
+      icon: Globe,
       items: [
         {
-          title: "Region",
+          title: "Région",
           url: "/localisation/region",
+          icon: Map,
         },
         {
           title: "District",
           url: "/localisation/district",
+          icon: MapPin,
         },
         {
           title: "Commune",
           url: "/localisation/commune",
+          icon: Home,
         },
         {
           title: "Fokontany",
           url: "/localisation/fokontany",
+          icon: Building,
         },
         {
           title: "Secteur",
           url: "/localisation/secteur",
+          icon: Layers,
         },
       ],
     },
     {
-      title: "Activite  Peches",
+      title: "Activité de pêche",
       url: "#",
-      icon: Waves,
+      icon: Fish,
       items: [
         {
-          title: "PratiquePeche",
+          title: "Pratique de pêche",
           url: "/activitePeche/pratique-peche",
-        },
-        {
-          title: "Equipement",
-          url: "/activitePeche/equip-peche",
+          icon: Waves,
         },
         {
           title: "Embarcation",
           url: "/activitePeche/embar-peche",
+          icon: Ship,
         },
         {
-          title: "Circuits commerciaux",
+          title: "Équipement",
+          url: "/activitePeche/equip-peche",
+          icon: Settings,
+        },
+
+        {
+          title: "Circuit commercial",
           url: "/activitePeche/circuit-peche",
+          icon: RefreshCw,
         },
       ],
     },
     {
-      title: "Activites Collectes",
+      title: "Activité de collecte",
       url: "",
-      icon: Store,
+      icon: ShoppingCart,
       items: [
         {
-          title: "Lieux d'approvisionnement",
+          title: "Lieu d'approvisionnement",
           url: "#",
+          icon: Warehouse,
         },
         {
-          title: "Produits achetés",
+          title: "Produit acheté",
           url: "",
+          icon: Package,
         },
         {
-          title: "Méthodes de stockage",
+          title: "Méthode de stockage",
           url: "#",
+          icon: Archive,
         },
         {
-          title: "Canaux de distribution",
+          title: "Canal de distribution",
           url: "#",
+          icon: Truck,
         },
       ],
     },
     {
-      title: "Activités économiques",
+      title: "Activité économique",
       url: "#",
-      icon: Workflow,
-      items: [
-        {
-          title: "Commerce de gros",
-          url: "#",
-        },
-        {
-          title: "Agriculture",
-          url: "#",
-        },
-        {
-          title: "Elevage",
-          url: "#",
-        },
-        {
-          title: " Salariale",
-          url: "#",
-        },
-      ],
+      icon: Briefcase,
+      // items: [
+      //   {
+      //     title: "Commerce de gros",
+      //     url: "#",
+      //   },
+      //   {
+      //     title: "Agriculture",
+      //     url: "#",
+      //   },
+      //   {
+      //     title: "Élevage",
+      //     url: "#",
+      //   },
+      //   {
+      //     title: "Salariat",
+      //     url: "#",
+      //   },
+      // ],
     },
   ],
   projects: [
     {
-      name: "Enqueteur",
+      name: "Enquêteur",
       url: "#",
-      icon: Frame,
+      icon: UserSearch,
     },
     {
-      name: "Enquetes",
+      name: "Enquêtes",
       url: "#",
       icon: PieChart,
     },

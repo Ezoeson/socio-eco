@@ -51,12 +51,12 @@ type EquipementPeche = {
   dureeUtilisation: number | null;
   rendementEstime: number | null;
   pecheurId: string;
-  pecheur: { id: string; enquete: { nomEnquete: string } } | null;
+  pecheur: { id: string; enquete: { nomRepondant: string } } | null;
 };
 
 type Pecheur = {
   id: string;
-  enquete: { nomEnquete: string };
+  enquete: { nomRepondant: string };
 };
 
 export default function EquipementsPeche() {
@@ -278,7 +278,7 @@ export default function EquipementsPeche() {
                     <SelectContent>
                       {pecheurOptions.map((pecheur) => (
                         <SelectItem key={pecheur.id} value={pecheur.id}>
-                          {pecheur.enquete.nomEnquete}
+                          {pecheur.enquete.nomRepondant}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -403,6 +403,14 @@ export default function EquipementsPeche() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
+                    {filteredEquipements.length === 0 && !loading ? (
+                      <TableRow>
+                        <TableCell colSpan={7} className="text-center text-2xl">
+                          Aucune équipement trouvé
+                        </TableCell>
+                      </TableRow>
+                    ) : null}
+
                     {loading
                       ? Array.from({
                           length:
@@ -444,7 +452,7 @@ export default function EquipementsPeche() {
                               {equipement?.typeEquipement}
                             </TableCell>
                             <TableCell>
-                              {equipement?.pecheur?.enquete?.nomEnquete}
+                              {equipement?.pecheur?.enquete?.nomRepondant}
                             </TableCell>
                             <TableCell>{equipement?.quantite}</TableCell>
                             <TableCell>

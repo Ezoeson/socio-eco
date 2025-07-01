@@ -61,8 +61,10 @@ CREATE TABLE "enqueteurs" (
     "prenom" TEXT,
     "code" TEXT,
     "telephone" TEXT,
+    "image" TEXT,
     "email" TEXT,
     "actif" BOOLEAN NOT NULL DEFAULT true,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "enqueteurs_pkey" PRIMARY KEY ("id")
 );
@@ -73,8 +75,8 @@ CREATE TABLE "enquetes" (
     "estPecheur" BOOLEAN NOT NULL DEFAULT false,
     "estCollecteur" BOOLEAN NOT NULL DEFAULT false,
     "touteActivite" BOOLEAN NOT NULL DEFAULT false,
-    "nomRepondant" TEXT,
-    "nomEnquete" TEXT NOT NULL,
+    "nomRepondant" TEXT NOT NULL,
+    "nomPerscible" TEXT,
     "ethnie" TEXT,
     "districtOrigine" TEXT,
     "anneeArriveeVillage" INTEGER,
@@ -100,7 +102,6 @@ CREATE TABLE "membres_famille" (
     "lienFamilial" "LienFamilial",
     "sexe" "Sexe",
     "frequentationEcole" BOOLEAN,
-    "estChefMenage" BOOLEAN DEFAULT false,
 
     CONSTRAINT "membres_famille_pkey" PRIMARY KEY ("id")
 );
@@ -109,7 +110,8 @@ CREATE TABLE "membres_famille" (
 CREATE TABLE "pecheurs" (
     "id" TEXT NOT NULL,
     "enqueteId" TEXT NOT NULL,
-    "anneeDebut" INTEGER,
+    "creationDate" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updateDate" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "pecheurs_pkey" PRIMARY KEY ("id")
 );
@@ -118,6 +120,7 @@ CREATE TABLE "pecheurs" (
 CREATE TABLE "pratiques_peche" (
     "id" TEXT NOT NULL,
     "pecheurId" TEXT NOT NULL,
+    "anneeDebut" INTEGER,
     "especeCible" TEXT,
     "dureeSaisonHaute" INTEGER,
     "dureeSaisonBasse" INTEGER,
@@ -323,9 +326,6 @@ CREATE TABLE "_ActiviteEconomiqueToCollecteur" (
 );
 
 -- CreateIndex
-CREATE UNIQUE INDEX "regions_nom_key" ON "regions"("nom");
-
--- CreateIndex
 CREATE UNIQUE INDEX "districts_nom_regionId_key" ON "districts"("nom", "regionId");
 
 -- CreateIndex
@@ -347,10 +347,16 @@ CREATE UNIQUE INDEX "enqueteurs_code_key" ON "enqueteurs"("code");
 CREATE UNIQUE INDEX "enqueteurs_email_key" ON "enqueteurs"("email");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "pecheurs_id_key" ON "pecheurs"("id");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "pecheurs_enqueteId_key" ON "pecheurs"("enqueteId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "pratiques_peche_pecheurId_especeCible_key" ON "pratiques_peche"("pecheurId", "especeCible");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "embarcations_peche_pecheurId_key" ON "embarcations_peche"("pecheurId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "operateurs_marche_enqueteId_key" ON "operateurs_marche"("enqueteId");

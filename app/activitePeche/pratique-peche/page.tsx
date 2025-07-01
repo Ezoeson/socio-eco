@@ -46,6 +46,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 type PratiquePeche = {
   id: string;
   especeCible: string;
+  anneeDebut: number | null;
   dureeSaisonHaute: number | null;
   dureeSaisonBasse: number | null;
   frequenceSortiesSaisonHaute: number | null;
@@ -54,18 +55,19 @@ type PratiquePeche = {
   capturesMoyennesSaisonBasse: number | null;
   classificationActivite: string | null;
   pecheurId: string;
-  pecheur: { id: string; enquete: { nomEnquete: string } } | null;
+  pecheur: { id: string; enquete: { nomRepondant: string } } | null;
 };
 
 type Pecheur = {
   id: string;
-  enquete: { nomEnquete: string };
+  enquete: { nomRepondant: string };
 };
 
 export default function PratiquesPeche() {
   const [pratiques, setPratiques] = useState<PratiquePeche[]>([]);
   const [formData, setFormData] = useState<{
     especeCible?: string;
+    anneeDebut?: number | null;
     dureeSaisonHaute?: number | null;
     dureeSaisonBasse?: number | null;
     frequenceSortiesSaisonHaute?: number | null;
@@ -145,6 +147,7 @@ export default function PratiquesPeche() {
         },
         body: JSON.stringify({
           especeCible: formData.especeCible,
+          anneeDebut: formData.anneeDebut || null,
           dureeSaisonHaute: formData.dureeSaisonHaute,
           dureeSaisonBasse: formData.dureeSaisonBasse,
           frequenceSortiesSaisonHaute: formData.frequenceSortiesSaisonHaute,
@@ -182,6 +185,7 @@ export default function PratiquesPeche() {
   const handleEdit = (pratique: PratiquePeche) => {
     setFormData({
       especeCible: pratique.especeCible,
+      anneeDebut: pratique.anneeDebut || null,
       dureeSaisonHaute: pratique.dureeSaisonHaute,
       dureeSaisonBasse: pratique.dureeSaisonBasse,
       frequenceSortiesSaisonHaute: pratique.frequenceSortiesSaisonHaute,
@@ -256,6 +260,21 @@ export default function PratiquesPeche() {
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-4">
                   <div>
+                    <Label htmlFor="anneeDebut">Année de début</Label>
+                    <Input
+                      autoFocus
+                      id="anneeDebut"
+                      type="number"
+                      value={formData.anneeDebut || ""}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          anneeDebut: parseInt(e.target.value),
+                        }))
+                      }
+                    />
+                  </div>
+                  <div>
                     <Label htmlFor="especeCible">Espèce cible</Label>
                     <Input
                       id="especeCible"
@@ -283,7 +302,7 @@ export default function PratiquesPeche() {
                     <SelectContent>
                       {pecheurOptions.map((pecheur) => (
                         <SelectItem key={pecheur.id} value={pecheur.id}>
-                          {pecheur.enquete.nomEnquete}
+                          {pecheur.enquete.nomRepondant}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -460,6 +479,7 @@ export default function PratiquesPeche() {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Espèce cible</TableHead>
+                      <TableHead>Année de début</TableHead>
                       <TableHead>Pêcheur</TableHead>
                       <TableHead>Durée (H/B)</TableHead>
                       <TableHead>Fréquence (H/B)</TableHead>
@@ -469,6 +489,13 @@ export default function PratiquesPeche() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
+                    {filteredPratiques.length === 0 && !loading ? (
+                      <TableRow>
+                        <TableCell colSpan={7} className="text-center text-2xl">
+                          Aucune pratique trouvée
+                        </TableCell>
+                      </TableRow>
+                    ) : null}
                     {loading
                       ? Array.from({
                           length:
@@ -496,8 +523,19 @@ export default function PratiquesPeche() {
                               </div>
                             </TableCell>
                             <TableCell>
+                              <div className="flex flex-col gap-2">
+                                <Skeleton className="h-[16px] w-full rounded" />
+                                <Skeleton className="h-[16px] w-3/4 rounded" />
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex flex-col gap-2">
+                                <Skeleton className="h-[16px] w-full rounded" />
+                                <Skeleton className="h-[16px] w-3/4 rounded" />
+                              </div>
+                            </TableCell>
+                            <TableCell>
                               <div className="flex gap-2">
-                                <Skeleton className="h-[32px] w-[32px] rounded" />
                                 <Skeleton className="h-[32px] w-[32px] rounded" />
                                 <Skeleton className="h-[32px] w-[32px] rounded" />
                               </div>
@@ -510,7 +548,10 @@ export default function PratiquesPeche() {
                               {pratique?.especeCible}
                             </TableCell>
                             <TableCell>
-                              {pratique?.pecheur?.enquete?.nomEnquete}
+                              {pratique?.anneeDebut || "N/A"}
+                            </TableCell>
+                            <TableCell>
+                              {pratique?.pecheur?.enquete?.nomRepondant}
                             </TableCell>
                             <TableCell>
                               {pratique?.dureeSaisonHaute}/

@@ -280,6 +280,14 @@ export default function Districts() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
+                    {filteredDistricts.length === 0 && !loading ? (
+                      <TableRow>
+                        <TableCell colSpan={5} className="text-center text-2xl">
+                          Aucune district trouvé
+                        </TableCell>
+                      </TableRow>
+                    ) : null}
+
                     {loading
                       ? Array.from({
                           length:

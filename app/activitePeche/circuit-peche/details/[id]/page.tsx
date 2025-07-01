@@ -27,7 +27,7 @@ interface CircuitCommercialDetails {
   modePaiement: string | null;
   periodeDemandeElevee: string | null;
   periodeDemandeFaible: string | null;
-  partMarche: number | null;
+
   destinations: {
     nom: string | null;
     pourcentage: number | null;
@@ -36,7 +36,7 @@ interface CircuitCommercialDetails {
     id: string;
     enquete: {
       id: string;
-      nomEnquete: string;
+      nomRepondant: string;
     };
   };
 }
@@ -148,49 +148,11 @@ export default function CircuitCommercialDetailPage() {
           <CardContent className="space-y-4">
             <DetailItem
               label="Pêcheur"
-              value={circuit.pecheur.enquete.nomEnquete}
+              value={circuit.pecheur.enquete.nomRepondant}
             />
             <DetailItem label="Type de produit" value={circuit.typeProduit} />
-            <DetailItem
-              label="Mode de livraison"
-              value={circuit.modeLivraison}
-            />
-            <DetailItem
-              label="Méthode de conservation"
-              value={circuit.methodeDeconservation}
-            />
-
-            <div className="grid grid-cols-2 gap-4">
-              <DetailItem
-                label="Durée déplacement (jours)"
-                value={circuit.dureeDeplacement}
-              />
-              <DetailItem label="Prix unitaire" value={circuit.prixUnitaire} />
-            </div>
           </CardContent>
         </Card>
-
-        {/* Section Prix */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Évolution des prix</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <DetailItem
-              label="Prix avant COVID"
-              value={circuit.prixAvantCorona}
-            />
-            <DetailItem
-              label="Prix pendant COVID"
-              value={circuit.prixPendantCorona}
-            />
-            <DetailItem
-              label="Prix après COVID"
-              value={circuit.prixApresCorona}
-            />
-          </CardContent>
-        </Card>
-
         {/* Section Financement */}
         <Card>
           <CardHeader>
@@ -209,22 +171,34 @@ export default function CircuitCommercialDetailPage() {
               />
             )}
 
-            <DetailItem
-              label="Prix déterminé"
-              value={circuit.determinePrix ? "Oui" : "Non"}
-            />
-
-            <DetailItem
-              label="Restriction quantité"
-              value={circuit.restrictionQuantite ? "Oui" : "Non"}
-            />
-
-            {circuit.restrictionQuantite && (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <DetailItem
-                label="Quantité livrée"
-                value={circuit.quantiteLivree}
+                label="Faiseur de prix"
+                value={circuit.determinePrix ? "Oui" : "Non"}
               />
-            )}
+              <DetailItem
+                label="Prix unitaire"
+                value={circuit.prixUnitaire || "Non spécifié"}
+              />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <DetailItem
+                label="Restriction quantité"
+                value={circuit.restrictionQuantite ? "Oui" : "Non"}
+              />
+
+              {circuit.restrictionQuantite && (
+                <DetailItem
+                  label="Quantité livrée"
+                  value={circuit.quantiteLivree}
+                />
+              )}
+            </div>
+            <DetailItem
+              label="Mode de paiement"
+              value={circuit.modePaiement || "Non spécifié"}
+            />
           </CardContent>
         </Card>
 
@@ -242,7 +216,49 @@ export default function CircuitCommercialDetailPage() {
               label="Période demande faible"
               value={circuit.periodeDemandeFaible}
             />
-            <DetailItem label="Part de marché (%)" value={circuit.partMarche} />
+          </CardContent>
+        </Card>
+        {/* Section Prix et mode livraison */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Mode de livraison et conservation</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <DetailItem
+                label="Mode de livraison"
+                value={circuit.modeLivraison || "Non spécifié"}
+              />
+              <DetailItem
+                label="Méthode de conservation"
+                value={circuit.methodeDeconservation || "Non spécifié"}
+              />
+              <DetailItem
+                label="Durée déplacement (jours)"
+                value={
+                  circuit.dureeDeplacement !== null
+                    ? circuit.dureeDeplacement
+                    : "Non spécifié"
+                }
+              />
+            </div>
+            <CardHeader>
+              <CardTitle>Évolution des prix</CardTitle>
+            </CardHeader>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <DetailItem
+                label="Prix avant COVID"
+                value={circuit.prixAvantCorona || "Non spécifié"}
+              />
+              <DetailItem
+                label="Prix pendant COVID"
+                value={circuit.prixPendantCorona || "Non spécifié"}
+              />
+              <DetailItem
+                label="Prix après COVID"
+                value={circuit.prixApresCorona || "Non spécifié"}
+              />
+            </div>
           </CardContent>
         </Card>
 
@@ -292,7 +308,7 @@ function DetailItem({
   value: string | number | boolean | null;
 }) {
   const displayValue =
-    value !== null && value !== undefined ? String(value) : "-";
+    value !== null && value !== undefined ? String(value) : "Non spécifié";
   return (
     <div>
       <p className="text-sm font-medium text-muted-foreground">{label}</p>

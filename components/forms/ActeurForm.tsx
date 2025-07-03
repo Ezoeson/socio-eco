@@ -4,8 +4,15 @@ import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { MembreFamilleForm } from "./MembreFamilleForm";
-import { ChevronLeft, User, Users } from "lucide-react";
+
+import {
+  ChevronLeft,
+  Fish,
+  MoreHorizontal,
+  ShoppingCart,
+  User,
+  Users,
+} from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import {
   Select,
@@ -13,47 +20,20 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "../ui/select";
+} from "@/components/ui/select";
 import { Checkbox } from "../ui/checkbox";
 import { Button } from "../ui/button";
 
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { EnqueteFormData, MembreFamille, Pecheur } from "@/type/localType";
+import FishermanTab from "./pecheur/FishermanTab";
+import { MembreFamilleForm } from "./MembreFamilleForm";
 import { Skeleton } from "../ui/skeleton";
-
-interface MembreFamille {
-  id: string;
-  nom: string;
-  age?: number;
-  ancienLieuResidence?: string;
-  villageOrigine?: string;
-  anneeArrivee?: number;
-  niveauEducation?: string;
-  lienFamilial?: string;
-  sexe?: string;
-  frequentationEcole?: boolean;
-}
-
-interface EnqueteFormData {
-  id: string;
-  nomPerscible: string;
-  nomRepondant?: string;
-  estPecheur: boolean;
-  estCollecteur: boolean;
-  touteActivite: boolean;
-  ethnie?: string;
-  districtOrigine?: string;
-  anneeArriveeVillage?: number;
-  possessionAncienMetier?: boolean;
-  ancienMetier?: string;
-  dateEnquete: string;
-  enqueteurId: string;
-  secteurId: string;
-  membresFamille: MembreFamille[];
-}
 
 export function ActeurForm() {
   const router = useRouter();
+  const [tabCount, setTabCount] = useState(2);
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [enqueteurs, setEnqueteurs] = useState<{ id: string; nom: string }[]>(
@@ -69,10 +49,53 @@ export function ActeurForm() {
     estCollecteur: false,
     touteActivite: false,
     membresFamille: [],
+    Pecheur: [],
     dateEnquete: new Date().toISOString().split("T")[0],
     enqueteurId: "",
     secteurId: "",
+    ethnie: "",
+    districtOrigine: "",
+    anneeArriveeVillage: undefined,
+    possessionAncienMetier: false,
+    ancienMetier: "",
+    localFokontany: false,
   });
+  const tabsConfig = [
+    {
+      value: "general",
+      label: "Informations générales",
+      icon: User,
+      show: true, // Toujours visible
+    },
+    {
+      value: "famille",
+      label: "Famille",
+      icon: Users,
+      show: true, // Toujours visible
+    },
+    {
+      value: "pecheur",
+      label: "Pêcheur",
+      icon: Fish,
+      show: formData?.estPecheur,
+    },
+    {
+      value: "collecteur",
+      label: "Collecteur",
+      icon: ShoppingCart,
+      show: formData?.estCollecteur,
+    },
+    {
+      value: "autreActivite",
+      label: "Autre activité",
+      icon: MoreHorizontal,
+      show: formData?.touteActivite,
+    },
+  ];
+  const visibleTabs = tabsConfig?.filter((tab) => tab.show);
+  useEffect(() => {
+    setTabCount(visibleTabs?.length);
+  }, [visibleTabs?.length]);
 
   useEffect(() => {
     const fetchInitialData = async () => {
@@ -106,7 +129,7 @@ export function ActeurForm() {
 
   const handleInputChange = (
     field: keyof EnqueteFormData,
-    value: string | number | boolean | undefined | MembreFamille[]
+    value: string | number | boolean | MembreFamille[] | Pecheur[] | undefined
   ) => {
     setFormData((prev) => ({
       ...prev,
@@ -143,9 +166,7 @@ export function ActeurForm() {
       const response = await fetch("/api/enquete_famille", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...formData,
-        }),
+        body: JSON.stringify(formData),
       });
 
       if (!response.ok) throw new Error(await response.text());
@@ -255,6 +276,7 @@ export function ActeurForm() {
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
+      {/* En-tête... */}
       <div className="flex items-center gap-4">
         <Button variant="outline" size="icon" onClick={() => router.back()}>
           <ChevronLeft className="h-4 w-4" />
@@ -269,20 +291,27 @@ export function ActeurForm() {
           <p className="text-gray-600">Enregistrer une nouvelle enquête</p>
         </div>
       </div>
-
       <form onSubmit={handleSubmit}>
         <Tabs defaultValue="general" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="general" className="flex items-center gap-2">
-              <User className="h-4 w-4" />
-              Informations générales
-            </TabsTrigger>
-            <TabsTrigger value="famille" className="flex items-center gap-2">
-              <Users className="h-4 w-4" />
-              Famille
-            </TabsTrigger>
+          <TabsList
+            className="grid w-full  gap-2 "
+            style={{
+              gridTemplateColumns: `repeat(${tabCount}, minmax(0, 1fr))`,
+            }}
+          >
+            {visibleTabs?.map((tab) => (
+              <TabsTrigger
+                key={tab.value}
+                value={tab.value}
+                className="flex items-center gap-2"
+              >
+                <tab.icon className="h-4 w-4" />
+                <span className="hidden md:block" >{tab.label}</span>
+              </TabsTrigger>
+            ))}
           </TabsList>
 
+          {/* Contenu des onglets... */}
           <TabsContent value="general">
             <Card>
               <CardHeader>
@@ -468,33 +497,47 @@ export function ActeurForm() {
                   </div>
                 </div>
 
-                <div className="space-y-4">
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id="ancienMetier"
-                      checked={formData.possessionAncienMetier || false}
-                      onCheckedChange={(checked) =>
-                        handleInputChange("possessionAncienMetier", checked)
-                      }
-                    />
-                    <Label htmlFor="ancienMetier">
-                      Possédait un ancien métier
-                    </Label>
-                  </div>
-
-                  {formData.possessionAncienMetier && (
-                    <div className="space-y-2">
-                      <Label htmlFor="ancienMetierDesc">
-                        Description de l&apos;ancien métier
-                      </Label>
-                      <Input
-                        id="ancienMetierDesc"
-                        value={formData.ancienMetier || ""}
-                        onChange={(e) =>
-                          handleInputChange("ancienMetier", e.target.value)
+                <div className="grid md:grid-cols-2 gap-y-2">
+                  <div className="space-y-4">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="ancienMetier"
+                        checked={formData.possessionAncienMetier || false}
+                        onCheckedChange={(checked) =>
+                          handleInputChange("possessionAncienMetier", checked)
                         }
-                        placeholder="Décrire l'ancien métier"
                       />
+                      <Label htmlFor="ancienMetier">
+                        Possédait un ancien métier
+                      </Label>
+                    </div>
+
+                    {formData.possessionAncienMetier && (
+                      <div className="space-y-2">
+                        <Label htmlFor="ancienMetierDesc">
+                          Description de l&apos;ancien métier
+                        </Label>
+                        <Input
+                          id="ancienMetierDesc"
+                          value={formData.ancienMetier || ""}
+                          onChange={(e) =>
+                            handleInputChange("ancienMetier", e.target.value)
+                          }
+                          placeholder="Décrire l'ancien métier"
+                        />
+                      </div>
+                    )}
+                  </div>
+                  {formData?.estCollecteur && (
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="localFokontany"
+                        checked={formData.localFokontany}
+                        onCheckedChange={(checked) =>
+                          handleInputChange("localFokontany", checked)
+                        }
+                      />
+                      <Label htmlFor="localFokontany">Issu du fokontany</Label>
                     </div>
                   )}
                 </div>
@@ -510,13 +553,36 @@ export function ActeurForm() {
               <CardContent>
                 <MembreFamilleForm
                   membres={formData.membresFamille}
-                  onChange={(membres) =>
+                  onChange={(membres: MembreFamille[]) =>
                     handleInputChange("membresFamille", membres)
                   }
                 />
               </CardContent>
             </Card>
           </TabsContent>
+          {formData.estPecheur && (
+            <TabsContent value="pecheur">
+              <FishermanTab
+                pecheur={formData.Pecheur?.[0] || { id: crypto.randomUUID() }}
+                onPecheurChange={(pecheur) =>
+                  handleInputChange("Pecheur", [pecheur])
+                }
+              />
+            </TabsContent>
+          )}
+          {formData.estCollecteur && (
+            <TabsContent value="collecteur">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Informations sur le collecteur</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {/* Contenu du collecteur à implémenter */}
+                  <p>Informations spécifiques au collecteur à venir.</p>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          )}
         </Tabs>
 
         <div className="flex justify-end space-x-4 pt-6">

@@ -1,8 +1,6 @@
 "use client";
 
-import * as React from "react";
 import {
-  Briefcase,
   Building,
   ClipboardList,
   GalleryVerticalEnd,
@@ -12,17 +10,7 @@ import {
   Map,
   MapPin,
   PieChart,
-  RefreshCw,
-  Settings,
-  Ship,
   UserSearch,
-  Waves,
-  Fish,
-  ShoppingCart,
-  Warehouse,
-  Package,
-  Archive,
-  Truck,
 } from "lucide-react";
 
 import { NavMain } from "@/components/nav-main";
@@ -62,16 +50,6 @@ const data = {
   ],
   navMain: [
     {
-      title: "Enquêteur",
-      url: "/enqueteur",
-      icon: UserSearch,
-    },
-    {
-      title: "Enquête",
-      url: "/enquete",
-      icon: ClipboardList,
-    },
-    {
       title: "Localisation",
       url: "",
       icon: Globe,
@@ -104,82 +82,14 @@ const data = {
       ],
     },
     {
-      title: "Activité de pêche",
-      url: "#",
-      icon: Fish,
-      items: [
-        {
-          title: "Pratique de pêche",
-          url: "/activitePeche/pratique-peche",
-          icon: Waves,
-        },
-        {
-          title: "Embarcation",
-          url: "/activitePeche/embar-peche",
-          icon: Ship,
-        },
-        {
-          title: "Équipement",
-          url: "/activitePeche/equip-peche",
-          icon: Settings,
-        },
-
-        {
-          title: "Circuit commercial",
-          url: "/activitePeche/circuit-peche",
-          icon: RefreshCw,
-        },
-      ],
+      title: "Enquêteur",
+      url: "/enqueteur",
+      icon: UserSearch,
     },
     {
-      title: "Activité de collecte",
-      url: "",
-      icon: ShoppingCart,
-      items: [
-        {
-          title: "Lieu d'approvisionnement",
-          url: "#",
-          icon: Warehouse,
-        },
-        {
-          title: "Produit acheté",
-          url: "",
-          icon: Package,
-        },
-        {
-          title: "Méthode de stockage",
-          url: "#",
-          icon: Archive,
-        },
-        {
-          title: "Canal de distribution",
-          url: "#",
-          icon: Truck,
-        },
-      ],
-    },
-    {
-      title: "Activité économique",
-      url: "#",
-      icon: Briefcase,
-      // items: [
-      //   {
-      //     title: "Commerce de gros",
-      //     url: "#",
-      //   },
-      //   {
-      //     title: "Agriculture",
-      //     url: "#",
-      //   },
-      //   {
-      //     title: "Élevage",
-      //     url: "#",
-      //   },
-      //   {
-      //     title: "Salariat",
-      //     url: "#",
-      //   },
-      // ],
+      title: "Enquête",
+      url: "/enquete",
+      icon: ClipboardList,
     },
   ],
   projects: [

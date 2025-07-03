@@ -5,13 +5,15 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-import { ChevronLeft, User, Users } from "lucide-react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-
-import { useRouter, useParams } from "next/navigation";
-import { toast } from "sonner";
-import { MembreFamilleForm } from "@/components/forms/MembreFamilleForm";
-import { Button } from "@/components/ui/button";
+import {
+  ChevronLeft,
+  Fish,
+  MoreHorizontal,
+  ShoppingCart,
+  User,
+  Users,
+} from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import {
   Select,
   SelectContent,
@@ -19,39 +21,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Checkbox } from "../ui/checkbox";
+import { Button } from "../ui/button";
+
+import { useRouter, useParams } from "next/navigation";
+import { toast } from "sonner";
+import { EnqueteFormData, MembreFamille, Pecheur } from "@/type/localType";
+import FishermanTab from "./pecheur/FishermanTab";
+import { MembreFamilleForm } from "./MembreFamilleForm";
 import { Skeleton } from "../ui/skeleton";
-
-interface MembreFamille {
-  id: string;
-  nom: string;
-  age?: number;
-  ancienLieuResidence?: string;
-  villageOrigine?: string;
-  anneeArrivee?: number;
-  niveauEducation?: string;
-  lienFamilial?: string;
-  sexe?: string;
-  frequentationEcole?: boolean;
-}
-
-interface EnqueteFormData {
-  id: string;
-  nomPerscible: string;
-  nomRepondant?: string;
-  estPecheur: boolean;
-  estCollecteur: boolean;
-  touteActivite: boolean;
-  ethnie?: string;
-  districtOrigine?: string;
-  anneeArriveeVillage?: number;
-  possessionAncienMetier?: boolean;
-  ancienMetier?: string;
-  dateEnquete: string;
-  enqueteurId: string;
-  secteurId: string;
-  membresFamille: MembreFamille[];
-}
 
 export function ActeurEditForm() {
   const router = useRouter();
@@ -73,10 +51,53 @@ export function ActeurEditForm() {
     estCollecteur: false,
     touteActivite: false,
     membresFamille: [],
+    Pecheur: [],
     dateEnquete: new Date().toISOString().split("T")[0],
     enqueteurId: "",
     secteurId: "",
+    ethnie: "",
+    districtOrigine: "",
+    anneeArriveeVillage: undefined,
+    possessionAncienMetier: false,
+    ancienMetier: "",
+    localFokontany: false,
   });
+
+  const tabsConfig = [
+    {
+      value: "general",
+      label: "Informations générales",
+      icon: User,
+      show: true,
+    },
+    {
+      value: "famille",
+      label: "Famille",
+      icon: Users,
+      show: true,
+    },
+    {
+      value: "pecheur",
+      label: "Pêcheur",
+      icon: Fish,
+      show: formData?.estPecheur,
+    },
+    {
+      value: "collecteur",
+      label: "Collecteur",
+      icon: ShoppingCart,
+      show: formData?.estCollecteur,
+    },
+    {
+      value: "autreActivite",
+      label: "Autre activité",
+      icon: MoreHorizontal,
+      show: formData?.touteActivite,
+    },
+  ];
+
+  const visibleTabs = tabsConfig?.filter((tab) => tab.show);
+  const tabCount = visibleTabs?.length;
 
   useEffect(() => {
     const fetchInitialData = async () => {
@@ -98,24 +119,32 @@ export function ActeurEditForm() {
         setEnqueteurs(enqueteursData);
         setSecteurs(secteursData);
 
-        // Charger les données de l'enquête seulement si on est en mode édition
         if (id) {
           const enqueteRes = await fetch(`/api/enquete_famille/${id}`);
-          if (!enqueteRes.ok) {
-            throw new Error("Enquête non trouvée");
-          }
+          if (!enqueteRes.ok) throw new Error("Enquête non trouvée");
+
           const enqueteData = await enqueteRes.json();
+          // Transformez la structure des données
+          const transformedPecheur = enqueteData.pecheur
+            ? {
+                id: enqueteData.pecheur.id,
+                PratiquePeche: enqueteData.pecheur.pratiquesPeche || [],
+                EquipementPeche: enqueteData.pecheur.equipementsPeche || [],
+                EmbarcationPeche: enqueteData.pecheur.embarcations || [],
+                CircuitCommercial: enqueteData.pecheur.circuitsCommercial || [],
+              }
+            : null;
+
           setFormData({
             ...enqueteData,
             dateEnquete: enqueteData.dateEnquete.split("T")[0],
+            Pecheur: transformedPecheur ? [transformedPecheur] : [],
           });
         }
       } catch (error) {
         console.error("Erreur:", error);
         toast.error("Erreur lors du chargement des données initiales");
-        if (id) {
-          router.push("/enquete");
-        }
+        if (id) router.push("/enquete");
       } finally {
         setLoading(false);
       }
@@ -126,7 +155,7 @@ export function ActeurEditForm() {
 
   const handleInputChange = (
     field: keyof EnqueteFormData,
-    value: string | number | boolean | undefined | MembreFamille[]
+    value: string | number | boolean | MembreFamille[] | Pecheur[] | undefined
   ) => {
     setFormData((prev) => ({
       ...prev,
@@ -144,35 +173,10 @@ export function ActeurEditForm() {
     }));
   };
 
-  const handleUpdateEnquete = async () => {
-    if (!id) return;
-
-    try {
-      const response = await fetch(`/api/enquete_famille/${id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...formData,
-          // On peut ajouter ici des champs spécifiques pour la modification si nécessaire
-          // Par exemple, on pourrait vouloir suivre qui a modifié l'enquête
-          //   updatedAt: new Date().toISOString(),
-        }),
-      });
-
-      if (!response.ok) throw new Error(await response.text());
-
-      return response.json();
-    } catch (error) {
-      console.error("Erreur lors de la modification:", error);
-      throw error;
-    }
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
-    // Validation
     if (
       !formData.nomPerscible ||
       !formData.enqueteurId ||
@@ -184,28 +188,23 @@ export function ActeurEditForm() {
     }
 
     try {
-      if (id) {
-        // Mode modification
-        await handleUpdateEnquete();
-        toast.success("Enquête mise à jour avec succès");
-      } else {
-        // Mode création
-        const response = await fetch("/api/enquete_famille", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(formData),
-        });
+      const method = id ? "PUT" : "POST";
+      const url = id ? `/api/enquete_famille/${id}` : "/api/enquete_famille";
 
-        if (!response.ok) throw new Error(await response.text());
+      const response = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
 
-        toast.success("Enquête enregistrée avec succès");
-      }
+      if (!response.ok) throw new Error(await response.text());
 
+      toast.success(`Enquête ${id ? "modifiée" : "enregistrée"} avec succès`);
       router.push("/enquete");
     } catch (error) {
       console.error("Erreur:", error);
       toast.error(
-        `Erreur lors de ${id ? "la mise à jour" : "l'enregistrement"}`
+        `Erreur lors de ${id ? "la modification" : "l'enregistrement"}`
       );
     } finally {
       setIsSubmitting(false);
@@ -215,13 +214,11 @@ export function ActeurEditForm() {
   if (loading) {
     return (
       <div className="max-w-7xl mx-auto space-y-6">
-        {/* Header avec bouton retour */}
         <div className="flex items-center gap-4">
           <Skeleton className="h-10 w-10 rounded-md" />
           <Skeleton className="h-8 w-48" />
         </div>
 
-        {/* En-tête avec avatar */}
         <div className="flex items-center gap-3 mb-6">
           <Skeleton className="h-8 w-8 rounded-full" />
           <div className="space-y-2">
@@ -230,22 +227,17 @@ export function ActeurEditForm() {
           </div>
         </div>
 
-        {/* Formulaire skeleton */}
         <div>
-          {/* Onglets */}
           <div className="grid w-full grid-cols-2 gap-2 mb-6">
             <Skeleton className="h-10 w-full" />
             <Skeleton className="h-10 w-full" />
           </div>
 
-          {/* Contenu des onglets */}
           <div className="space-y-6">
-            {/* Carte générale */}
             <div className="rounded-lg border bg-card shadow-sm p-6">
               <Skeleton className="h-6 w-48 mb-6" />
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Champs de formulaire */}
                 {[...Array(8)].map((_, i) => (
                   <div key={i} className="space-y-2">
                     <Skeleton className="h-4 w-24" />
@@ -254,7 +246,6 @@ export function ActeurEditForm() {
                 ))}
               </div>
 
-              {/* Checkboxes */}
               <div className="flex flex-col md:flex-row space-y-2 md:space-y-0 md:space-x-4 mt-4">
                 {[...Array(3)].map((_, i) => (
                   <div key={i} className="flex items-center space-x-2">
@@ -264,7 +255,6 @@ export function ActeurEditForm() {
                 ))}
               </div>
 
-              {/* Section conditionnelle */}
               <div className="space-y-4 mt-6">
                 <div className="flex items-center space-x-2">
                   <Skeleton className="h-4 w-4 rounded-sm" />
@@ -277,7 +267,6 @@ export function ActeurEditForm() {
               </div>
             </div>
 
-            {/* Carte famille */}
             <div className="rounded-lg border bg-card shadow-sm p-6">
               <Skeleton className="h-6 w-48 mb-6" />
               <div className="space-y-4">
@@ -295,7 +284,6 @@ export function ActeurEditForm() {
             </div>
           </div>
 
-          {/* Boutons d'action */}
           <div className="flex justify-end space-x-4 pt-6">
             <Skeleton className="h-10 w-24" />
             <Skeleton className="h-10 w-48" />
@@ -332,15 +320,17 @@ export function ActeurEditForm() {
 
       <form onSubmit={handleSubmit}>
         <Tabs defaultValue="general" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="general" className="flex items-center gap-2">
-              <User className="h-4 w-4" />
-              Informations générales
-            </TabsTrigger>
-            <TabsTrigger value="famille" className="flex items-center gap-2">
-              <Users className="h-4 w-4" />
-              Famille
-            </TabsTrigger>
+          <TabsList className={`grid w-full grid-cols-${tabCount} gap-2`}>
+            {visibleTabs?.map((tab) => (
+              <TabsTrigger
+                key={tab.value}
+                value={tab.value}
+                className="flex items-center gap-2"
+              >
+                <tab.icon className="h-4 w-4" />
+                {tab.label}
+              </TabsTrigger>
+            ))}
           </TabsList>
 
           <TabsContent value="general">
@@ -350,7 +340,6 @@ export function ActeurEditForm() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* Secteur - Version améliorée */}
                   <div className="space-y-2">
                     <Label>Secteur *</Label>
                     <Select
@@ -377,7 +366,6 @@ export function ActeurEditForm() {
                     </Select>
                   </div>
 
-                  {/* Enquêteur */}
                   <div className="space-y-2">
                     <Label>Enquêteur *</Label>
                     <Select
@@ -404,25 +392,22 @@ export function ActeurEditForm() {
                       </SelectContent>
                     </Select>
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {/* ... autres champs */}
 
-                    <div className="space-y-2">
-                      <Label htmlFor="dateEnquete">
-                        Date de l&apos;enquête *
-                      </Label>
-                      <Input
-                        id="dateEnquete"
-                        type="date"
-                        value={formData.dateEnquete}
-                        onChange={(e) =>
-                          handleInputChange("dateEnquete", e.target.value)
-                        }
-                        required
-                      />
-                    </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="dateEnquete">
+                      Date de l&apos;enquête *
+                    </Label>
+                    <Input
+                      id="dateEnquete"
+                      type="date"
+                      value={formData.dateEnquete}
+                      onChange={(e) =>
+                        handleInputChange("dateEnquete", e.target.value)
+                      }
+                      required
+                    />
                   </div>
-                  {/* Checkboxes groupées */}
+
                   <div className="flex flex-col md:flex-row space-y-2 md:space-y-0 md:space-x-4">
                     <div className="flex items-center space-x-2">
                       <Checkbox
@@ -457,6 +442,7 @@ export function ActeurEditForm() {
                       <Label htmlFor="touteActivite">Autre activité</Label>
                     </div>
                   </div>
+
                   <div className="space-y-2">
                     <Label htmlFor="nomRepondant">Nom du répondant</Label>
                     <Input
@@ -468,17 +454,18 @@ export function ActeurEditForm() {
                       placeholder="Nom de la personne interrogée"
                     />
                   </div>
+
                   <div className="space-y-2">
-                    <Label htmlFor="nomEnquete">
+                    <Label htmlFor="nomPerscible">
                       Nom de la personne cible *
                     </Label>
                     <Input
-                      id="nomEnquete"
+                      id="nomPerscible"
                       value={formData.nomPerscible || ""}
                       onChange={(e) =>
                         handleInputChange("nomPerscible", e.target.value)
                       }
-                      placeholder="Nom de l'enquête"
+                      placeholder="Nom de la personne cible"
                       required
                     />
                   </div>
@@ -510,11 +497,11 @@ export function ActeurEditForm() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="anneeArrivee">
+                    <Label htmlFor="anneeArriveeVillage">
                       Année d&apos;arrivée au village
                     </Label>
                     <Input
-                      id="anneeArrivee"
+                      id="anneeArriveeVillage"
                       type="number"
                       value={formData.anneeArriveeVillage || ""}
                       onChange={(e) =>
@@ -528,33 +515,47 @@ export function ActeurEditForm() {
                   </div>
                 </div>
 
-                <div className="space-y-4">
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id="ancienMetier"
-                      checked={formData.possessionAncienMetier || false}
-                      onCheckedChange={(checked) =>
-                        handleInputChange("possessionAncienMetier", checked)
-                      }
-                    />
-                    <Label htmlFor="ancienMetier">
-                      Possédait un ancien métier
-                    </Label>
-                  </div>
-
-                  {formData.possessionAncienMetier && (
-                    <div className="space-y-2">
-                      <Label htmlFor="ancienMetierDesc">
-                        Description de l&apos;ancien métier
-                      </Label>
-                      <Input
-                        id="ancienMetierDesc"
-                        value={formData.ancienMetier || ""}
-                        onChange={(e) =>
-                          handleInputChange("ancienMetier", e.target.value)
+                <div className="grid md:grid-cols-2 gap-y-2">
+                  <div className="space-y-4">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="ancienMetier"
+                        checked={formData.possessionAncienMetier || false}
+                        onCheckedChange={(checked) =>
+                          handleInputChange("possessionAncienMetier", checked)
                         }
-                        placeholder="Décrire l'ancien métier"
                       />
+                      <Label htmlFor="ancienMetier">
+                        Possédait un ancien métier
+                      </Label>
+                    </div>
+
+                    {formData.possessionAncienMetier && (
+                      <div className="space-y-2">
+                        <Label htmlFor="ancienMetierDesc">
+                          Description de l&apos;ancien métier
+                        </Label>
+                        <Input
+                          id="ancienMetierDesc"
+                          value={formData.ancienMetier || ""}
+                          onChange={(e) =>
+                            handleInputChange("ancienMetier", e.target.value)
+                          }
+                          placeholder="Décrire l'ancien métier"
+                        />
+                      </div>
+                    )}
+                  </div>
+                  {formData?.estCollecteur && (
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="localFokontany"
+                        checked={formData.localFokontany}
+                        onCheckedChange={(checked) =>
+                          handleInputChange("localFokontany", checked)
+                        }
+                      />
+                      <Label htmlFor="localFokontany">Issu du fokontany</Label>
                     </div>
                   )}
                 </div>
@@ -570,13 +571,37 @@ export function ActeurEditForm() {
               <CardContent>
                 <MembreFamilleForm
                   membres={formData.membresFamille}
-                  onChange={(membres) =>
+                  onChange={(membres: MembreFamille[]) =>
                     handleInputChange("membresFamille", membres)
                   }
                 />
               </CardContent>
             </Card>
           </TabsContent>
+
+          {formData.estPecheur && (
+            <TabsContent value="pecheur">
+              <FishermanTab
+                pecheur={formData.Pecheur?.[0] || { id: crypto.randomUUID() }}
+                onPecheurChange={(pecheur) =>
+                  handleInputChange("Pecheur", [pecheur])
+                }
+              />
+            </TabsContent>
+          )}
+
+          {formData.estCollecteur && (
+            <TabsContent value="collecteur">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Informations sur le collecteur</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p>Informations spécifiques au collecteur à venir.</p>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          )}
         </Tabs>
 
         <div className="flex justify-end space-x-4 pt-6">
@@ -588,7 +613,13 @@ export function ActeurEditForm() {
             Annuler
           </Button>
           <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? "Modification en cours..." : "Modifier l'enquête"}
+            {isSubmitting
+              ? id
+                ? "Modification en cours..."
+                : "Enregistrement en cours..."
+              : id
+              ? "Modifier l'enquête"
+              : "Enregistrer l'enquête"}
           </Button>
         </div>
       </form>

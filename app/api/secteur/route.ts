@@ -1,23 +1,28 @@
-import { PrismaClient } from '@prisma/client';
-import { NextResponse } from 'next/server';
+import { PrismaClient } from "@prisma/client";
+import { NextResponse } from "next/server";
 
 const prisma = new PrismaClient();
 
 export async function GET() {
-  try {
-    const secteurs = await prisma.secteur.findMany({
-      include: {
-        fokontany: true,
-        enquetes: true,
+  const secteurs = await prisma.secteur.findMany({
+    include: {
+      fokontany: {
+        select: {
+          id: true,
+          nom: true,
+        }, 
       },
-    });
-    return NextResponse.json(secteurs);
-  } catch {
-    return NextResponse.json(
-      { error: 'Failed to fetch secteurs' },
-      { status: 500 }
-    );
-  }
+      enquetes: {
+        select: {
+          id: true,
+          nomPerscible: true,
+          dateEnquete: true,
+        },
+
+      },
+    },
+  });
+  return NextResponse.json(secteurs);
 }
 
 export async function POST(request: Request) {
@@ -30,7 +35,7 @@ export async function POST(request: Request) {
 
     if (!fokontanyExists) {
       return NextResponse.json(
-        { error: 'Fokontany not found' },
+        { error: "Fokontany not found" },
         { status: 404 }
       );
     }
@@ -44,7 +49,7 @@ export async function POST(request: Request) {
 
     if (existingSecteur) {
       return NextResponse.json(
-        { error: 'Secteur with this name already exists in this fokontany' },
+        { error: "Secteur with this name already exists in this fokontany" },
         { status: 400 }
       );
     }
@@ -57,12 +62,12 @@ export async function POST(request: Request) {
     });
 
     return NextResponse.json({
-      message: 'Secteur created successfully',
+      message: "Secteur created successfully",
       data: secteur,
     });
   } catch {
     return NextResponse.json(
-      { error: 'Failed to create secteur' },
+      { error: "Failed to create secteur" },
       { status: 500 }
     );
   }

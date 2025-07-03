@@ -11,19 +11,9 @@ import {
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
+import { MembreFamille } from "@/type/localType";
 
-interface MembreFamille {
-  id: string;
-  nom: string;
-  age?: number;
-  ancienLieuResidence?: string;
-  villageOrigine?: string;
-  anneeArrivee?: number;
-  niveauEducation?: string;
-  lienFamilial?: string;
-  sexe?: string;
-  frequentationEcole?: boolean;
-}
+
 
 interface MembreFamilleFormProps {
   membres: MembreFamille[];
@@ -65,10 +55,10 @@ export function MembreFamilleForm({
     onChange(membres.filter((membre) => membre.id !== id));
   };
 
-  const modifierMembre = (
+  const modifierMembre = <K extends keyof MembreFamille>(
     id: string,
-    champ: keyof MembreFamille,
-    valeur: string | number | boolean | undefined
+    champ: K,
+    valeur: MembreFamille[K]
   ) => {
     onChange(
       membres.map((membre) =>
@@ -152,7 +142,11 @@ export function MembreFamilleForm({
 
 interface MembreCardProps {
   membre: MembreFamille;
-  onModifier: (id: string, champ: keyof MembreFamille, valeur: any) => void;
+  onModifier: <K extends keyof MembreFamille>(
+    id: string,
+    champ: K,
+    valeur: MembreFamille[K]
+  ) => void;
   onSupprimer: (id: string) => void;
   index?: number;
 }
@@ -332,7 +326,7 @@ function MembreCard({
                 id={`frequentation-${membre.id}`}
                 checked={membre.frequentationEcole || false}
                 onCheckedChange={(checked) =>
-                  onModifier(membre.id, "frequentationEcole", checked)
+                  onModifier(membre.id, "frequentationEcole", checked === true)
                 }
               />
               <Label htmlFor={`frequentation-${membre.id}`}>

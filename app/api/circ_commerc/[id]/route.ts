@@ -5,6 +5,13 @@ import { NextRequest, NextResponse } from "next/server";
 
 const prisma = new PrismaClient();
 
+interface DestinationData {
+  name: string;
+  location: string;
+
+  [key: string]: string | number | boolean | null | undefined;
+}
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -86,7 +93,7 @@ export async function PUT(
       // 3. Ajouter les nouvelles destinations
       if (destinations && destinations.length > 0) {
         await prisma.destinationCommerciale.createMany({
-          data: destinations.map((dest: any) => ({
+          data: destinations.map((dest: DestinationData) => ({
             ...dest,
             circuitId: id,
           })),

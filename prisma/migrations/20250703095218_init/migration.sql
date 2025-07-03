@@ -1,15 +1,3 @@
--- CreateEnum
-CREATE TYPE "NiveauEducation" AS ENUM ('AUCUN', 'PRESCOLAIRE', 'PRIMAIRE_NON_COMPLET', 'PRIMAIRE_COMPLET', 'COLLEGE_NON_COMPLET', 'COLLEGE_COMPLET', 'SECONDAIRE_NON_COMPLET', 'SECONDAIRE_COMPLET');
-
--- CreateEnum
-CREATE TYPE "SourceFinancement" AS ENUM ('PROPRE', 'EMPRUNT', 'DON');
-
--- CreateEnum
-CREATE TYPE "Sexe" AS ENUM ('MASCULIN', 'FEMININ');
-
--- CreateEnum
-CREATE TYPE "LienFamilial" AS ENUM ('CONJOINT', 'ENFANT', 'PARENT', 'BEAU_PARENT', 'FRERE_SOEUR', 'AUTRE');
-
 -- CreateTable
 CREATE TABLE "regions" (
     "id" TEXT NOT NULL,
@@ -75,6 +63,7 @@ CREATE TABLE "enquetes" (
     "estPecheur" BOOLEAN NOT NULL DEFAULT false,
     "estCollecteur" BOOLEAN NOT NULL DEFAULT false,
     "touteActivite" BOOLEAN NOT NULL DEFAULT false,
+    "localFokontany" BOOLEAN,
     "nomRepondant" TEXT NOT NULL,
     "nomPerscible" TEXT,
     "ethnie" TEXT,
@@ -83,6 +72,8 @@ CREATE TABLE "enquetes" (
     "possessionAncienMetier" BOOLEAN,
     "ancienMetier" TEXT,
     "dateEnquete" TIMESTAMP(3),
+    "updateDate" TIMESTAMP(3) NOT NULL,
+    "creationDate" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "enqueteurId" TEXT,
     "secteurId" TEXT,
 
@@ -98,9 +89,9 @@ CREATE TABLE "membres_famille" (
     "ancienLieuResidence" TEXT,
     "villageOrigine" TEXT,
     "anneeArrivee" INTEGER,
-    "niveauEducation" "NiveauEducation",
-    "lienFamilial" "LienFamilial",
-    "sexe" "Sexe",
+    "niveauEducation" TEXT,
+    "lienFamilial" TEXT,
+    "sexe" TEXT,
     "frequentationEcole" BOOLEAN,
 
     CONSTRAINT "membres_famille_pkey" PRIMARY KEY ("id")
@@ -157,7 +148,7 @@ CREATE TABLE "embarcations_peche" (
     "partageCaptures" DOUBLE PRECISION,
     "coutAcquisition" DOUBLE PRECISION,
     "modeAcquisition" TEXT,
-    "typeFinancement" "SourceFinancement",
+    "typeFinancement" TEXT,
     "montantFinancement" DOUBLE PRECISION,
     "dureeFinancement" INTEGER,
     "remboursementMensuel" DOUBLE PRECISION,
@@ -193,7 +184,6 @@ CREATE TABLE "circuits_commerciaux" (
     "modePaiement" TEXT,
     "periodeDemandeElevee" TEXT,
     "periodeDemandeFaible" TEXT,
-    "partMarche" DOUBLE PRECISION,
 
     CONSTRAINT "circuits_commerciaux_pkey" PRIMARY KEY ("id")
 );
@@ -212,7 +202,6 @@ CREATE TABLE "destinations_commerciales" (
 CREATE TABLE "operateurs_marche" (
     "id" TEXT NOT NULL,
     "enqueteId" TEXT NOT NULL,
-    "localFokontany" BOOLEAN,
     "experienceAnnees" DOUBLE PRECISION,
     "estMareyeur" BOOLEAN DEFAULT false,
     "lieuCollecte" TEXT[],

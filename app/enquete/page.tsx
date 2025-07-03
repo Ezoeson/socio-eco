@@ -111,7 +111,7 @@ export default function ListeEnquetes() {
     ]
   );
 
-  const filteredEnquetes = enquetes.filter((enquete) =>
+  const filteredEnquetes = enquetes?.filter((enquete) =>
     enquete.nomPerscible.toLowerCase().includes(searchTerm.toLowerCase())
   );
 

@@ -7,32 +7,9 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum NiveauEducation {
-  AUCUN
-  PRESCOLAIRE
-  PRIMAIRE_NON_COMPLET
-  PRIMAIRE_COMPLET
-  COLLEGE_NON_COMPLET
-  COLLEGE_COMPLET
-  SECONDAIRE_NON_COMPLET
-  SECONDAIRE_COMPLET
-}
 
 
 
-enum Sexe {
-  MASCULIN
-  FEMININ
-}
-
-enum LienFamilial {
-  CONJOINT
-  ENFANT
-  PARENT
-  BEAU_PARENT
-  FRERE_SOEUR
-  AUTRE
-}
 
 model Region {
   id        String     @id @default(uuid())
@@ -107,6 +84,7 @@ model Enquete {
   estPecheur             Boolean   @default(false)
   estCollecteur          Boolean   @default(false)
   touteActivite          Boolean   @default(false)
+  localFokontany         Boolean?
   nomRepondant           String
   nomPerscible           String?
   ethnie                 String?
@@ -140,9 +118,9 @@ model MembreFamille {
   ancienLieuResidence String?
   villageOrigine      String?
   anneeArrivee        Int?
-  niveauEducation     NiveauEducation?
-  lienFamilial        LienFamilial?
-  sexe                Sexe?
+  niveauEducation     String?
+  lienFamilial        String?
+  sexe                String?
   frequentationEcole  Boolean?
 
   
@@ -270,7 +248,7 @@ model Collecteur {
   id                       String   @id @default(uuid())
   enquete                  Enquete  @relation(fields: [enqueteId], references: [id], onDelete: Cascade)
   enqueteId                String   @unique
-  localFokontany           Boolean?
+
   experienceAnnees         Float?
   estMareyeur              Boolean? @default(false)
   lieuCollecte             String[]

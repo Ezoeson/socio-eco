@@ -202,13 +202,16 @@ export default function Communes() {
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
               <Button
+                className="cursor-pointer"
                 onClick={() => {
                   setFormData({ districtId: "" });
                   setEditingId(null);
                 }}
               >
-                <Plus className="h-4 w-4 mr-2" />
-                <span className="hidden md:block">Nouveau commune</span>
+                <div className="flex justify-center items-center">
+                  <Plus className="h-4 w-4 mr-2" />
+                  <span className="hidden md:block">Nouveau commune</span>
+                </div>
               </Button>
             </DialogTrigger>
 

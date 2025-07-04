@@ -30,6 +30,7 @@ import { EnqueteFormData } from "@/type/localType";
 import FishermanTab from "./pecheur/FishermanTab";
 import { MembreFamilleForm } from "./MembreFamilleForm";
 import { Skeleton } from "../ui/skeleton";
+import { ActiviteEconomiqueForm } from "./ActiviteEconomiqueForm";
 
 export function ActeurDetails() {
   const router = useRouter();
@@ -52,6 +53,7 @@ export function ActeurDetails() {
     touteActivite: false,
     membresFamille: [],
     Pecheur: [],
+    activites: [],
     dateEnquete: new Date().toISOString().split("T")[0],
     enqueteurId: "",
     secteurId: "",
@@ -97,6 +99,7 @@ export function ActeurDetails() {
   ];
 
   const visibleTabs = tabsConfig?.filter((tab) => tab.show);
+  const tabCount = visibleTabs?.length;
 
   useEffect(() => {
     const fetchInitialData = async () => {
@@ -255,7 +258,7 @@ export function ActeurDetails() {
 
       <div>
         <Tabs defaultValue="general" className="space-y-6">
-          <TabsList className={`grid w-full grid-cols-3 gap-2`}>
+          <TabsList className={`grid w-full grid-cols-${tabCount} gap-2`}>
             {visibleTabs?.map((tab) => (
               <TabsTrigger
                 key={tab.value}
@@ -453,6 +456,21 @@ export function ActeurDetails() {
                 </CardHeader>
                 <CardContent>
                   <p>Informations spécifiques au collecteur à venir.</p>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          )}
+          {formData.touteActivite && (
+            <TabsContent value="autreActivite">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Informations sur les activites</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ActiviteEconomiqueForm
+                    activites={formData.activites}
+                    onChange={() => {}}
+                  />
                 </CardContent>
               </Card>
             </TabsContent>

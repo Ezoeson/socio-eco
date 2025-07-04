@@ -106,6 +106,53 @@ export interface MembreFamille {
   frequentationEcole?: boolean;
 }
 
+export interface ActiviteEconomique {
+  id: string;
+
+  // Champs communs
+  typeActivite: string;
+  importanceActivite?: string;
+
+  // Champs pour la mangrove
+  autreRessourceExploitee?: string;
+  utilisationRessource?: string;
+  prixVente?: number;
+  frequenceCollecte?: number;
+  frequenceVente?: number;
+  saisonHaute?: string;
+  saisonBasse?: string;
+
+  // Champs pour l'agriculture
+  activiteAgricole?: string;
+  complementaritePeche?: string;
+  frequenceActiviteAgricole?: string;
+  superficieCultivee?: number; // en hectares
+  quantiteProduite?: number; // en kg
+  statutFoncier?: string;
+  lieuExploitationAgricole?: string;
+  outilsProduction?: string;
+
+  // Champs pour l'élevage
+  sousTypeElevage?: string;
+  effectifElevage?: number;
+  zonePaturage?: string;
+  frequenceSoins?: string;
+
+  // Champs pour le salariat
+  activiteSalariale?: string;
+  dureeConsacreeSalariat?: number; // en jours/mois
+  frequenceMensuelleSalariat?: number;
+  lieuExerciceSalariat?: string;
+  revenuMensuelSalariat?: number; // en MGA
+
+  // Champs pour les AGR
+  activiteGeneratrice?: string;
+  dureeActiviteAGR?: number; // en jours
+  frequenceMensuelleAGR?: number;
+  lieuExerciceAGR?: string;
+  revenuMensuelAGR?: number; // en MGA
+}
+
 export interface EnqueteFormData {
   id: string;
   nomPerscible: string;
@@ -124,5 +171,5 @@ export interface EnqueteFormData {
   secteurId: string;
   membresFamille: MembreFamille[];
   Pecheur?: Pecheur[];
-  
+  activites?: ActiviteEconomique[];
 }

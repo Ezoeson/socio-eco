@@ -241,7 +241,7 @@ export function FishingBoats({ boats, onChange }: FishingBoatsProps) {
                     <CardContent className="space-y-4">
                       <div className="space-y-2">
                         <Label htmlFor="prixAcquisition">
-                          Prix d&apos;achat
+                          Prix d&apos;achat (MGA)
                         </Label>
                         <Input
                           id="coutAcquisition"

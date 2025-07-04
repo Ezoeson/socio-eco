@@ -39,7 +39,7 @@ export default function FishermanTabs({
   const handleCircuitsChange = (circuits: CircuitCommercial[]) => {
     onPecheurChange({ ...pecheur, CircuitCommercial: circuits });
   };
-  console.log(pecheur.PratiquePeche);
+
   return (
     <Card>
       <CardHeader>

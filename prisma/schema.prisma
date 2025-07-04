@@ -324,36 +324,50 @@ model ActiviteEconomique {
   enquete   Enquete @relation(fields: [enqueteId], references: [id], onDelete: Cascade)
   enqueteId String
 
-  typeActivite String?
-  sousType     String?
+  // Champs communs
+  typeActivite       String  // "mangrove", "agriculture", "elevage", "salariat", "AGR"
+  importanceActivite String? // "principale"/"secondaire"/"tertiaire"
+  
+  // Champs pour la mangrove
+  autreRessourceExploitee String?  // Ressource spécifique (ex: "miel", "bois")
+  utilisationRessource    String?  // "vente"/"autoconsommation"
+  prixVente               Int?
+  frequenceCollecte       Int?
+  frequenceVente          Int?
+  saisonHaute             String?
+  saisonBasse             String?
+  
+  // Champs pour l'agriculture
+  activiteAgricole        String?  // Type de culture
+  complementaritePeche    String?  // "Cumulé"/"alternative"
+  frequenceActiviteAgricole String?
+  superficieCultivee      Float?   // en hectares
+  quantiteProduite        Float?   // en kg
+  statutFoncier           String?
+  lieuExploitationAgricole String?
+  outilsProduction        String?
+  
+  // Champs pour l'élevage
+  sousTypeElevage         String?  // "bovin", "caprin_ovin", etc.
+  effectifElevage         Int?
+  zonePaturage            String?
+  frequenceSoins          String?
+  
+  // Champs pour le salariat
+  activiteSalariale       String?
+  dureeConsacreeSalariat  Int?     // en jours/mois
+  frequenceMensuelleSalariat Int?
+  lieuExerciceSalariat    String?
+  revenuMensuelSalariat   Float?   // en MGA
+  
+  // Champs pour les AGR
+  activiteGeneratrice     String?
+  dureeActiviteAGR        Int?     // en jours
+  frequenceMensuelleAGR   Int?
+  lieuExerciceAGR         String?
+  revenuMensuelAGR        Float?   // en MGA
 
-  utilisationRessource       String?
-  prixVente                  Int?
-  frequenceCollecte          String?
-  frequenceCommercialisation String?
-  saisonHaute                String?
-  saisonBasse                String?
-  importanceActivite         String?
-
-  lienAvecPeche      String?
-  superficie         Float?
-  productionAnnuelle Float?
-  regimeFoncier      String?
-  localisation       String?
-  outilsUtilises     String?
-
-  frequenceActivite String?
-
-  dureeExperience String?
-  nombreAnimaux   Int?
-  zonePaturage    String?
-  frequenceSoins  String?
-
-  tempsConsacreHebdo   Int?
-  revenuMensuel        Float?
-  lieuExercice         String?
-  niveauSpecialization String?
-
+  // Relations
   pecheur    Pecheur[]
   collecteur Collecteur[]
 

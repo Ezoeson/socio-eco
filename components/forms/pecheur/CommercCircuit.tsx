@@ -220,7 +220,7 @@ export function CommercialCircuit({
 
                     {circuit.determinePrix && (
                       <div className="space-y-2">
-                        <Label>Prix unitaire</Label>
+                        <Label>Prix unitaire (MGA)</Label>
                         <Input
                           type="number"
                           value={circuit.prixUnitaire || ""}
@@ -371,7 +371,7 @@ export function CommercialCircuit({
 
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label>Prix avant COVID</Label>
+                        <Label>Prix avant COVID (MGA)</Label>
                         <Input
                           type="number"
                           value={circuit.prixAvantCorona || ""}
@@ -385,7 +385,7 @@ export function CommercialCircuit({
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label>Prix pendant COVID</Label>
+                        <Label>Prix pendant COVID (MGA)</Label>
                         <Input
                           type="number"
                           value={circuit.prixPendantCorona || ""}
@@ -401,7 +401,7 @@ export function CommercialCircuit({
                     </div>
 
                     <div className="space-y-2">
-                      <Label>Prix après COVID</Label>
+                      <Label>Prix après COVID (MGA)</Label>
                       <Input
                         type="number"
                         value={circuit.prixApresCorona || ""}

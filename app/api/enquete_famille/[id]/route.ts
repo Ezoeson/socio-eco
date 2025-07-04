@@ -128,6 +128,9 @@ export async function PUT(request: Request) {
       await prisma.membreFamille.deleteMany({
         where: { enqueteId: data.id },
       });
+      await prisma.activiteEconomique.deleteMany({
+        where: { enqueteId: data.id },
+      });
 
       if (existingEnquete.pecheur) {
         await prisma.pratiquePeche.deleteMany({
@@ -290,6 +293,54 @@ export async function PUT(request: Request) {
               }
             : existingEnquete.pecheur
             ? { delete: true }
+            : undefined,
+          activites: data.activites
+            ? {
+                create: data.activites.map((activite) => ({
+                  typeActivite: activite.typeActivite,
+                  importanceActivite: activite.importanceActivite,
+
+                  // Champs mangrove
+                  autreRessourceExploitee: activite.autreRessourceExploitee,
+                  utilisationRessource: activite.utilisationRessource,
+                  prixVente: activite.prixVente,
+                  frequenceCollecte: activite.frequenceCollecte,
+                  frequenceVente: activite.frequenceVente,
+                  saisonHaute: activite.saisonHaute,
+                  saisonBasse: activite.saisonBasse,
+
+                  // Champs agriculture
+                  activiteAgricole: activite.activiteAgricole,
+                  complementaritePeche: activite.complementaritePeche,
+                  frequenceActiviteAgricole: activite.frequenceActiviteAgricole,
+                  superficieCultivee: activite.superficieCultivee,
+                  quantiteProduite: activite.quantiteProduite,
+                  statutFoncier: activite.statutFoncier,
+                  lieuExploitationAgricole: activite.lieuExploitationAgricole,
+                  outilsProduction: activite.outilsProduction,
+
+                  // Champs élevage
+                  sousTypeElevage: activite.sousTypeElevage,
+                  effectifElevage: activite.effectifElevage,
+                  zonePaturage: activite.zonePaturage,
+                  frequenceSoins: activite.frequenceSoins,
+
+                  // Champs salariat
+                  activiteSalariale: activite.activiteSalariale,
+                  dureeConsacreeSalariat: activite.dureeConsacreeSalariat,
+                  frequenceMensuelleSalariat:
+                    activite.frequenceMensuelleSalariat,
+                  lieuExerciceSalariat: activite.lieuExerciceSalariat,
+                  revenuMensuelSalariat: activite.revenuMensuelSalariat,
+
+                  // Champs AGR
+                  activiteGeneratrice: activite.activiteGeneratrice,
+                  dureeActiviteAGR: activite.dureeActiviteAGR,
+                  frequenceMensuelleAGR: activite.frequenceMensuelleAGR,
+                  lieuExerciceAGR: activite.lieuExerciceAGR,
+                  revenuMensuelAGR: activite.revenuMensuelAGR,
+                })),
+              }
             : undefined,
         },
         include: {

@@ -158,8 +158,8 @@ export default function ListeEnquetes() {
             </p>
           </div>
           <Link href="/enquete/ajout">
-            <Button className="cursor-pointer">
-              <div className="flex justify-center items-center">
+            <Button className="cursor-pointer bg-blue-500 text-white">
+              <div className="flex justify-center items-center ">
                 <Plus className="h-4 w-4 mr-2" />
                 <span className="hidden md:block">Nouvelle enquête</span>
               </div>
@@ -178,7 +178,7 @@ export default function ListeEnquetes() {
                     </span>
                   </CardTitle>
                   <div className="flex items-center gap-2">
-                    <Search className="h-4 w-4 text-gray-400" />
+                    <Search className="h-4 w-4 text-blue-600" />
                     <Input
                       placeholder="Rechercher une enquête..."
                       value={searchTerm}

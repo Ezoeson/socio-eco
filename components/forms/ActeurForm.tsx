@@ -292,8 +292,8 @@ export function ActeurForm() {
     <div className="max-w-7xl mx-auto space-y-6">
       {/* En-tête... */}
       <div className="flex items-center gap-4">
-        <Button variant="outline" size="icon" onClick={() => router.back()}>
-          <ChevronLeft className="h-4 w-4" />
+        <Button variant="outline" size="icon"  className="bg-blue-500" onClick={() => router.back()}>
+          <ChevronLeft className="h-4 w-4 text-white" />
         </Button>
         <h2 className="text-3xl font-bold">Enquête</h2>
       </div>
@@ -301,12 +301,12 @@ export function ActeurForm() {
       <div className="flex items-center gap-3 mb-6">
         <User className="h-8 w-8 text-blue-600" />
         <div>
-          <h1 className="text-2xl font-bold">Nouvelle Enquête</h1>
+          <h1 className="text-md font-bold">Nouvelle Enquête</h1>
           <p className="text-gray-600">Enregistrer une nouvelle enquête</p>
         </div>
       </div>
       <form onSubmit={handleSubmit}>
-        <Tabs defaultValue="general" className="space-y-6">
+        <Tabs defaultValue="general" className="space-y-6 ">
           <TabsList
             className="grid w-full  gap-2 "
             style={{
@@ -319,14 +319,14 @@ export function ActeurForm() {
                 value={tab.value}
                 className="flex items-center gap-2"
               >
-                <tab.icon className="h-4 w-4" />
+                <tab.icon className="h-10 w-10 text-blue-500" />
                 <span className="hidden md:block">{tab.label}</span>
               </TabsTrigger>
             ))}
           </TabsList>
 
           {/* Contenu des onglets... */}
-          <TabsContent value="general">
+          <TabsContent value="general" className=" shadow-md shadow-blue-500 ">
             <Card>
               <CardHeader>
                 <CardTitle>Informations de base</CardTitle>
@@ -559,7 +559,7 @@ export function ActeurForm() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="famille">
+          <TabsContent value="famille" className=" shadow-md shadow-blue-500 ">
             <Card>
               <CardHeader>
                 <CardTitle>Composition familiale</CardTitle>
@@ -575,7 +575,10 @@ export function ActeurForm() {
             </Card>
           </TabsContent>
           {formData.estPecheur && (
-            <TabsContent value="pecheur">
+            <TabsContent
+              value="pecheur"
+              className=" shadow-md shadow-blue-500 "
+            >
               <FishermanTab
                 pecheur={formData.Pecheur?.[0] || { id: crypto.randomUUID() }}
                 onPecheurChange={(pecheur) =>
@@ -585,7 +588,10 @@ export function ActeurForm() {
             </TabsContent>
           )}
           {formData.estCollecteur && (
-            <TabsContent value="collecteur">
+            <TabsContent
+              value="collecteur"
+              className=" shadow-md shadow-blue-500 "
+            >
               <Card>
                 <CardHeader>
                   <CardTitle>Informations sur le collecteur</CardTitle>
@@ -620,11 +626,16 @@ export function ActeurForm() {
           <Button
             type="button"
             variant="outline"
+            className="bg-gray-950 text-white"
             onClick={() => router.push("/enquete")}
           >
             Annuler
           </Button>
-          <Button type="submit" disabled={isSubmitting}>
+          <Button
+            type="submit"
+            disabled={isSubmitting}
+            className=" shadow-md shadow-blue-500 bg-blue-500 dark:text-white "
+          >
             {isSubmitting ? "Enregistrement..." : "Enregistrer l'enquête"}
           </Button>
         </div>

@@ -3,7 +3,7 @@
 import {
   Building,
   ClipboardList,
-  GalleryVerticalEnd,
+  // GalleryVerticalEnd,
   Globe,
   Home,
   Layers,
@@ -15,7 +15,7 @@ import {
 
 import { NavMain } from "@/components/nav-main";
 import { NavUser } from "@/components/nav-user";
-import { TeamSwitcher } from "@/components/team-switcher";
+// import { TeamSwitcher } from "@/components/team-switcher";
 import {
   Sidebar,
   SidebarContent,
@@ -31,23 +31,23 @@ const data = {
     email: "nambinintsoa6017@gmail.com",
     avatar: "",
   },
-  teams: [
-    {
-      name: "Magnirike",
-      logo: GalleryVerticalEnd,
-      plan: "Enterprise",
-    },
-    // {
-    //   name: 'Acme Corp.',
-    //   logo: AudioWaveform,
-    //   plan: 'Startup',
-    // },
-    // {
-    //   name: 'Evil Corp.',
-    //   logo: Command,
-    //   plan: 'Free',
-    // },
-  ],
+  // teams: [
+  //   {
+  //     name: "Magnirike",
+  //     logo: GalleryVerticalEnd,
+  //     plan: "Enterprise",
+  //   },
+  //   // {
+  //   //   name: 'Acme Corp.',
+  //   //   logo: AudioWaveform,
+  //   //   plan: 'Startup',
+  //   // },
+  //   // {
+  //   //   name: 'Evil Corp.',
+  //   //   logo: Command,
+  //   //   plan: 'Free',
+  //   // },
+  // ],
   navMain: [
     {
       title: "Localisation",
@@ -115,7 +115,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
-        <TeamSwitcher teams={data.teams} />
+        {/* <TeamSwitcher teams={data.teams} /> */}
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={data.navMain} />

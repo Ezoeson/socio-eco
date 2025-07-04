@@ -334,7 +334,12 @@ export function ActeurEditForm() {
 
       <form onSubmit={handleSubmit}>
         <Tabs defaultValue="general" className="space-y-6">
-          <TabsList className={`grid w-full grid-cols-${tabCount} gap-2`}>
+          <TabsList
+            className="grid w-full  gap-2 "
+            style={{
+              gridTemplateColumns: `repeat(${tabCount}, minmax(0, 1fr))`,
+            }}
+          >
             {visibleTabs?.map((tab) => (
               <TabsTrigger
                 key={tab.value}
@@ -342,7 +347,7 @@ export function ActeurEditForm() {
                 className="flex items-center gap-2"
               >
                 <tab.icon className="h-4 w-4" />
-                {tab.label}
+                <span className="hidden md:block">{tab.label}</span>
               </TabsTrigger>
             ))}
           </TabsList>

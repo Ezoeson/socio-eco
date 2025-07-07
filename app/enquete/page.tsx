@@ -1,19 +1,22 @@
 "use client";
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import Wrapper from "@/components/Wrapper";
+import { Plus, Search, Edit, Trash2, Eye, Users } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
 import {
-  CircleAlert,
-  Edit,
-  Eye,
-  Plus,
-  Search,
-  Trash2,
-  Users,
-} from "lucide-react";
-import { useEffect, useState } from "react";
-
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import {
   Dialog,
   DialogContent,
@@ -29,401 +32,384 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import Link from "next/link";
+import { toast } from "sonner";
+import { Skeleton } from "@/components/ui/skeleton";
+import { PagePagination } from "@/components/pagination";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
+import Link from "next/link";
 
-import { Skeleton } from "@/components/ui/skeleton";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import { toast } from "sonner";
-
-type Enquete = {
+interface Enquete {
   id: string;
   nomPerscible: string;
+  nomRepondant?: string;
+  dateEnquete: Date;
   estPecheur: boolean;
   estCollecteur: boolean;
   touteActivite: boolean;
-  nomRepondant?: string;
-  dateEnquete?: Date;
-  secteur?: {
+  secteur: {
     id: string;
     nom: string;
+    fokontany: {
+      nom: string;
+    };
   };
-  enqueteur?: {
+  enqueteur: {
     id: string;
     nom: string;
+    prenom: string;
+    code: string;
   };
-  membresFamille?: {
+  membresFamille: {
     id: string;
     nom: string;
-    age?: number;
-    sexe?: "MASCULIN" | "FEMININ";
-    estChefMenage?: boolean;
-    lienFamilial?: string;
-    frequentationEcole?: boolean;
-    niveauEducation?: string;
-    enqueteId: string;
+    age: number;
+    lienFamilial: string;
   }[];
-};
+}
+
+interface PaginatedResponse {
+  data: Enquete[];
+  total: number;
+  page: number;
+  totalPages: number;
+}
+
+const ITEMS_PER_PAGE = 10;
 
 export default function ListeEnquetes() {
-  const [enquetes, setEnquetes] = useState<Enquete[]>([]);
-
+  const [data, setData] = useState<PaginatedResponse>({
+    data: [],
+    total: 0,
+    page: 1,
+    totalPages: 1,
+  });
   const [searchTerm, setSearchTerm] = useState("");
-  const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [isDeleteModal, setIsDeleteModal] = useState(false);
-  // const [selectedEnqueteId, setSelectedEnqueteId] = useState<string | null>(
-  //   null
-  // );
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isMutating, setIsMutating] = useState(false);
+  const [dateFilter, setDateFilter] = useState({
+    start: "",
+    end: "",
+  });
 
-  useEffect(
-    () => {
-      const fetchData = async () => {
-        try {
-          // Fetch enquetes
-          const enqueteResponse = await fetch("/api/enquete_famille");
-          const enqueteData = await enqueteResponse.json();
-          setEnquetes(enqueteData);
-          console.log("Enquêtes:", enqueteData);
-        } catch (error) {
-          console.error("Error fetching data:", error);
-          setLoading(false);
-        } finally {
-          setLoading(false);
-        }
-      };
+  const fetchData = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      let url = `/api/enquete_famille?page=${data.page}`;
 
+      if (searchTerm) {
+        url += `&search=${encodeURIComponent(searchTerm)}`;
+      }
+      if (dateFilter.start) {
+        url += `&dateDebut=${dateFilter.start}`;
+      }
+      if (dateFilter.end) {
+        url += `&dateFin=${dateFilter.end}`;
+      }
+
+      const response = await fetch(url);
+
+      if (!response.ok) throw new Error("Failed to fetch enquetes");
+
+      const responseData = await response.json();
+      const paginatedData = Array.isArray(responseData)
+        ? {
+            data: responseData,
+            total: responseData.length,
+            page: 1,
+            totalPages: 1,
+          }
+        : responseData;
+
+      setData(paginatedData);
+    } catch (error) {
+      console.error("Fetch error:", error);
+      toast.error("Erreur lors du chargement des enquêtes");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [data.page, searchTerm, dateFilter]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
       fetchData();
-    },
-    [
-      // This dependency is not needed here, but kept for consistency
-    ]
-  );
+    }, 300);
 
-  const filteredEnquetes = enquetes?.filter((enquete) =>
-    enquete.nomPerscible.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+    return () => clearTimeout(timer);
+  }, [fetchData]);
 
-  const formatDate = (date?: Date) => {
-    if (!date) return "Non spécifiée";
+  const handlePageChange = (page: number) => {
+    setData((prev) => ({ ...prev, page }));
+  };
+
+  const formatDate = (date: Date) => {
     return format(new Date(date), "PPP", { locale: fr });
   };
-  const handleDelete = () => {
+
+  const getEnqueteType = (enquete: Enquete) => {
+    const types = [];
+    if (enquete.estPecheur) types.push("Pêcheur");
+    if (enquete.estCollecteur) types.push("Collecteur");
+    if (enquete.touteActivite) types.push("Autres activités");
+    return types.join(" / ");
+  };
+
+  const handleDelete = async () => {
     if (!deletingId) return;
 
-    fetch(`/api/enquete_famille/${deletingId}`, {
-      method: "DELETE",
-    })
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error("Erreur lors de la suppression de l'enquête");
-        }
-        return response.json();
-      })
-      .then(() => {
-        setEnquetes((prev) =>
-          prev.filter((enquete) => enquete.id !== deletingId)
-        );
-        toast.success("Suppression réussie");
-      })
-      .catch((error) => {
-        console.error("Erreur:", error);
-        toast("Erreur lors de la suppression");
-      })
-      .finally(() => {
-        setIsDeleteModal(false);
-        setDeletingId(null);
+    try {
+      setIsMutating(true);
+      const response = await fetch(`/api/enquetes/${deletingId}`, {
+        method: "DELETE",
       });
+
+      if (!response.ok) throw new Error("Delete failed");
+
+      toast.success("Enquête supprimée avec succès");
+
+      if (data.data.length === 1 && data.page > 1) {
+        setData((prev) => ({ ...prev, page: prev.page - 1 }));
+      } else {
+        fetchData();
+      }
+    } catch (error) {
+      console.error("Delete error:", error);
+      toast.error("Échec de la suppression");
+    } finally {
+      setIsDeleteModalOpen(false);
+      setDeletingId(null);
+      setIsMutating(false);
+    }
   };
 
   return (
     <Wrapper>
       <div className="space-y-6">
-        <div className="flex justify-between items-center">
+        <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
           <div>
-            <h2 className="text-3xl font-bold">Gestion des Enquêtes</h2>
-            <p className="text-gray-600">
-              Liste des enquêtes en cours et passées
+            <h1 className="text-2xl font-bold tracking-tight">
+              Gestion des Enquêtes
+            </h1>
+            <p className="text-muted-foreground">
+              {data.total} enquêtes enregistrées
             </p>
           </div>
-          <Link href="/enquete/ajout">
-            <Button className="cursor-pointer bg-blue-500 text-white">
-              <div className="flex justify-center items-center ">
-                <Plus className="h-4 w-4 mr-2" />
-                <span className="hidden md:block">Nouvelle enquête</span>
+
+          <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 w-full">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Rechercher une enquête..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-9 w-full"
+                />
               </div>
-            </Button>
-          </Link>
-        </div>
+              <div className="flex gap-2">
+                <Input
+                  type="date"
+                  value={dateFilter.start}
+                  onChange={(e) =>
+                    setDateFilter({ ...dateFilter, start: e.target.value })
+                  }
+                  className="w-full"
+                  placeholder="Date début"
+                />
+                <Input
+                  type="date"
+                  value={dateFilter.end}
+                  onChange={(e) =>
+                    setDateFilter({ ...dateFilter, end: e.target.value })
+                  }
+                  className="w-full"
+                  placeholder="Date fin"
+                />
+              </div>
+            </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="lg:col-span-2">
-            <Card>
-              <CardHeader>
-                <div className="flex justify-center md:justify-between items-center">
-                  <CardTitle>
-                    <span className="hidden md:block">
-                      Liste des Enquêtes ({filteredEnquetes.length})
-                    </span>
-                  </CardTitle>
-                  <div className="flex items-center gap-2">
-                    <Search className="h-4 w-4 text-blue-600" />
-                    <Input
-                      placeholder="Rechercher une enquête..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="w-64"
-                    />
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Répondant</TableHead>
-                      <TableHead>Personne cible</TableHead>
-                      <TableHead>Type</TableHead>
-                      <TableHead>Date</TableHead>
-                      <TableHead>Secteur</TableHead>
-                      <TableHead>Enquêteur</TableHead>
-                      <TableHead>Famille</TableHead>
-                      <TableHead>Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredEnquetes.length === 0 && !loading ? (
-                      <TableRow>
-                        <TableCell colSpan={7} className="text-center text-2xl">
-                          Aucune enquête trouvée
-                        </TableCell>
-                      </TableRow>
-                    ) : null}
-
-                    {loading
-                      ? Array.from({
-                          length:
-                            filteredEnquetes?.length > 0
-                              ? filteredEnquetes?.length
-                              : 5,
-                        }).map((_, index) => (
-                          <TableRow key={`skeleton-${index}`}>
-                            <TableCell>
-                              <Skeleton className="h-[20px] w-full rounded" />
-                            </TableCell>
-                            <TableCell>
-                              <Skeleton className="h-[20px] w-3/4 rounded" />
-                            </TableCell>
-                            <TableCell>
-                              <Skeleton className="h-[20px] w-2/3 rounded" />
-                            </TableCell>
-                            <TableCell>
-                              <Skeleton className="h-[20px] w-1/2 rounded" />
-                            </TableCell>
-                            <TableCell>
-                              <Skeleton className="h-[20px] w-full rounded" />
-                            </TableCell>
-                            <TableCell>
-                              <Skeleton className="h-[20px] w-3/4 rounded" />
-                            </TableCell>
-                            <TableCell>
-                              <Skeleton className="h-[20px] w-2/3 rounded" />
-                            </TableCell>
-
-                            <TableCell>
-                              <div className="flex gap-2">
-                                <Skeleton className="h-[32px] w-[32px] rounded" />
-                                <Skeleton className="h-[32px] w-[32px] rounded" />
-                                <Skeleton className="h-[32px] w-[32px] rounded" />
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        ))
-                      : filteredEnquetes.map((enquete) => {
-                          const membres = enquete.membresFamille || [];
-                          return (
-                            <TableRow key={enquete.id}>
-                              <TableCell>
-                                {enquete.nomRepondant || "Non spécifié"}
-                              </TableCell>
-                              <TableCell className="font-medium">
-                                {enquete.nomPerscible}
-                              </TableCell>
-                              <TableCell>
-                                {enquete.estPecheur && "Pêcheur "}
-                                {enquete.estCollecteur && "Collecteur "}
-                                {enquete.touteActivite && "Toute activité"}
-                              </TableCell>
-                              <TableCell>
-                                {formatDate(enquete.dateEnquete)}
-                              </TableCell>
-                              <TableCell>
-                                {enquete.secteur
-                                  ? enquete.secteur.nom
-                                  : "Non spécifié"}
-                              </TableCell>
-                              <TableCell>
-                                {enquete.enqueteur?.nom || "Non spécifié"}
-                              </TableCell>
-                              <TableCell>
-                                <Dialog>
-                                  <DialogTrigger asChild>
-                                    <Button
-                                      className="cursor-pointer"
-                                      variant="outline"
-                                      size="sm"
-                                    >
-                                      <Users className="h-4 w-4" />
-                                      <span className="ml-2">
-                                        {membres.length}
-                                      </span>
-                                    </Button>
-                                  </DialogTrigger>
-                                  <DialogContent className="md:min-w-4xl overflow-auto">
-                                    <DialogHeader>
-                                      <DialogTitle>
-                                        Membres de la famille
-                                      </DialogTitle>
-                                      <p className="text-sm text-gray-500">
-                                        Enquête: {enquete.nomPerscible}
-                                      </p>
-                                    </DialogHeader>
-                                    <div className="space-y-4">
-                                      <Table>
-                                        <TableHeader>
-                                          <TableRow>
-                                            <TableHead>Nom</TableHead>
-                                            <TableHead>Âge</TableHead>
-                                            <TableHead>Sexe</TableHead>
-                                            <TableHead>Lien familial</TableHead>
-                                          </TableRow>
-                                        </TableHeader>
-                                        <TableBody>
-                                          {membres.map((membre) => (
-                                            <TableRow key={membre.id}>
-                                              <TableCell>
-                                                {membre.nom}
-                                              </TableCell>
-                                              <TableCell>
-                                                {membre.age || "Non spécifié"}
-                                              </TableCell>
-                                              <TableCell>
-                                                {membre.sexe === "MASCULIN"
-                                                  ? "Homme"
-                                                  : membre.sexe === "FEMININ"
-                                                  ? "Femme"
-                                                  : "-"}
-                                              </TableCell>
-                                              <TableCell>
-                                                {membre.lienFamilial ||
-                                                  "Non spécifié"}
-                                              </TableCell>
-                                            </TableRow>
-                                          ))}
-                                        </TableBody>
-                                      </Table>
-                                    </div>
-                                  </DialogContent>
-                                </Dialog>
-                              </TableCell>
-                              <TableCell>
-                                <div className="flex gap-2">
-                                  <Link href={`/enquete/details/${enquete.id}`}>
-                                    <Button
-                                      className="cursor-pointer"
-                                      variant="outline"
-                                      size="sm"
-                                    >
-                                      <Eye className="h-3 w-3 text-blue-500" />
-                                    </Button>
-                                  </Link>
-                                  <Link
-                                    href={`/enquete/modifier/${enquete.id}`}
-                                  >
-                                    <Button
-                                      className="cursor-pointer"
-                                      variant="outline"
-                                      size="sm"
-                                    >
-                                      <Edit className="h-3 w-3 text-green-500" />
-                                    </Button>
-                                  </Link>
-                                  <AlertDialog
-                                    open={
-                                      isDeleteModal && deletingId === enquete.id
-                                    }
-                                    onOpenChange={(open) => {
-                                      if (!open) {
-                                        setIsDeleteModal(false);
-                                        setDeletingId(null);
-                                      }
-                                    }}
-                                  >
-                                    <AlertDialogTrigger asChild>
-                                      <Button
-                                        className="cursor-pointer"
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() => {
-                                          setDeletingId(enquete.id);
-                                          setIsDeleteModal(true);
-                                        }}
-                                      >
-                                        <Trash2 className="h-3 w-3 text-red-500" />
-                                      </Button>
-                                    </AlertDialogTrigger>
-                                    <AlertDialogContent>
-                                      <AlertDialogHeader>
-                                        <AlertDialogTitle>
-                                          Voulez-vous supprimer cette enquête ?
-                                        </AlertDialogTitle>
-                                        <AlertDialogDescription>
-                                          Cette action est irréversible.
-                                          Êtes-vous sûr de vouloir supprimer
-                                          cette enquête et toutes les données
-                                          associées ?
-                                          <br />
-                                          <strong>
-                                            Nom de l&apos;enquête :{" "}
-                                            {enquete.nomPerscible}
-                                          </strong>
-                                          <CircleAlert className="h-12 w-12 text-red-500 inline-block ml-2  animate-pulse" />
-                                        </AlertDialogDescription>
-                                      </AlertDialogHeader>
-                                      <AlertDialogFooter>
-                                        <AlertDialogCancel>
-                                          Annuler
-                                        </AlertDialogCancel>
-                                        <AlertDialogAction
-                                          onClick={() => handleDelete()}
-                                        >
-                                          Confirmer
-                                        </AlertDialogAction>
-                                      </AlertDialogFooter>
-                                    </AlertDialogContent>
-                                  </AlertDialog>
-                                </div>
-                              </TableCell>
-                            </TableRow>
-                          );
-                        })}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
+            <Link href="/enquete/ajout" className="w-full md:w-auto">
+              <Button className="w-full">
+                <Plus className="h-4 w-4 mr-2" />
+                Nouvelle enquête
+              </Button>
+            </Link>
           </div>
         </div>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Liste des Enquêtes</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Répondant</TableHead>
+                  <TableHead>Personne cible</TableHead>
+                  <TableHead>Type</TableHead>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Secteur</TableHead>
+                  <TableHead>Enquêteur</TableHead>
+                  <TableHead>Famille</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {isLoading ? (
+                  Array.from({ length: ITEMS_PER_PAGE }).map((_, i) => (
+                    <TableRow key={`skeleton-${i}`}>
+                      {Array.from({ length: 8 }).map((_, j) => (
+                        <TableCell key={`skeleton-cell-${i}-${j}`}>
+                          <Skeleton className="h-4 w-full" />
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  ))
+                ) : data.data.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={8} className="text-center h-24">
+                      {searchTerm || dateFilter.start || dateFilter.end
+                        ? "Aucune enquête trouvée"
+                        : "Aucune enquête enregistrée"}
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  data.data.map((enquete) => (
+                    <TableRow key={enquete.id}>
+                      <TableCell>
+                        {enquete.nomRepondant || "Non spécifié"}
+                      </TableCell>
+                      <TableCell className="font-medium">
+                        {enquete.nomPerscible}
+                      </TableCell>
+                      <TableCell>{getEnqueteType(enquete)}</TableCell>
+                      <TableCell>{formatDate(enquete.dateEnquete)}</TableCell>
+                      <TableCell>
+                        {enquete.secteur?.nom || "Non spécifié"}
+                      </TableCell>
+                      <TableCell>
+                        {enquete.enqueteur?.prenom} {enquete.enqueteur?.nom}
+                      </TableCell>
+                      <TableCell>
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button variant="outline" size="sm">
+                              <Users className="h-4 w-4 mr-2" />
+                              {enquete.membresFamille.length}
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent className="max-w-2xl">
+                            <DialogHeader>
+                              <DialogTitle>Membres de la famille</DialogTitle>
+                              <p className="text-sm text-muted-foreground">
+                                Enquête: {enquete.nomPerscible}
+                              </p>
+                            </DialogHeader>
+                            <div className="space-y-4">
+                              <Table>
+                                <TableHeader>
+                                  <TableRow>
+                                    <TableHead>Nom</TableHead>
+                                    <TableHead>Âge</TableHead>
+                                    <TableHead>Lien familial</TableHead>
+                                  </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                  {enquete.membresFamille.map((membre) => (
+                                    <TableRow key={membre.id}>
+                                      <TableCell>{membre.nom}</TableCell>
+                                      <TableCell>{membre.age}</TableCell>
+                                      <TableCell>
+                                        {membre.lienFamilial}
+                                      </TableCell>
+                                    </TableRow>
+                                  ))}
+                                </TableBody>
+                              </Table>
+                            </div>
+                          </DialogContent>
+                        </Dialog>
+                      </TableCell>
+                      <TableCell className="flex justify-end gap-2">
+                        <Link href={`/enquete/details/${enquete.id}`}>
+                          <Button variant="ghost" size="sm">
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                        </Link>
+
+                        <Link href={`/enquete/modifier/${enquete.id}`}>
+                          <Button variant="ghost" size="sm">
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                        </Link>
+
+                        <AlertDialog
+                          open={isDeleteModalOpen && deletingId === enquete.id}
+                          onOpenChange={(open) => {
+                            setIsDeleteModalOpen(open);
+                            if (!open) setDeletingId(null);
+                          }}
+                        >
+                          <AlertDialogTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                setDeletingId(enquete.id);
+                                setIsDeleteModalOpen(true);
+                              }}
+                            >
+                              <Trash2 className="h-4 w-4 text-red-500" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>
+                                Confirmer la suppression
+                              </AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Êtes-vous sûr de vouloir supprimer
+                                l&apos;enquête de {enquete.nomPerscible} ?
+                                <br />
+                                <span className="text-red-500">
+                                  Cette action est irréversible.
+                                </span>
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel disabled={isMutating}>
+                                Annuler
+                              </AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={handleDelete}
+                                disabled={isMutating}
+                              >
+                                {isMutating ? "Suppression..." : "Confirmer"}
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+
+        {data.total > ITEMS_PER_PAGE && (
+          <div className="flex justify-center">
+            <PagePagination
+              currentPage={data.page}
+              totalPages={data.totalPages}
+              onPageChange={handlePageChange}
+            />
+          </div>
+        )}
       </div>
     </Wrapper>
   );

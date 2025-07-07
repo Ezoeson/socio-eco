@@ -1,10 +1,10 @@
 "use client";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import Wrapper from "@/components/Wrapper";
 import { Plus, Search, Edit, Trash2, MapPin } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Label } from "@/components/ui/label";
 import {
   AlertDialog,
@@ -17,6 +17,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { toast } from "sonner";
 import {
   Dialog,
   DialogContent,
@@ -25,13 +26,6 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
   Table,
   TableBody,
   TableCell,
@@ -39,353 +33,401 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
+import { PagePagination } from "@/components/pagination";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
-type Commune = {
+interface District {
   id: string;
   nom: string;
-  districtId: string;
-  district: { id: string; nom: string };
-};
+  region: {
+    id: string;
+    nom: string;
+  };
+}
 
-type District = {
+interface Commune {
   id: string;
   nom: string;
-};
+  district: District;
+  fokontanyCount: number;
+}
+
+interface PaginatedResponse {
+  data: Commune[];
+  total: number;
+  page: number;
+  totalPages: number;
+}
+
+const ITEMS_PER_PAGE = 10;
 
 export default function Communes() {
-  const [communes, setCommunes] = useState<Commune[]>([]);
-  const [formData, setFormData] = useState<{
-    nom?: string;
-    districtId: string;
-  }>({
-    districtId: "",
+  // États
+  const [data, setData] = useState<PaginatedResponse>({
+    data: [],
+    total: 0,
+    page: 1,
+    totalPages: 1,
   });
+  const [searchTerm, setSearchTerm] = useState("");
+  const [formData, setFormData] = useState<{ nom: string; districtId: string }>(
+    {
+      nom: "",
+      districtId: "",
+    }
+  );
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [districtOptions, setDistrictOptions] = useState<District[]>([]);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [isDeleteModal, setIsDeleteModal] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isMutating, setIsMutating] = useState(false);
+  const [districts, setDistricts] = useState<District[]>([]);
+
+  // Fetch data avec pagination et recherche
+  const fetchData = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      const url = `/api/commune?page=${data.page}&search=${encodeURIComponent(
+        searchTerm
+      )}`;
+      const [communesRes, districtsRes] = await Promise.all([
+        fetch(url),
+        fetch("/api/district"),
+      ]);
+
+      if (!communesRes.ok) throw new Error("Failed to fetch communes");
+      if (!districtsRes.ok) throw new Error("Failed to fetch districts");
+
+      const communesData: PaginatedResponse = await communesRes.json();
+      const districtsData = await districtsRes.json();
+
+      setData(communesData);
+      setDistricts(districtsData.data || districtsData);
+    } catch (error) {
+      console.error("Fetch error:", error);
+      toast.error("Erreur lors du chargement des données");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [data.page, searchTerm]);
+
+  // Modifiez l'effet pour réinitialiser la page quand la recherche change
+  useEffect(() => {
+    setData((prev) => ({ ...prev, page: 1 })); // Réinitialise à la page 1
+  }, [searchTerm]);
 
   useEffect(() => {
-    const fetchCommune = async () => {
-      try {
-        const response = await fetch("/api/commune");
-        const data = await response.json();
-        setCommunes(data);
-      } catch (error) {
-        console.error("Error fetching communes:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
+    const timer = setTimeout(() => {
+      fetchData();
+    }, 300);
 
-    const fetchDistricts = async () => {
-      try {
-        const response = await fetch("/api/district");
-        const data = await response.json();
-        setDistrictOptions(data);
-      } catch (error) {
-        console.error("Error fetching districts:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
+    return () => clearTimeout(timer);
+  }, [fetchData]);
 
-    fetchCommune();
-    fetchDistricts();
-  }, [
-    setCommunes,
-    setDistrictOptions,
-    setFormData,
-    setEditingId,
-    isDialogOpen,
-  ]);
-
-  const filteredCommunes = communes.filter((commune) =>
-    commune?.nom?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  const handleSubmit = (e: React.FormEvent) => {
+  // Gestion du formulaire
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.nom || !formData.districtId) {
-      alert("Veuillez remplir tous les champs obligatoires.");
+      toast.error("Veuillez remplir tous les champs");
       return;
     }
 
-    const method = editingId ? "PUT" : "POST";
-    const url = editingId ? `/api/commune/${editingId}` : "/api/commune";
-
     try {
-      // create
-      fetch(url, {
-        method,
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          nom: formData.nom,
-          districtId: formData.districtId,
-        }),
-      })
-        .then((response) => response.json())
-        .then((data) => {
-          if (editingId) {
-            // update
-            setCommunes(
-              communes.map((commune) =>
-                commune.id === editingId ? { ...commune, ...formData } : commune
-              )
-            );
-          } else {
-            // create
-            setCommunes([...communes, data]);
-          }
-          setIsDialogOpen(false);
-          setFormData({ districtId: "" });
-          setEditingId(null);
-        });
+      setIsMutating(true);
+      const method = editingId ? "PUT" : "POST";
+      const url = editingId ? `/api/commune/${editingId}` : "/api/commune";
 
-      // update
+      const response = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
+
+      if (!response.ok)
+        throw new Error(editingId ? "Update failed" : "Create failed");
+
+      toast.success(editingId ? "Commune mise à jour" : "Commune créée");
+      setIsDialogOpen(false);
+      fetchData(); // Recharger les données
     } catch (error) {
-      console.error("Error submitting form:", error);
+      console.error("Form error:", error);
+      toast.error("Une erreur est survenue");
+    } finally {
+      setIsMutating(false);
     }
   };
 
-  const handleEdit = (commune: Commune) => {
-    setFormData({ nom: commune.nom, districtId: commune.districtId });
-    setEditingId(commune.id);
-    setIsDialogOpen(true);
+  // Suppression robuste avec gestion des erreurs
+  const handleDelete = async () => {
+    if (!deletingId) return;
+
+    try {
+      setIsMutating(true);
+      const response = await fetch(`/api/commune/${deletingId}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) throw new Error("Delete failed");
+
+      toast.success("Commune supprimée");
+
+      // Gestion intelligente de la pagination après suppression
+      if (data.data.length === 1 && data.page > 1) {
+        setData((prev) => ({ ...prev, page: prev.page - 1 }));
+      } else {
+        fetchData();
+      }
+    } catch (error) {
+      console.error("Delete error:", error);
+      toast.error("Échec de la suppression");
+    } finally {
+      setIsDeleteModalOpen(false);
+      setDeletingId(null);
+      setIsMutating(false);
+    }
   };
 
-  const handleDelete = () => {
-    fetch(`/api/commune/${deletingId}`, {
-      method: "DELETE",
-    })
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error("Erreur lors de la suppression de la région");
-        }
-        return response.json();
-      })
-      .then(() => {
-        setCommunes((prev) =>
-          prev.filter((commune) => commune.id !== deletingId)
-        );
-        toast("Suppression réussie");
-      })
-      .catch((error) => {
-        console.error("Erreur:", error);
-      })
-      .finally(() => {
-        setIsDialogOpen(false);
-        setDeletingId(null);
-      });
+  // Gestion de la pagination
+  const handlePageChange = (page: number) => {
+    setData((prev) => ({ ...prev, page }));
   };
 
   return (
     <Wrapper>
       <div className="space-y-6">
-        <div className="flex justify-between items-center">
+        {/* En-tête */}
+        <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
           <div>
-            <h2 className="text-3xl font-bold flex items-center gap-2">
-              <MapPin className="h-8 w-8 text-green-600" />
+            <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
+              <MapPin className="h-6 w-6 text-green-600" />
               Gestion des Communes
-            </h2>
-            <p className="text-gray-600">
-              Administration territoriale - Niveau commune
+            </h1>
+            <p className="text-muted-foreground">
+              {data.total} communes enregistrées
             </p>
           </div>
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button
-                className="cursor-pointer"
-                onClick={() => {
-                  setFormData({ districtId: "" });
+
+          <div className="flex gap-2">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Rechercher une commune..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-9 w-full md:w-64"
+              />
+            </div>
+
+            <Dialog
+              open={isDialogOpen}
+              onOpenChange={(open) => {
+                setIsDialogOpen(open);
+                if (!open) {
                   setEditingId(null);
-                }}
-              >
-                <div className="flex justify-center items-center">
+                  setFormData({ nom: "", districtId: "" });
+                }
+              }}
+            >
+              <DialogTrigger asChild>
+                <Button>
                   <Plus className="h-4 w-4 mr-2" />
-                  <span className="hidden md:block">Nouveau commune</span>
-                </div>
-              </Button>
-            </DialogTrigger>
-
-            <DialogContent className="max-w-md">
-              <DialogHeader>
-                <DialogTitle>
-                  {editingId ? "Modifier un commune" : "Ajouter un commune"}
-                </DialogTitle>
-              </DialogHeader>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                  <Label htmlFor="nom">Nom du secteur</Label>
-                  <Input
-                    id="nom"
-                    value={formData.nom || ""}
-                    onChange={(e) =>
-                      setFormData((prev) => ({ ...prev, nom: e.target.value }))
-                    }
-                    required
-                  />
-                  <Select
-                    value={formData.districtId || ""}
-                    onValueChange={(value) =>
-                      setFormData((prev) => ({ ...prev, districtId: value }))
-                    }
-                    required
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Sélectionner un district" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {districtOptions.map((district) => (
-                        <SelectItem key={district.id} value={district.id}>
-                          {district.nom}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <Button type="submit" className="w-full">
-                  {editingId ? "Modifier" : "Ajouter"}
+                  Nouvelle commune
                 </Button>
-              </form>
-            </DialogContent>
-          </Dialog>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="lg:col-span-2">
-            <Card>
-              <CardHeader>
-                <div className="flex md:justify-between items-center">
-                  <CardTitle className="hidden md:block">
-                    <span>Liste des Communes ({filteredCommunes.length})</span>
-                  </CardTitle>
-                  <div className="flex items-center gap-2">
-                    <Search className="h-4 w-4 text-gray-400" />
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>
+                    {editingId ? "Modifier commune" : "Créer une commune"}
+                  </DialogTitle>
+                </DialogHeader>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label>Nom de la commune</Label>
                     <Input
-                      placeholder="Rechercher un commune..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="w-64"
+                      value={formData.nom}
+                      onChange={(e) =>
+                        setFormData({ ...formData, nom: e.target.value })
+                      }
+                      required
                     />
                   </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Nom du commune</TableHead>
-                      <TableHead>District</TableHead>
-                      <TableHead>Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredCommunes.length === 0 && !loading ? (
-                      <TableRow>
-                        <TableCell colSpan={3} className="text-center text-2xl">
-                          Aucune commune trouvée
-                        </TableCell>
-                      </TableRow>
-                    ) : null}
-
-                    {loading
-                      ? Array.from({
-                          length:
-                            filteredCommunes.length > 0
-                              ? filteredCommunes.length
-                              : 5,
-                        }).map((_, index) => (
-                          <TableRow key={`skeleton-${index}`}>
-                            <TableCell>
-                              <Skeleton className="h-[20px] w-1/2 rounded" />
-                            </TableCell>
-                            <TableCell>
-                              <div className="flex flex-col gap-2">
-                                <Skeleton className="h-[16px] w-full rounded" />
-                                <Skeleton className="h-[16px] w-3/4 rounded" />
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              <div className="flex gap-2">
-                                <Skeleton className="h-[32px] w-[32px] rounded" />
-                                <Skeleton className="h-[32px] w-[32px] rounded" />
-                                <Skeleton className="h-[32px] w-[32px] rounded" />
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        ))
-                      : filteredCommunes.map((commune) => (
-                          <TableRow key={commune?.id}>
-                            <TableCell className="font-medium">
-                              {commune?.nom}
-                            </TableCell>
-                            <TableCell>{commune?.district.nom}</TableCell>
-                            <TableCell>
-                              <div className="flex gap-2">
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => handleEdit(commune)}
-                                >
-                                  <Edit className="h-3 w-3 text-green-500" />
-                                </Button>
-                                <AlertDialog
-                                  open={isDeleteModal}
-                                  onOpenChange={setIsDeleteModal}
-                                >
-                                  <AlertDialogTrigger asChild>
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      onClick={() => {
-                                        setDeletingId(commune.id);
-                                        setIsDeleteModal(true);
-                                      }}
-                                    >
-                                      <Trash2 className="h-3 w-3 text-red-500" />
-                                    </Button>
-                                  </AlertDialogTrigger>
-                                  <AlertDialogContent>
-                                    <AlertDialogHeader>
-                                      <AlertDialogTitle>
-                                        Voulez-vous supprimer?
-                                      </AlertDialogTitle>
-                                      <AlertDialogDescription>
-                                        This action cannot be undone. This will
-                                        permanently delete your account and
-                                        remove your data from our servers.
-                                      </AlertDialogDescription>
-                                    </AlertDialogHeader>
-                                    <AlertDialogFooter>
-                                      <AlertDialogCancel>
-                                        Annuler
-                                      </AlertDialogCancel>
-                                      <AlertDialogAction
-                                        onClick={() => handleDelete()}
-                                      >
-                                        Continue
-                                      </AlertDialogAction>
-                                    </AlertDialogFooter>
-                                  </AlertDialogContent>
-                                </AlertDialog>
-                              </div>
-                            </TableCell>
-                          </TableRow>
+                  <div className="space-y-2">
+                    <Label>District</Label>
+                    <Select
+                      value={formData.districtId}
+                      onValueChange={(value) =>
+                        setFormData({ ...formData, districtId: value })
+                      }
+                      required
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Sélectionnez un district" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {districts.map((district) => (
+                          <SelectItem key={district.id} value={district.id}>
+                            {district.nom} ({district.region.nom})
+                          </SelectItem>
                         ))}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <Button
+                    type="submit"
+                    disabled={isMutating}
+                    className="w-full"
+                  >
+                    {isMutating
+                      ? "En cours..."
+                      : editingId
+                      ? "Modifier"
+                      : "Créer"}
+                  </Button>
+                </form>
+              </DialogContent>
+            </Dialog>
           </div>
         </div>
+
+        {/* Tableau */}
+        <Card>
+          <CardContent className="p-0">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Nom</TableHead>
+                  <TableHead>District</TableHead>
+                  <TableHead>Région</TableHead>
+                  <TableHead>Fokontany</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {isLoading ? (
+                  Array.from({ length: ITEMS_PER_PAGE }).map((_, i) => (
+                    <TableRow key={`skeleton-${i}`}>
+                      <TableCell>
+                        <Skeleton className="h-4 w-3/4" />
+                      </TableCell>
+                      <TableCell>
+                        <Skeleton className="h-4 w-1/2" />
+                      </TableCell>
+                      <TableCell>
+                        <Skeleton className="h-4 w-1/2" />
+                      </TableCell>
+                      <TableCell>
+                        <Skeleton className="h-4 w-1/4" />
+                      </TableCell>
+                      <TableCell className="flex justify-end gap-2">
+                        <Skeleton className="h-8 w-8" />
+                        <Skeleton className="h-8 w-8" />
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : data.data.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center h-24">
+                      {searchTerm
+                        ? "Aucune commune trouvée"
+                        : "Aucune commune enregistrée"}
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  data.data.map((commune) => (
+                    <TableRow key={commune.id}>
+                      <TableCell className="font-medium">
+                        {commune.nom}
+                      </TableCell>
+                      <TableCell>{commune.district.nom}</TableCell>
+                      <TableCell>{commune.district.region.nom}</TableCell>
+                      <TableCell>{commune.fokontanyCount}</TableCell>
+                      <TableCell className="flex justify-end gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setFormData({
+                              nom: commune.nom,
+                              districtId: commune.district.id,
+                            });
+                            setEditingId(commune.id);
+                            setIsDialogOpen(true);
+                          }}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+
+                        <AlertDialog
+                          open={isDeleteModalOpen && deletingId === commune.id}
+                          onOpenChange={(open) => {
+                            setIsDeleteModalOpen(open);
+                            if (!open) setDeletingId(null);
+                          }}
+                        >
+                          <AlertDialogTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                setDeletingId(commune.id);
+                                setIsDeleteModalOpen(true);
+                              }}
+                            >
+                              <Trash2 className="h-4 w-4 text-red-500" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>
+                                Confirmer la suppression
+                              </AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Êtes-vous sûr de vouloir supprimer la commune{" "}
+                                <strong>{commune.nom}</strong> ? Cette action
+                                supprimera également {commune.fokontanyCount}{" "}
+                                fokontanys associés.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel disabled={isMutating}>
+                                Annuler
+                              </AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={handleDelete}
+                                disabled={isMutating}
+                              >
+                                {isMutating ? "Suppression..." : "Confirmer"}
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+
+        {/* Pagination */}
+        {data.total > ITEMS_PER_PAGE && (
+          <div className="flex justify-center">
+            <PagePagination
+              currentPage={data.page}
+              totalPages={data.totalPages}
+              onPageChange={handlePageChange}
+            />
+          </div>
+        )}
       </div>
     </Wrapper>
   );

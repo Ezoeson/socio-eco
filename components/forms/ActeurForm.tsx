@@ -36,6 +36,7 @@ import FishermanTab from "./pecheur/FishermanTab";
 import { MembreFamilleForm } from "./MembreFamilleForm";
 import { Skeleton } from "../ui/skeleton";
 import { ActiviteEconomiqueForm } from "./ActiviteEconomiqueForm";
+import MadaDistrict from "@/db/district";
 
 export function ActeurForm() {
   const router = useRouter();
@@ -122,7 +123,7 @@ export function ActeurForm() {
         ]);
 
         setEnqueteurs(enqueteursData);
-        setSecteurs(secteursData);
+        setSecteurs(secteursData.data);
       } catch (error) {
         console.error("Erreur:", error);
         toast.error("Erreur lors du chargement des données initiales");
@@ -152,7 +153,7 @@ export function ActeurForm() {
   };
 
   const handleSelectChange = (
-    field: "secteurId" | "enqueteurId",
+    field: "secteurId" | "enqueteurId" | "districtOrigine",
     value: string
   ) => {
     setFormData((prev) => ({
@@ -292,7 +293,12 @@ export function ActeurForm() {
     <div className="max-w-7xl mx-auto space-y-6">
       {/* En-tête... */}
       <div className="flex items-center gap-4">
-        <Button variant="outline" size="icon"  className="bg-blue-500" onClick={() => router.back()}>
+        <Button
+          variant="outline"
+          size="icon"
+          className="bg-blue-500"
+          onClick={() => router.back()}
+        >
           <ChevronLeft className="h-4 w-4 text-white" />
         </Button>
         <h2 className="text-3xl font-bold">Enquête</h2>
@@ -478,18 +484,26 @@ export function ActeurForm() {
                     />
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="districtOrigine">
-                      District d&apos;origine
-                    </Label>
-                    <Input
-                      id="districtOrigine"
+                  <div className="space-y-2 w-full">
+                    <Label>District d&apos;origine</Label>
+                    <Select
                       value={formData.districtOrigine || ""}
-                      onChange={(e) =>
-                        handleInputChange("districtOrigine", e.target.value)
+                      onValueChange={(value) =>
+                        handleSelectChange("districtOrigine", value)
                       }
-                      placeholder="District d'origine"
-                    />
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Sélectionnez District d'origine" />
+                      </SelectTrigger>
+                      {/* Place la liste juste sous le trigger */}
+                      <SelectContent className="mt-1">
+                        {MadaDistrict.map((district) => (
+                          <SelectItem key={district} value={district}>
+                            {district.charAt(0).toUpperCase() + district.slice(1)}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
 
                   <div className="space-y-2">

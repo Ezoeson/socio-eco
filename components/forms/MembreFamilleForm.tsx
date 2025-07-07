@@ -12,8 +12,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { MembreFamille } from "@/type/localType";
-
-
+import MadaDistrict from "@/db/district";
 
 interface MembreFamilleFormProps {
   membres: MembreFamille[];
@@ -272,14 +271,23 @@ function MembreCard({
                 <Label htmlFor={`village-${membre.id}`}>
                   Village d&apos;origine
                 </Label>
-                <Input
-                  id={`village-${membre.id}`}
+                <Select
                   value={membre.villageOrigine || ""}
-                  onChange={(e) =>
-                    onModifier(membre.id, "villageOrigine", e.target.value)
+                  onValueChange={(value) =>
+                    onModifier(membre.id, "villageOrigine", value)
                   }
-                  placeholder="Village d'origine"
-                />
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Sélectionnez  son district d'origine" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {MadaDistrict.map((district) => (
+                      <SelectItem key={district} value={district}>
+                        {district}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               <div className="space-y-2">

@@ -1,16 +1,11 @@
 "use client";
-
 import { Button } from "@/components/ui/button";
-
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-
 import Wrapper from "@/components/Wrapper";
-
 import { Plus, Search, Edit, Trash2, MapPin } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Label } from "@/components/ui/label";
-
 import {
   AlertDialog,
   AlertDialogAction,
@@ -22,7 +17,6 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { toast } from "sonner";
 import {
   Dialog,
   DialogContent,
@@ -38,7 +32,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
+import { PagePagination } from "@/components/pagination";
 
 interface Region {
   id: string;
@@ -48,301 +44,334 @@ interface Region {
   fokontany: number;
 }
 
-export default function Region() {
-  const [regions, setRegions] = useState<Region[]>([]);
-  const [searchTerm, setSearchTerm] = useState("");
+interface PaginatedResponse {
+  data: Region[];
+  total: number;
+  page: number;
+  totalPages: number;
+}
 
-  const [formData, setFormData] = useState<Partial<Region>>({});
+const ITEMS_PER_PAGE = 10;
+
+export default function Region() {
+  // États
+  const [data, setData] = useState<PaginatedResponse>({
+    data: [],
+    total: 0,
+    page: 1,
+    totalPages: 1,
+  });
+  const [searchTerm, setSearchTerm] = useState("");
+  const [formData, setFormData] = useState<{ nom: string }>({ nom: "" });
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [isDeleteModal, setIsDeleteModal] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isMutating, setIsMutating] = useState(false);
+
+  // Fetch data avec pagination et recherche
+  const fetchData = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      const url = `/api/region?page=${data.page}&search=${encodeURIComponent(
+        searchTerm
+      )}`;
+      const response = await fetch(url);
+
+      if (!response.ok) throw new Error("Failed to fetch regions");
+
+      const regionsData: PaginatedResponse = await response.json();
+      setData(regionsData);
+    } catch (error) {
+      console.error("Fetch error:", error);
+      toast.error("Erreur lors du chargement des données");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [data.page, searchTerm]);
 
   useEffect(() => {
-    const fetchRegion = async () => {
-      try {
-        const response = await fetch("/api/region");
-        if (!response.ok) {
-          throw new Error("Erreur lors de la récupération des régions");
-        }
-        const data = await response.json();
-        setRegions(data);
-        console.log(data);
-      } catch (error) {
-        console.error("Erreur:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchRegion();
-  }, [isDialogOpen, isDeleteModal]);
+    const timer = setTimeout(() => {
+      fetchData();
+    }, 300);
 
-  const filteredRegions = regions?.filter((region) =>
-    region?.nom?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-  const handleSubmit = (e: React.FormEvent) => {
+    return () => clearTimeout(timer);
+  }, [fetchData]);
+
+  // Gestion du formulaire
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.nom) return;
-    const method = editingId ? "PUT" : "POST";
-    const url = editingId ? `/api/region/${editingId}` : "/api/region";
-    fetch(url, {
-      method,
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ nom: formData.nom }),
-    })
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error("Erreur lors de la sauvegarde de la région");
-        }
-        return response.json();
-      })
-      .then((data) => {
-        if (editingId) {
-          setRegions((prev) =>
-            prev.map((region) =>
-              region.id === editingId ? { ...region, nom: data.nom } : region
-            )
-          );
-          toast.success("Modification réussie");
-        } else {
-          setRegions((prev) => [...prev, { ...data, id: data.id }]);
-          toast.success("Ajout réussi");
-        }
-        setFormData({});
-        setEditingId(null);
-        setIsDialogOpen(false);
-      })
-      .catch((error) => {
-        console.error("Erreur:", error);
+    if (!formData.nom) {
+      toast.error("Veuillez remplir tous les champs");
+      return;
+    }
+
+    try {
+      setIsMutating(true);
+      const method = editingId ? "PUT" : "POST";
+      const url = editingId ? `/api/region/${editingId}` : "/api/region";
+
+      const response = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
       });
+
+      if (!response.ok)
+        throw new Error(editingId ? "Update failed" : "Create failed");
+
+      toast.success(editingId ? "Région mise à jour" : "Région créée");
+      setIsDialogOpen(false);
+      fetchData(); // Recharger les données
+    } catch (error) {
+      console.error("Form error:", error);
+      toast.error("Une erreur est survenue");
+    } finally {
+      setIsMutating(false);
+    }
   };
 
-  const handleEdit = (region: Region) => {
-    setFormData(region);
-    setEditingId(region.id);
-    setIsDialogOpen(true);
+  // Suppression
+  const handleDelete = async () => {
+    if (!deletingId) return;
+
+    try {
+      setIsMutating(true);
+      const response = await fetch(`/api/region/${deletingId}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) throw new Error("Delete failed");
+
+      toast.success("Région supprimée");
+
+      // Gestion de la pagination après suppression
+      if (data.data.length === 1 && data.page > 1) {
+        setData((prev) => ({ ...prev, page: prev.page - 1 }));
+      } else {
+        fetchData();
+      }
+    } catch (error) {
+      console.error("Delete error:", error);
+      toast.error("Échec de la suppression");
+    } finally {
+      setIsDeleteModalOpen(false);
+      setDeletingId(null);
+      setIsMutating(false);
+    }
   };
 
-  const handleDelete = () => {
-    fetch(`/api/region/${deletingId}`, {
-      method: "DELETE",
-    })
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error("Erreur lors de la suppression de la région");
-        }
-        return response.json();
-      })
-      .then(() => {
-        setRegions((prev) => prev.filter((region) => region.id !== deletingId));
-        toast("Suppression réussie");
-      })
-      .catch((error) => {
-        console.error("Erreur:", error);
-      })
-      .finally(() => {
-        setIsDialogOpen(false);
-        setDeletingId(null);
-      });
+  // Gestion de la pagination
+  const handlePageChange = (page: number) => {
+    setData((prev) => ({ ...prev, page }));
   };
 
   return (
     <Wrapper>
       <div className="space-y-6">
-        <div className="flex justify-between items-center">
+        {/* En-tête */}
+        <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
           <div>
-            <h2 className="text-3xl font-bold  flex items-center gap-2">
-              <MapPin className="h-8 w-8 text-green-600" />
+            <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
+              <MapPin className="h-6 w-6 text-green-600" />
               Gestion des Régions
-            </h2>
-            <p className="text-gray-600">
-              Administration territoriale - Niveau régional
+            </h1>
+            <p className="text-muted-foreground">
+              {data.total} régions enregistrées
             </p>
           </div>
 
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button
-                className="cursor-pointer flex justify-center items-center gap-2 shadow-md dark:shadow-blue-800 "
-                onClick={() => {
-                  setFormData({});
-                  setEditingId(null);
-                }}
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                <span className="hidden md:block"> Ajouter région</span>
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-md">
-              <DialogHeader>
-                <DialogTitle>
-                  {editingId ? "Modifier une region" : "Ajouter une region"}
-                </DialogTitle>
-              </DialogHeader>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="space-y-4">
-                  <Label>Nom de la région</Label>
-                  <Input
-                    value={formData.nom || ""}
-                    onChange={(e) =>
-                      setFormData({ ...formData, nom: e.target.value })
-                    }
-                    required
-                  />
-                </div>
-                <Button type="submit" className="w-full">
-                  {editingId ? "Modifier" : "Ajouter"}
-                </Button>
-              </form>
-            </DialogContent>
-          </Dialog>
-        </div>
+          <div className="flex gap-2">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Rechercher..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-9 w-full md:w-64"
+              />
+            </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="lg:col-span-2">
-            <Card className="shadow-md dark:shadow-blue-800 ">
-              <CardHeader>
-                <div className="flex md:justify-between justify-center items-center">
-                  <CardTitle>
-                    <span className="hidden md:block">
-                      Liste des Régions ({filteredRegions.length})
-                    </span>
-                  </CardTitle>
-                  <div className="flex items-center gap-2">
-                    <Search className="h-4 w-4 text-gray-400" />
+            <Dialog
+              open={isDialogOpen}
+              onOpenChange={(open) => {
+                setIsDialogOpen(open);
+                if (!open) {
+                  setEditingId(null);
+                  setFormData({ nom: "" });
+                }
+              }}
+            >
+              <DialogTrigger asChild>
+                <Button>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Nouvelle région
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>
+                    {editingId ? "Modifier la région" : "Créer une région"}
+                  </DialogTitle>
+                </DialogHeader>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label>Nom de la région</Label>
                     <Input
-                      placeholder="Rechercher une région..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="w-64"
+                      value={formData.nom}
+                      onChange={(e) =>
+                        setFormData({ ...formData, nom: e.target.value })
+                      }
+                      required
                     />
                   </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Nom de la région</TableHead>
-                      <TableHead>Districts</TableHead>
-                      <TableHead>Communes</TableHead>
-                      <TableHead>Fokontany</TableHead>
-                      <TableHead>Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-
-                  <TableBody>
-                    {!loading && filteredRegions.length === 0 && (
-                      <TableRow>
-                        <TableCell colSpan={5} className="text-center text-2xl">
-                          Aucune région trouvée
-                        </TableCell>
-                      </TableRow>
-                    )}
-                    {loading
-                      ? Array.from({
-                          length:
-                            filteredRegions.length > 0
-                              ? filteredRegions.length
-                              : 5,
-                        }).map((_, index) => (
-                          <TableRow key={`skeleton-${index}`}>
-                            <TableCell>
-                              <Skeleton className="h-[20px] w-full rounded" />
-                            </TableCell>
-                            <TableCell>
-                              <Skeleton className="h-[20px] w-3/4 rounded" />
-                            </TableCell>
-                            <TableCell>
-                              <Skeleton className="h-[20px] w-2/3 rounded" />
-                            </TableCell>
-                            <TableCell>
-                              <Skeleton className="h-[20px] w-1/2 rounded" />
-                            </TableCell>
-                            <TableCell>
-                              <div className="flex flex-col gap-2">
-                                <Skeleton className="h-[16px] w-full rounded" />
-                                <Skeleton className="h-[16px] w-3/4 rounded" />
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              <div className="flex gap-2">
-                                <Skeleton className="h-[32px] w-[32px] rounded" />
-                                <Skeleton className="h-[32px] w-[32px] rounded" />
-                                <Skeleton className="h-[32px] w-[32px] rounded" />
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        ))
-                      : filteredRegions?.map((region) => (
-                          <TableRow key={region.id}>
-                            <TableCell className="font-medium">
-                              {region.nom}
-                            </TableCell>
-                            <TableCell>{region.districts}</TableCell>
-                            <TableCell>{region.communes}</TableCell>
-                            <TableCell>{region.fokontany}</TableCell>
-                            <TableCell>
-                              <div className="flex gap-2">
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => handleEdit(region)}
-                                >
-                                  <Edit className="h-3 w-3 text-green-500" />
-                                </Button>
-                                <AlertDialog
-                                  open={isDeleteModal}
-                                  onOpenChange={setIsDeleteModal}
-                                >
-                                  <AlertDialogTrigger asChild>
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      onClick={() => {
-                                        setDeletingId(region.id);
-                                        setIsDeleteModal(true);
-                                      }}
-                                    >
-                                      <Trash2 className="h-3 w-3 text-red-500" />
-                                    </Button>
-                                  </AlertDialogTrigger>
-                                  <AlertDialogContent>
-                                    <AlertDialogHeader>
-                                      <AlertDialogTitle>
-                                        Voulez-vous supprimer?
-                                      </AlertDialogTitle>
-                                      <AlertDialogDescription>
-                                        This action cannot be undone. This will
-                                        permanently delete your account and
-                                        remove your data from our servers.
-                                      </AlertDialogDescription>
-                                    </AlertDialogHeader>
-                                    <AlertDialogFooter>
-                                      <AlertDialogCancel>
-                                        Annuler
-                                      </AlertDialogCancel>
-                                      <AlertDialogAction
-                                        onClick={() => handleDelete()}
-                                      >
-                                        Continue
-                                      </AlertDialogAction>
-                                    </AlertDialogFooter>
-                                  </AlertDialogContent>
-                                </AlertDialog>
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
+                  <Button
+                    type="submit"
+                    disabled={isMutating}
+                    className="w-full"
+                  >
+                    {isMutating
+                      ? "En cours..."
+                      : editingId
+                      ? "Modifier"
+                      : "Créer"}
+                  </Button>
+                </form>
+              </DialogContent>
+            </Dialog>
           </div>
         </div>
+
+        {/* Tableau */}
+        <Card>
+          <CardContent className="p-0">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Nom</TableHead>
+                  <TableHead>Districts</TableHead>
+                  <TableHead>Communes</TableHead>
+                  <TableHead>Fokontany</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {isLoading ? (
+                  Array.from({ length: ITEMS_PER_PAGE }).map((_, i) => (
+                    <TableRow key={`skeleton-${i}`}>
+                      <TableCell>
+                        <Skeleton className="h-4 w-3/4" />
+                      </TableCell>
+                      <TableCell>
+                        <Skeleton className="h-4 w-1/2" />
+                      </TableCell>
+                      <TableCell>
+                        <Skeleton className="h-4 w-1/2" />
+                      </TableCell>
+                      <TableCell>
+                        <Skeleton className="h-4 w-1/2" />
+                      </TableCell>
+                      <TableCell className="flex justify-end gap-2">
+                        <Skeleton className="h-8 w-8" />
+                        <Skeleton className="h-8 w-8" />
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : data.data.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center h-24">
+                      {searchTerm
+                        ? "Aucun résultat trouvé"
+                        : "Aucune région enregistrée"}
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  data.data.map((region) => (
+                    <TableRow key={region.id}>
+                      <TableCell className="font-medium">
+                        {region.nom}
+                      </TableCell>
+                      <TableCell>{region.districts}</TableCell>
+                      <TableCell>{region.communes}</TableCell>
+                      <TableCell>{region.fokontany}</TableCell>
+                      <TableCell className="flex justify-end gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setFormData({ nom: region.nom });
+                            setEditingId(region.id);
+                            setIsDialogOpen(true);
+                          }}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+
+                        <AlertDialog
+                          open={isDeleteModalOpen && deletingId === region.id}
+                          onOpenChange={(open) => {
+                            setIsDeleteModalOpen(open);
+                            if (!open) setDeletingId(null);
+                          }}
+                        >
+                          <AlertDialogTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                setDeletingId(region.id);
+                                setIsDeleteModalOpen(true);
+                              }}
+                            >
+                              <Trash2 className="h-4 w-4 text-red-500" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>
+                                Confirmer la suppression
+                              </AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Êtes-vous sûr de vouloir supprimer la région{" "}
+                                {region.nom} ? Cette action supprimera également
+                                {region.districts} districts, {region.communes}{" "}
+                                communes et {region.fokontany} fokontanys
+                                associés.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel disabled={isMutating}>
+                                Annuler
+                              </AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={handleDelete}
+                                disabled={isMutating}
+                              >
+                                {isMutating ? "Suppression..." : "Confirmer"}
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+
+        {/* Pagination */}
+        {data.total > ITEMS_PER_PAGE && (
+          <div className="flex justify-center">
+            <PagePagination
+              currentPage={data.page}
+              totalPages={data.totalPages}
+              onPageChange={handlePageChange}
+            />
+          </div>
+        )}
       </div>
     </Wrapper>
   );

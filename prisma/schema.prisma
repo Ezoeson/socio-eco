@@ -13,7 +13,7 @@ datasource db {
 
 model Region {
   id        String     @id @default(uuid())
-  nom       String
+  nom       String @unique
   districts District[]
 
   @@map("regions")

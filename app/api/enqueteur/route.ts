@@ -1,11 +1,27 @@
-import { PrismaClient } from '@prisma/client';
-import { NextResponse } from 'next/server';
+import { PrismaClient } from "@prisma/client";
+import { NextResponse } from "next/server";
 
 const prisma = new PrismaClient();
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    // On peut récupérer des paramètres de requête si besoin (ex: filtrage, pagination)
+    const { searchParams } = new URL(request.url);
+    const searchTerm = searchParams.get("search") || "";
+
+    // Exemple de filtre simple sur le nom de l’enqueteur (à adapter selon besoin)
+    const whereClause = searchTerm
+      ? {
+          nom: {
+            contains: searchTerm,
+            mode: "insensitive" as const,
+          },
+        }
+      : {};
+
+    // Récupération des enqueteurs avec inclusions imbriquées
     const enqueteurs = await prisma.enqueteur.findMany({
+      where: whereClause,
       include: {
         enquetes: {
           include: {
@@ -20,13 +36,25 @@ export async function GET() {
           },
         },
       },
+      orderBy: {
+        nom: "asc", // Tri alphabétique pour cohérence
+      },
     });
+
     return NextResponse.json(enqueteurs);
-  } catch {
+  } catch (error) {
     return NextResponse.json(
-      { error: 'Failed to fetch enqueteurs' },
+      {
+        error: "Failed to fetch enqueteurs",
+        details:
+          process.env.NODE_ENV === "development" && error instanceof Error
+            ? error.message
+            : undefined,
+      },
       { status: 500 }
     );
+  } finally {
+    await prisma.$disconnect();
   }
 }
 
@@ -41,7 +69,7 @@ export async function POST(request: Request) {
       });
       if (existingByNom) {
         return NextResponse.json(
-          { error: 'Enqueteur with this name already exists' },
+          { error: "Enqueteur with this name already exists" },
           { status: 400 }
         );
       }
@@ -53,7 +81,7 @@ export async function POST(request: Request) {
       });
       if (existingByCode) {
         return NextResponse.json(
-          { error: 'Enqueteur with this code already exists' },
+          { error: "Enqueteur with this code already exists" },
           { status: 400 }
         );
       }
@@ -65,7 +93,7 @@ export async function POST(request: Request) {
       });
       if (existingByEmail) {
         return NextResponse.json(
-          { error: 'Enqueteur with this email already exists' },
+          { error: "Enqueteur with this email already exists" },
           { status: 400 }
         );
       }
@@ -76,12 +104,12 @@ export async function POST(request: Request) {
     });
 
     return NextResponse.json({
-      message: 'Enqueteur created successfully',
+      message: "Enqueteur created successfully",
       data: enqueteur,
     });
   } catch {
     return NextResponse.json(
-      { error: 'Failed to create enqueteur' },
+      { error: "Failed to create enqueteur" },
       { status: 500 }
     );
   }

@@ -119,7 +119,7 @@ export function ActeurDetails() {
         ]);
 
         setEnqueteurs(enqueteursData);
-        setSecteurs(secteursData);
+        setSecteurs(secteursData.data);
 
         if (id) {
           const enqueteRes = await fetch(`/api/enquete_famille/${id}`);

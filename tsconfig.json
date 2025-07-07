@@ -29,6 +29,6 @@
     "**/*.tsx",
     ".next/types/**/*.ts",
     "dynamicImport/dynamic-import.ts"
-  ],
+, "import.js"  ],
   "exclude": ["node_modules"]
 }

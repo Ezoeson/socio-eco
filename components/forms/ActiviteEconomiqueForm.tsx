@@ -409,7 +409,7 @@ function ActiviteCard({
                 }
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Sélectionner" />
+                  <SelectValue placeholder="Sélectionnez" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="bovin">Bovins</SelectItem>

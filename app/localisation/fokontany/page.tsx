@@ -1,10 +1,10 @@
 "use client";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import Wrapper from "@/components/Wrapper";
 import { Plus, Search, Edit, Trash2, MapPin } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Label } from "@/components/ui/label";
 import {
   AlertDialog,
@@ -40,364 +40,389 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-
 import { Skeleton } from "@/components/ui/skeleton";
+import { PagePagination } from "@/components/pagination";
 
-type Fokontany = {
+interface Fokontany {
   id: string;
   nom: string;
-  communeId: string;
-  commune: { id: string; nom: string };
-};
+  commune: {
+    id: string;
+    nom: string;
+  };
+  secteurCount?: number;
+  totalEnquetes?: number;
+}
 
-type Commune = {
+interface Commune {
   id: string;
   nom: string;
-};
+}
+
+interface PaginatedResponse {
+  data: Fokontany[];
+  total: number;
+  page: number;
+  totalPages: number;
+}
+
+const ITEMS_PER_PAGE = 10;
 
 export default function Fokontanys() {
-  const [fokontanys, setFokontanys] = useState<Fokontany[]>([]);
-  const [formData, setFormData] = useState<{
-    nom?: string;
-    communeId: string;
-  }>({
+  // États
+  const [data, setData] = useState<PaginatedResponse>({
+    data: [],
+    total: 0,
+    page: 1,
+    totalPages: 1,
+  });
+  const [searchTerm, setSearchTerm] = useState("");
+  const [formData, setFormData] = useState<{ nom: string; communeId: string }>({
+    nom: "",
     communeId: "",
   });
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [communeOptions, setCommuneOptions] = useState<Commune[]>([]);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [isDeleteModal, setIsDeleteModal] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isMutating, setIsMutating] = useState(false);
+  const [communes, setCommunes] = useState<Commune[]>([]);
+
+  // Fetch data avec pagination et recherche
+  const fetchData = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      const url = `/api/fokontany?page=${data.page}&search=${encodeURIComponent(
+        searchTerm
+      )}`;
+      const [fokontanysRes, communesRes] = await Promise.all([
+        fetch(url),
+        fetch("/api/commune"),
+      ]);
+
+      if (!fokontanysRes.ok) throw new Error("Failed to fetch fokontanys");
+      if (!communesRes.ok) throw new Error("Failed to fetch communes");
+
+      const fokontanysData: PaginatedResponse = await fokontanysRes.json();
+      const communesData = await communesRes.json();
+
+      setData(fokontanysData);
+      setCommunes(communesData.data || communesData);
+    } catch (error) {
+      console.error("Fetch error:", error);
+      toast.error("Erreur lors du chargement des données");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [data.page, searchTerm]);
 
   useEffect(() => {
-    const fetchFokontany = async () => {
-      try {
-        const response = await fetch("/api/fokontany");
-        const data = await response.json();
-        setFokontanys(data);
-      } catch (error) {
-        console.error("Error fetching fokontany:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
+    const timer = setTimeout(() => {
+      fetchData();
+    }, 300);
 
-    const fetchCommunes = async () => {
-      try {
-        const response = await fetch("/api/commune");
-        const data = await response.json();
-        setCommuneOptions(data);
-      } catch (error) {
-        console.error("Error fetching communes:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
+    return () => clearTimeout(timer);
+  }, [fetchData]);
 
-    fetchFokontany();
-    fetchCommunes();
-  }, [
-    setFokontanys,
-    setCommuneOptions,
-    setFormData,
-    setEditingId,
-    isDialogOpen,
-  ]);
-
-  const filteredFokontanys = fokontanys.filter((fokontany) =>
-    fokontany?.nom?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  const handleSubmit = (e: React.FormEvent) => {
+  // Gestion du formulaire
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.nom || !formData.communeId) {
-      alert("Veuillez remplir tous les champs obligatoires.");
+      toast.error("Veuillez remplir tous les champs");
       return;
     }
 
-    const method = editingId ? "PUT" : "POST";
-    const url = editingId ? `/api/fokontany/${editingId}` : "/api/fokontany";
-
     try {
-      // create
-      fetch(url, {
-        method,
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          nom: formData.nom,
-          communeId: formData.communeId,
-        }),
-      })
-        .then((response) => response.json())
-        .then((data) => {
-          if (editingId) {
-            // update
-            setFokontanys(
-              fokontanys.map((fokontany) =>
-                fokontany.id === editingId
-                  ? { ...fokontany, ...formData }
-                  : fokontany
-              )
-            );
-          } else {
-            // create
-            setFokontanys([...fokontanys, data]);
-          }
-          setIsDialogOpen(false);
-          setFormData({ communeId: "" });
-          setEditingId(null);
-        });
+      setIsMutating(true);
+      const method = editingId ? "PUT" : "POST";
+      const url = editingId ? `/api/fokontany/${editingId}` : "/api/fokontany";
 
-      // update
+      const response = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
+
+      if (!response.ok)
+        throw new Error(editingId ? "Update failed" : "Create failed");
+
+      toast.success(editingId ? "Fokontany mis à jour" : "Fokontany créé");
+      setIsDialogOpen(false);
+      fetchData(); // Recharger les données
     } catch (error) {
-      console.error("Error submitting form:", error);
+      console.error("Form error:", error);
+      toast.error("Une erreur est survenue");
+    } finally {
+      setIsMutating(false);
     }
   };
 
-  const handleEdit = (fokontany: Fokontany) => {
-    setFormData({ nom: fokontany.nom, communeId: fokontany.communeId });
-    setEditingId(fokontany.id);
-    setIsDialogOpen(true);
+  // Suppression
+  const handleDelete = async () => {
+    if (!deletingId) return;
+
+    try {
+      setIsMutating(true);
+      const response = await fetch(`/api/fokontany/${deletingId}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) throw new Error("Delete failed");
+
+      toast.success("Fokontany supprimé");
+
+      // Gestion de la pagination après suppression
+      if (data.data.length === 1 && data.page > 1) {
+        setData((prev) => ({ ...prev, page: prev.page - 1 }));
+      } else {
+        fetchData();
+      }
+    } catch (error) {
+      console.error("Delete error:", error);
+      toast.error("Échec de la suppression");
+    } finally {
+      setIsDeleteModalOpen(false);
+      setDeletingId(null);
+      setIsMutating(false);
+    }
   };
 
-  const handleDelete = () => {
-    fetch(`/api/fokontany/${deletingId}`, {
-      method: "DELETE",
-    })
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error("Erreur lors de la suppression de fokontany");
-        }
-        return response.json();
-      })
-      .then(() => {
-        setFokontanys((prev) =>
-          prev.filter((region) => region.id !== deletingId)
-        );
-        toast(<p className="text-red-700-">Suppression réussi</p>);
-      })
-      .catch((error) => {
-        console.error("Erreur:", error);
-      })
-      .finally(() => {
-        setIsDialogOpen(false);
-        setDeletingId(null);
-      });
+  // Gestion de la pagination
+  const handlePageChange = (page: number) => {
+    setData((prev) => ({ ...prev, page }));
   };
 
   return (
     <Wrapper>
       <div className="space-y-6">
-        <div className="flex justify-between items-center">
+        {/* En-tête */}
+        <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
           <div>
-            <h2 className="text-3xl font-bold flex items-center gap-2">
-              <MapPin className="h-8 w-8 text-green-600" />
-              Gestion des Fokontany
-            </h2>
-            <p className="text-gray-600">
-              Administration territoriale - Niveau fokontany
+            <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
+              <MapPin className="h-6 w-6 text-green-600" />
+              Gestion des Fokontanys
+            </h1>
+            <p className="text-muted-foreground">
+              {data.total} fokontanys enregistrés
             </p>
           </div>
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button
-                onClick={() => {
-                  setFormData({ communeId: "" });
+
+          <div className="flex gap-2">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Rechercher..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-9 w-full md:w-64"
+              />
+            </div>
+
+            <Dialog
+              open={isDialogOpen}
+              onOpenChange={(open) => {
+                setIsDialogOpen(open);
+                if (!open) {
                   setEditingId(null);
-                }}
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                <span className="hidden md:block"> Nouveau fokontany</span>
-              </Button>
-            </DialogTrigger>
-
-            <DialogContent className="max-w-md">
-              <DialogHeader>
-                <DialogTitle>
-                  {editingId ? "Modifier un fokontany" : "Ajouter un fokontany"}
-                </DialogTitle>
-              </DialogHeader>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                  <Label htmlFor="nom">Nom du secteur</Label>
-                  <Input
-                    id="nom"
-                    value={formData.nom || ""}
-                    onChange={(e) =>
-                      setFormData((prev) => ({ ...prev, nom: e.target.value }))
-                    }
-                    required
-                  />
-                  <Select
-                    value={formData.communeId || ""}
-                    onValueChange={(value) =>
-                      setFormData((prev) => ({ ...prev, communeId: value }))
-                    }
-                    required
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Sélectionner un commune" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {communeOptions.map((commune) => (
-                        <SelectItem key={commune.id} value={commune.id}>
-                          {commune.nom}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <Button type="submit" className="w-full">
-                  {editingId ? "Modifier" : "Ajouter"}
+                  setFormData({ nom: "", communeId: "" });
+                }
+              }}
+            >
+              <DialogTrigger asChild>
+                <Button>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Nouveau
                 </Button>
-              </form>
-            </DialogContent>
-          </Dialog>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="lg:col-span-2">
-            <Card>
-              <CardHeader>
-                <div className="flex md:justify-between items-center">
-                  <CardTitle>
-                    <p className="hidden md:block">
-                      Liste des Fokontany ({filteredFokontanys.length})
-                    </p>
-                  </CardTitle>
-                  <div className="flex items-center gap-2">
-                    <Search className="h-4 w-4 text-gray-400" />
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>
+                    {editingId ? "Modifier fokontany" : "Créer un fokontany"}
+                  </DialogTitle>
+                </DialogHeader>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label>Nom du fokontany</Label>
                     <Input
-                      placeholder="Rechercher un fokontany..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="w-64"
+                      value={formData.nom}
+                      onChange={(e) =>
+                        setFormData({ ...formData, nom: e.target.value })
+                      }
+                      required
                     />
                   </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Nom du fokontany</TableHead>
-                      <TableHead>Commune</TableHead>
-                      <TableHead>Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-
-                  <TableBody>
-                    {filteredFokontanys.length === 0 && !loading ? (
-                      <TableRow>
-                        <TableCell colSpan={3} className="text-center text-2xl">
-                          Aucune fokontany trouvée
-                        </TableCell>
-                      </TableRow>
-                    ) : null}
-
-                    {loading
-                      ? Array.from({
-                          length:
-                            filteredFokontanys.length > 0
-                              ? filteredFokontanys.length
-                              : 5,
-                        }).map((_, index) => (
-                          <TableRow key={`skeleton-${index}`}>
-                            <TableCell>
-                              <Skeleton className="h-[20px] w-full rounded" />
-                            </TableCell>
-                            <TableCell>
-                              <Skeleton className="h-[20px] w-3/4 rounded" />
-                            </TableCell>
-                            <TableCell>
-                              <Skeleton className="h-[20px] w-2/3 rounded" />
-                            </TableCell>
-                            <TableCell>
-                              <Skeleton className="h-[20px] w-1/2 rounded" />
-                            </TableCell>
-                            <TableCell>
-                              <div className="flex flex-col gap-2">
-                                <Skeleton className="h-[16px] w-full rounded" />
-                                <Skeleton className="h-[16px] w-3/4 rounded" />
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              <div className="flex gap-2">
-                                <Skeleton className="h-[32px] w-[32px] rounded" />
-                                <Skeleton className="h-[32px] w-[32px] rounded" />
-                                <Skeleton className="h-[32px] w-[32px] rounded" />
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        ))
-                      : filteredFokontanys.map((fokontany) => (
-                          <TableRow key={fokontany?.id}>
-                            <TableCell className="font-medium">
-                              {fokontany?.nom}
-                            </TableCell>
-                            <TableCell>{fokontany?.commune.nom}</TableCell>
-                            <TableCell>
-                              <div className="flex gap-2">
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => handleEdit(fokontany)}
-                                >
-                                  <Edit className="h-3 w-3 text-green-500" />
-                                </Button>
-                                <AlertDialog
-                                  open={isDeleteModal}
-                                  onOpenChange={setIsDeleteModal}
-                                >
-                                  <AlertDialogTrigger asChild>
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      onClick={() => {
-                                        setDeletingId(fokontany.id);
-                                        setIsDeleteModal(true);
-                                      }}
-                                    >
-                                      <Trash2 className="h-3 w-3 text-red-500" />
-                                    </Button>
-                                  </AlertDialogTrigger>
-                                  <AlertDialogContent>
-                                    <AlertDialogHeader>
-                                      <AlertDialogTitle>
-                                        Voulez-vous supprimer?
-                                      </AlertDialogTitle>
-                                      <AlertDialogDescription>
-                                        This action cannot be undone. This will
-                                        permanently delete your account and
-                                        remove your data from our servers.
-                                      </AlertDialogDescription>
-                                    </AlertDialogHeader>
-                                    <AlertDialogFooter>
-                                      <AlertDialogCancel>
-                                        Annuler
-                                      </AlertDialogCancel>
-                                      <AlertDialogAction
-                                        onClick={() => handleDelete()}
-                                      >
-                                        Continue
-                                      </AlertDialogAction>
-                                    </AlertDialogFooter>
-                                  </AlertDialogContent>
-                                </AlertDialog>
-                              </div>
-                            </TableCell>
-                          </TableRow>
+                  <div className="space-y-2">
+                    <Label>Commune</Label>
+                    <Select
+                      value={formData.communeId}
+                      onValueChange={(value) =>
+                        setFormData({ ...formData, communeId: value })
+                      }
+                      required
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Sélectionnez une commune" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {communes.map((commune) => (
+                          <SelectItem key={commune.id} value={commune.id}>
+                            {commune.nom}
+                          </SelectItem>
                         ))}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <Button
+                    type="submit"
+                    disabled={isMutating}
+                    className="w-full"
+                  >
+                    {isMutating
+                      ? "En cours..."
+                      : editingId
+                      ? "Modifier"
+                      : "Créer"}
+                  </Button>
+                </form>
+              </DialogContent>
+            </Dialog>
           </div>
         </div>
+
+        {/* Tableau */}
+        <Card>
+          <CardContent className="p-0">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Nom</TableHead>
+                  <TableHead>Commune</TableHead>
+                  <TableHead>Secteurs</TableHead>
+                  <TableHead>Enquêtes</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {isLoading ? (
+                  Array.from({ length: ITEMS_PER_PAGE }).map((_, i) => (
+                    <TableRow key={`skeleton-${i}`}>
+                      <TableCell>
+                        <Skeleton className="h-4 w-3/4" />
+                      </TableCell>
+                      <TableCell>
+                        <Skeleton className="h-4 w-1/2" />
+                      </TableCell>
+                      <TableCell>
+                        <Skeleton className="h-4 w-1/4" />
+                      </TableCell>
+                      <TableCell>
+                        <Skeleton className="h-4 w-1/4" />
+                      </TableCell>
+                      <TableCell className="flex justify-end gap-2">
+                        <Skeleton className="h-8 w-8" />
+                        <Skeleton className="h-8 w-8" />
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : data.data.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center h-24">
+                      {searchTerm
+                        ? "Aucun résultat trouvé"
+                        : "Aucun fokontany enregistré"}
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  data.data.map((fokontany) => (
+                    <TableRow key={fokontany.id}>
+                      <TableCell className="font-medium">
+                        {fokontany.nom}
+                      </TableCell>
+                      <TableCell>{fokontany.commune.nom}</TableCell>
+                      <TableCell>{fokontany.secteurCount || 0}</TableCell>
+                      <TableCell>{fokontany.totalEnquetes || 0}</TableCell>
+                      <TableCell className="flex justify-end gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setFormData({
+                              nom: fokontany.nom,
+                              communeId: fokontany.commune.id,
+                            });
+                            setEditingId(fokontany.id);
+                            setIsDialogOpen(true);
+                          }}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+
+                        <AlertDialog
+                          open={
+                            isDeleteModalOpen && deletingId === fokontany.id
+                          }
+                          onOpenChange={(open) => {
+                            setIsDeleteModalOpen(open);
+                            if (!open) setDeletingId(null);
+                          }}
+                        >
+                          <AlertDialogTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                setDeletingId(fokontany.id);
+                                setIsDeleteModalOpen(true);
+                              }}
+                            >
+                              <Trash2 className="h-4 w-4 text-red-500" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>
+                                Confirmer la suppression
+                              </AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Êtes-vous sûr de vouloir supprimer le fokontany{" "}
+                                {fokontany.nom} ? Cette action supprimera
+                                également {fokontany.secteurCount || 0} secteurs
+                                associés.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel disabled={isMutating}>
+                                Annuler
+                              </AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={handleDelete}
+                                disabled={isMutating}
+                              >
+                                {isMutating ? "Suppression..." : "Confirmer"}
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+
+        {/* Pagination */}
+        {data.total > ITEMS_PER_PAGE && (
+          <div className="flex justify-center">
+            <PagePagination
+              currentPage={data.page}
+              totalPages={data.totalPages}
+              onPageChange={handlePageChange}
+            />
+          </div>
+        )}
       </div>
     </Wrapper>
   );

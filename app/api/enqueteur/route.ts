@@ -5,11 +5,10 @@ const prisma = new PrismaClient();
 
 export async function GET(request: Request) {
   try {
-    // On peut récupérer des paramètres de requête si besoin (ex: filtrage, pagination)
     const { searchParams } = new URL(request.url);
+    const hasPagination = searchParams.has("page");
     const searchTerm = searchParams.get("search") || "";
 
-    // Exemple de filtre simple sur le nom de l’enqueteur (à adapter selon besoin)
     const whereClause = searchTerm
       ? {
           nom: {
@@ -19,33 +18,107 @@ export async function GET(request: Request) {
         }
       : {};
 
-    // Récupération des enqueteurs avec inclusions imbriquées
-    const enqueteurs = await prisma.enqueteur.findMany({
-      where: whereClause,
-      include: {
-        enquetes: {
+    if (hasPagination) {
+      const page = Number(searchParams.get("page")) || 1;
+      const perPage = 10;
+      const skip = (page - 1) * perPage;
+
+      const [enqueteurs, totalEnqueteurs] = await Promise.all([
+        prisma.enqueteur.findMany({
+          where: whereClause,
+          skip,
+          take: perPage,
           include: {
-            secteur: true,
-            collecteur: {
+            enquetes: {
               include: {
-                produitsAchetes: true,
-                methodesStockage: true,
+                secteur: true,
+                collecteur: {
+                  include: {
+                    produitsAchetes: true,
+                    methodesStockage: true,
+                  },
+                },
+                pecheur: true,
               },
             },
-            pecheur: true,
+          },
+          orderBy: {
+            nom: "asc",
+          },
+        }),
+        prisma.enqueteur.count({ where: whereClause }),
+      ]);
+
+      const formattedEnqueteurs = enqueteurs.map((enqueteur) => ({
+        id: enqueteur.id,
+        nom: enqueteur.nom,
+        prenom: enqueteur.prenom,
+        code: enqueteur.code,
+        image: enqueteur.image,
+        telephone: enqueteur.telephone,
+        actif: enqueteur.actif,
+        enquetesCount: enqueteur.enquetes.length,
+        totalCollecteurs: enqueteur.enquetes.reduce(
+          (sum, enq) => sum + (enq.collecteur ? 1 : 0),
+          0
+        ),
+        totalPecheurs: enqueteur.enquetes.reduce(
+          (sum, enq) => sum + (enq.pecheur ? 1 : 0),
+          0
+        ),
+      }));
+
+      return NextResponse.json({
+        data: formattedEnqueteurs,
+        total: totalEnqueteurs,
+        page,
+        totalPages: Math.ceil(totalEnqueteurs / perPage),
+      });
+    } else {
+      // Cas sans pagination
+      const enqueteurs = await prisma.enqueteur.findMany({
+        where: whereClause,
+        include: {
+          enquetes: {
+            include: {
+              secteur: true,
+              collecteur: {
+                include: {
+                  produitsAchetes: true,
+                  methodesStockage: true,
+                },
+              },
+              pecheur: true,
+            },
           },
         },
-      },
-      orderBy: {
-        nom: "asc", // Tri alphabétique pour cohérence
-      },
-    });
+        orderBy: {
+          nom: "asc",
+        },
+      });
 
-    return NextResponse.json(enqueteurs);
+      const formattedEnqueteurs = enqueteurs.map((enqueteur) => ({
+        id: enqueteur.id,
+        nom: enqueteur.nom,
+        enquetesCount: enqueteur.enquetes.length,
+        totalCollecteurs: enqueteur.enquetes.reduce(
+          (sum, enq) => sum + (enq.collecteur ? 1 : 0),
+          0
+        ),
+        totalPecheurs: enqueteur.enquetes.reduce(
+          (sum, enq) => sum + (enq.pecheur ? 1 : 0),
+          0
+        ),
+      }));
+
+      return NextResponse.json({
+        data: formattedEnqueteurs,
+      });
+    }
   } catch (error) {
     return NextResponse.json(
       {
-        error: "Failed to fetch enqueteurs",
+        error: "Échec de la récupération des enquêteurs",
         details:
           process.env.NODE_ENV === "development" && error instanceof Error
             ? error.message

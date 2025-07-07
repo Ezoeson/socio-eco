@@ -122,7 +122,7 @@ export function ActeurForm() {
           secteursRes.json(),
         ]);
 
-        setEnqueteurs(enqueteursData);
+        setEnqueteurs(enqueteursData.data);
         setSecteurs(secteursData.data);
       } catch (error) {
         console.error("Erreur:", error);

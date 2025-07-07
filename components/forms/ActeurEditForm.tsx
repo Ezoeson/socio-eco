@@ -123,7 +123,7 @@ export function ActeurEditForm() {
           secteursRes.json(),
         ]);
 
-        setEnqueteurs(enqueteursData);
+        setEnqueteurs(enqueteursData.data);
         setSecteurs(secteursData.data);
 
         if (id) {

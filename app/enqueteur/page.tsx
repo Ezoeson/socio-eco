@@ -48,7 +48,7 @@ interface Enqueteur {
   image?: string;
   email?: string;
   actif: boolean;
-  // À typer plus précisément si nécessaire
+  enquetesCount?: number;
 }
 
 interface PaginatedResponse {
@@ -111,6 +111,8 @@ export default function EnqueteurPage() {
     }
   }, [data.page, searchTerm]);
 
+  console.log(data);
+
   useEffect(() => {
     const timer = setTimeout(() => {
       fetchData();
@@ -131,7 +133,7 @@ export default function EnqueteurPage() {
       setIsMutating(true);
       const method = editingId ? "PUT" : "POST";
       const url = editingId ? `/api/enqueteur/${editingId}` : "/api/enqueteur";
-
+      console.log(formData);
       const response = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
@@ -414,6 +416,7 @@ export default function EnqueteurPage() {
                   <TableHead>Téléphone</TableHead>
                   <TableHead>Email</TableHead>
                   <TableHead>Statut</TableHead>
+                  <TableHead>Enquêtes</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -497,6 +500,7 @@ export default function EnqueteurPage() {
                           {enqueteur.actif ? "Actif" : "Inactif"}
                         </span>
                       </TableCell>
+                      <TableCell>{enqueteur.enquetesCount || 0}</TableCell>
                       <TableCell className="flex justify-end gap-2">
                         <Button
                           variant="ghost"

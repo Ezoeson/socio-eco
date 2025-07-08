@@ -31,12 +31,14 @@ import {
   EnqueteFormData,
   MembreFamille,
   Pecheur,
+  Collecteur,
 } from "@/type/localType";
 import FishermanTab from "./pecheur/FishermanTab";
 import { MembreFamilleForm } from "./MembreFamilleForm";
 import { Skeleton } from "../ui/skeleton";
 import { ActiviteEconomiqueForm } from "./ActiviteEconomiqueForm";
 import MadaDistrict from "@/db/district";
+import CollecteurTabs from "./collecteur/CollecteurTab";
 
 export function ActeurForm() {
   const router = useRouter();
@@ -58,6 +60,7 @@ export function ActeurForm() {
     membresFamille: [],
     Pecheur: [],
     activites: [],
+    collecteur: [],
     dateEnquete: new Date().toISOString().split("T")[0],
     enqueteurId: "",
     secteurId: "",
@@ -143,6 +146,7 @@ export function ActeurForm() {
       | boolean
       | MembreFamille[]
       | Pecheur[]
+      | Collecteur[]
       | ActiviteEconomique[]
       | undefined
   ) => {
@@ -499,7 +503,8 @@ export function ActeurForm() {
                       <SelectContent className="mt-1">
                         {MadaDistrict.map((district) => (
                           <SelectItem key={district} value={district}>
-                            {district.charAt(0).toUpperCase() + district.slice(1)}
+                            {district.charAt(0).toUpperCase() +
+                              district.slice(1)}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -611,8 +616,16 @@ export function ActeurForm() {
                   <CardTitle>Informations sur le collecteur</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  {/* Contenu du collecteur à implémenter */}
-                  <p>Informations spécifiques au collecteur à venir.</p>
+                  <CollecteurTabs
+                    collecteur={formData.collecteur?.[0] || undefined}
+                    onCollecteurChange={(collecteur: Collecteur) => {
+                      // Si collecteur est undefined, on garde le tableau existant ou un tableau vide
+                      const newCollecteurs = collecteur
+                        ? [collecteur]
+                        : formData.collecteur || [];
+                      handleInputChange("collecteur", newCollecteurs);
+                    }}
+                  />
                 </CardContent>
               </Card>
             </TabsContent>

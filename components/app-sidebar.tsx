@@ -50,6 +50,16 @@ const data = {
   // ],
   navMain: [
     {
+      title: "Enquêteur",
+      url: "/enqueteur",
+      icon: UserSearch,
+    },
+    {
+      title: "Enquête",
+      url: "/enquete",
+      icon: ClipboardList,
+    },
+    {
       title: "Localisation",
       url: "",
       icon: Globe,
@@ -80,16 +90,6 @@ const data = {
           icon: Layers,
         },
       ],
-    },
-    {
-      title: "Enquêteur",
-      url: "/enqueteur",
-      icon: UserSearch,
-    },
-    {
-      title: "Enquête",
-      url: "/enquete",
-      icon: ClipboardList,
     },
   ],
   projects: [

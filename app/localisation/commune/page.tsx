@@ -215,7 +215,7 @@ export default function Communes() {
             </p>
           </div>
 
-          <div className="flex gap-2">
+          <div className="flex gap-4 justify-between">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
@@ -237,9 +237,9 @@ export default function Communes() {
               }}
             >
               <DialogTrigger asChild>
-                <Button>
+                <Button className="bg-gradient-to-r from-blue-700 to-rose-700  text-white ">
                   <Plus className="h-4 w-4 mr-2" />
-                  Nouvelle commune
+                  <p className="  font-bold md:block hidden ">Nouvelle commune</p>
                 </Button>
               </DialogTrigger>
               <DialogContent>
@@ -389,11 +389,12 @@ export default function Communes() {
                               <AlertDialogTitle>
                                 Confirmer la suppression
                               </AlertDialogTitle>
-                              <AlertDialogDescription>
+                              <AlertDialogDescription className="flex flex-col justify-center items-center">
                                 Êtes-vous sûr de vouloir supprimer la commune{" "}
                                 <strong>{commune.nom}</strong> ? Cette action
                                 supprimera également {commune.fokontanyCount}{" "}
                                 fokontanys associés.
+                                <Trash2 className="text-red-500 h-28 w-28 animate-bounce animate-infinite animate-ease-in-out " />
                               </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>

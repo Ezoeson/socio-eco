@@ -4,7 +4,15 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import Wrapper from "@/components/Wrapper";
-import { Plus, Search, Edit, Trash2, Eye, Users } from "lucide-react";
+import {
+  Plus,
+  Search,
+  Edit,
+  Trash2,
+  Eye,
+  Users,
+  MessagesSquare,
+} from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
 import {
   AlertDialog,
@@ -38,6 +46,11 @@ import { PagePagination } from "@/components/pagination";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import Link from "next/link";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface Enquete {
   id: string;
@@ -183,14 +196,22 @@ export default function ListeEnquetes() {
       setIsMutating(false);
     }
   };
-
+  const validateDates = (start: string, end: string): boolean => {
+    if (start && end) {
+      return new Date(start) <= new Date(end);
+    }
+    return true;
+  };
   return (
     <Wrapper>
       <div className="space-y-6">
         <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
           <div>
             <h1 className="text-2xl font-bold tracking-tight">
-              Gestion des Enquêtes
+              <p className="tracking-widest animate-pulse bg-gradient-to-r from-blue-700 to-rose-700 text-transparent bg-clip-text text-4xl font-extrabold">
+                {" "}
+                Gestion des Enquêtes
+              </p>
             </h1>
             <p className="text-muted-foreground">
               {data.total} enquêtes enregistrées
@@ -212,28 +233,69 @@ export default function ListeEnquetes() {
                 <Input
                   type="date"
                   value={dateFilter.start}
-                  onChange={(e) =>
-                    setDateFilter({ ...dateFilter, start: e.target.value })
-                  }
+                  onChange={(e) => {
+                    const newStart = e.target.value;
+                    setDateFilter((prev) => {
+                      // Si la date de fin existe et est inférieure à la nouvelle date de début
+                      if (
+                        prev.end &&
+                        newStart &&
+                        new Date(newStart) > new Date(prev.end)
+                      ) {
+                        return { ...prev, start: newStart, end: newStart }; // Réinitialise la date de fin
+                      }
+                      return { ...prev, start: newStart };
+                    });
+                  }}
                   className="w-full"
                   placeholder="Date début"
                 />
-                <Input
-                  type="date"
-                  value={dateFilter.end}
-                  onChange={(e) =>
-                    setDateFilter({ ...dateFilter, end: e.target.value })
-                  }
-                  className="w-full"
-                  placeholder="Date fin"
-                />
+                {dateFilter.start ? (
+                  <Input
+                    type="date"
+                    value={dateFilter.end}
+                    onChange={(e) => {
+                      const newEnd = e.target.value;
+                      if (validateDates(dateFilter.start, newEnd)) {
+                        setDateFilter((prev) => ({ ...prev, end: newEnd }));
+                      } else {
+                        toast.error(
+                          "La date de fin doit être après la date de début"
+                        );
+                      }
+                    }}
+                    min={dateFilter.start} // Définit le minimum comme la date de début
+                    className="w-full"
+                    placeholder="Date fin"
+                    disabled={!dateFilter.start} // Désactive tant que la date de début n'est pas définie
+                  />
+                ) : (
+                  <Tooltip>
+                    <TooltipTrigger>
+                      <Input
+                        type="date"
+                        // Définit le minimum comme la date de début
+                        className="w-full"
+                        placeholder="Date fin"
+                        disabled={!dateFilter.start} // Désactive tant que la date de début n'est pas définie
+                      />
+                    </TooltipTrigger>
+                    <TooltipContent className=" flex flex-col justify-center items-center">
+                      <MessagesSquare className="text-red-500 animate-pulse" />
+                      <p className="text-gray-950">
+                        {" "}
+                        La date de fin doit être après la date de début
+                      </p>
+                    </TooltipContent>
+                  </Tooltip>
+                )}
               </div>
             </div>
 
             <Link href="/enquete/ajout" className="w-full md:w-auto">
-              <Button className="w-full">
+              <Button className="bg-gradient-to-r from-blue-700 to-rose-700  text-white w-full ">
                 <Plus className="h-4 w-4 mr-2" />
-                Nouvelle enquête
+                <p className="  font-bold"> Nouvelle enquête</p>
               </Button>
             </Link>
           </div>
@@ -370,13 +432,14 @@ export default function ListeEnquetes() {
                               <AlertDialogTitle>
                                 Confirmer la suppression
                               </AlertDialogTitle>
-                              <AlertDialogDescription>
+                              <AlertDialogDescription className="flex flex-col justify-center items-center">
                                 Êtes-vous sûr de vouloir supprimer
                                 l&apos;enquête de {enquete.nomPerscible} ?
                                 <br />
                                 <span className="text-red-500">
                                   Cette action est irréversible.
                                 </span>
+                                <Trash2 className="text-red-500 h-28 w-28 animate-bounce animate-infinite animate-ease-in-out " />
                               </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>

@@ -93,6 +93,63 @@ export interface DestinationCommerciale {
   pourcentage?: number;
 }
 
+export interface Collecteur {
+  id: string;
+
+  experienceAnnees?: number;
+  estMareyeur?: boolean;
+  lieuCollecte: string[];
+  dureeCollecteHebdo?: number;
+  effectifPers?: number;
+  frequencePassage?: string;
+  estStockage?: boolean;
+  capitalTotal?: number;
+  partCapitalPropre?: number;
+  partCapitalEmprunte?: number;
+  investissementEquipement?: number;
+  investissementLocation?: number;
+  coutRessourcesHumaines?: number;
+
+  // Relations
+  produitsAchetes: ProduitAchete[];
+  stockage: Stockage[];
+  distribution: Distribution[];
+}
+
+export interface ProduitAchete {
+  id: string;
+  operateurId: string;
+  typeProduit?: string;
+  volumeHebdomadaireKg?: number;
+  criteresQualite?: string;
+  systemeAvance?: boolean;
+  montantAvance?: number;
+  possedeCarteProfession?: boolean;
+  varieteProduit: string[];
+}
+
+export interface Stockage {
+  id: string;
+  operateurId: string;
+  lieuStockage: string[];
+  techniqueConservation?: string;
+  dureeStockageJours?: number;
+  tauxPerte?: number;
+  gestionDechets?: string;
+}
+
+export interface Distribution {
+  id: string;
+  operateurId: string;
+  circuitDistribution: string[];
+  pointVente: string[];
+  moyenTransport: string[];
+  frequenceLivraisonsMois?: number;
+  techniqueTransport?: string;
+  periodeDemandeElevee?: string;
+  periodeDemandeFaible?: string;
+}
+
 export interface MembreFamille {
   id: string;
   nom: string;
@@ -172,4 +229,5 @@ export interface EnqueteFormData {
   membresFamille: MembreFamille[];
   Pecheur?: Pecheur[];
   activites?: ActiviteEconomique[];
+  collecteur: Collecteur[];
 }

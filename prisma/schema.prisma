@@ -140,7 +140,7 @@ model Pecheur {
   equipementsPeche   EquipementPeche[]
   embarcations       EmbarcationPeche[]
   circuitsCommercial CircuitCommercialProduit[]
-  activites          ActiviteEconomique[]
+
 
   @@map("pecheurs")
 }
@@ -251,18 +251,23 @@ model Collecteur {
 
   experienceAnnees         Float?
   estMareyeur              Boolean? @default(false)
-  lieuCollecte             String[]
+  lieuCollecte             String[]  // Ne dépend pas du produit
+  dureeCollecteHebdo       Float?
+  effectifPers             Int?
+  frequencePassage         String?
+  estStockage              Boolean?  @default(true)
+
   capitalTotal             Float?
   partCapitalPropre        Float?
   partCapitalEmprunte      Float?
   investissementEquipement Float?
   investissementLocation   Float?
   coutRessourcesHumaines   Float?
-
-  produitsAchetes    ProduitAchete[]
-  methodesStockage   MethodeStockage[]
-  canauxDistribution CanalDistribution[]
-  activites          ActiviteEconomique[]
+   
+  // Relations
+  produitsAchetes          ProduitAchete[]
+  stockage                 Stockage[]      // Nouveau modèle simplifié
+  distribution             Distribution[]  // Nouveau modèle simplifié
 
   @@map("operateurs_marche")
 }
@@ -277,48 +282,41 @@ model ProduitAchete {
   systemeAvance          Boolean?
   montantAvance          Int?
   possedeCarteProfession Boolean?
-  varieteProduitA        String?
-  varieteProduitB        String?
-  dureeCollecteHebdo     Float?
+  varieteProduit         String[]
 
   @@unique([operateurId, typeProduit])
   @@map("produits_achetes")
 }
 
-model MethodeStockage {
+// Nouveau modèle simplifié pour le stockage
+model Stockage {
   id                    String     @id @default(uuid())
   operateur             Collecteur @relation(fields: [operateurId], references: [id], onDelete: Cascade)
   operateurId           String
-  typeProduit           String?
-  lieuStockage          String[]
+  lieuStockage          String?   // Ne dépend plus du type de produit
   techniqueConservation String?
   dureeStockageJours    Int?
   tauxPerte             Float?
   gestionDechets        String?
 
-  @@map("methodes_stockage")
+  @@map("stockage")
 }
 
-model CanalDistribution {
+// Nouveau modèle simplifié pour la distribution
+model Distribution {
   id                      String     @id @default(uuid())
   operateur               Collecteur @relation(fields: [operateurId], references: [id], onDelete: Cascade)
   operateurId             String
-  typeProduit             String?
-  circuitDistribution     String?
-  pointVente              String[]
-  moyenTransport          String?
+  circuitDistribution     String[]   // Ne dépend plus du type de produit
+  pointVente              String[]   // Ne dépend plus du type de produit
+  moyenTransport          String[]   // Ne dépend plus du type de produit
   frequenceLivraisonsMois Int?
   techniqueTransport      String?
-  prixVenteKg             Int?
   periodeDemandeElevee    String?
   periodeDemandeFaible    String?
-  requiertAvance          Boolean?
-  montantAvance           Int?
-  acheteurDeterminePrix   Boolean?
 
-  @@map("canaux_distribution")
+  @@map("distribution")
 }
-
 model ActiviteEconomique {
   id        String  @id @default(uuid())
   enquete   Enquete @relation(fields: [enqueteId], references: [id], onDelete: Cascade)
@@ -367,9 +365,7 @@ model ActiviteEconomique {
   lieuExerciceAGR         String?
   revenuMensuelAGR        Float?   // en MGA
 
-  // Relations
-  pecheur    Pecheur[]
-  collecteur Collecteur[]
+
 
   @@map("activites_economiques")
 }

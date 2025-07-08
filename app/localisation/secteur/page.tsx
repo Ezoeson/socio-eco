@@ -203,14 +203,17 @@ export default function Secteurs() {
           <div>
             <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
               <MapPin className="h-6 w-6 text-green-600" />
-              Gestion des Secteurs
+              <p className="tracking-widest animate-pulse bg-gradient-to-r from-blue-700 to-rose-700 text-transparent bg-clip-text text-4xl font-extrabold">
+                {" "}
+                Gestion des Secteurs
+              </p>
             </h1>
             <p className="text-muted-foreground">
               {data.total} secteurs enregistrés
             </p>
           </div>
 
-          <div className="flex gap-2">
+          <div className="flex gap-4 justify-between">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
@@ -232,9 +235,9 @@ export default function Secteurs() {
               }}
             >
               <DialogTrigger asChild>
-                <Button>
+                <Button className="bg-gradient-to-r from-blue-700 to-rose-700  text-white ">
                   <Plus className="h-4 w-4 mr-2" />
-                  Nouveau
+                  <p className="hidden md:block  font-bold">Nouveau secteur</p>
                 </Button>
               </DialogTrigger>
               <DialogContent>
@@ -379,11 +382,12 @@ export default function Secteurs() {
                               <AlertDialogTitle>
                                 Confirmer la suppression
                               </AlertDialogTitle>
-                              <AlertDialogDescription>
+                              <AlertDialogDescription className="flex flex-col justify-center items-center">
                                 Êtes-vous sûr de vouloir supprimer le secteur{" "}
                                 {secteur.nom} ? Cette action supprimera
                                 également
                                 {secteur.enqueteCount || 0} enquêtes associées.
+                                <Trash2 className="text-red-500 h-28 w-28 animate-bounce animate-infinite animate-ease-in-out " />
                               </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>

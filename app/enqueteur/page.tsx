@@ -229,14 +229,17 @@ export default function EnqueteurPage() {
           <div>
             <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
               <User className="h-6 w-6 text-blue-600" />
-              Gestion des Enquêteurs
+              <p className="tracking-widest animate-pulse bg-gradient-to-r from-blue-700 to-rose-700 text-transparent bg-clip-text text-4xl font-extrabold">
+                {" "}
+                Gestion des Enquêteurs
+              </p>
             </h1>
             <p className="text-muted-foreground">
               {data.total} enquêteurs enregistrés
             </p>
           </div>
 
-          <div className="flex gap-2">
+          <div className="flex gap-4 justify-between">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
@@ -258,9 +261,10 @@ export default function EnqueteurPage() {
               }}
             >
               <DialogTrigger asChild>
-                <Button>
+                
+                <Button className="bg-gradient-to-r from-blue-700 to-rose-700  text-white ">
                   <Plus className="h-4 w-4 mr-2" />
-                  Nouvel enquêteur
+                  <p className="hidden md:block  font-bold"> Nouvel enquêteur</p>
                 </Button>
               </DialogTrigger>
               <DialogContent className="max-w-md">
@@ -548,16 +552,13 @@ export default function EnqueteurPage() {
                               <AlertDialogTitle>
                                 Confirmer la suppression
                               </AlertDialogTitle>
-                              <AlertDialogDescription>
+                              <AlertDialogDescription className="flex flex-col justify-center items-center">
                                 Êtes-vous sûr de vouloir supprimer
                                 l&apos;enquêteur {enqueteur.nom}{" "}
                                 {enqueteur.prenom || ""} ?
                                 <>
                                   <br />
-                                  <span className="text-red-500">
-                                    Attention enquête(s) associée(s) seront
-                                    également supprimées.
-                                  </span>
+                                  <Trash2 className="text-red-500 h-28 w-28 animate-bounce animate-infinite animate-ease-in-out " />
                                 </>
                               </AlertDialogDescription>
                             </AlertDialogHeader>

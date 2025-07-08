@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import Wrapper from "@/components/Wrapper";
-import { Plus, Search, Edit, Trash2, MapPin } from "lucide-react";
+import { Plus, Search, Edit, Trash2, MapPin, Loader } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
 import { Label } from "@/components/ui/label";
 import {
@@ -156,9 +156,9 @@ export default function Region() {
       console.error("Delete error:", error);
       toast.error("Échec de la suppression");
     } finally {
-      setIsDeleteModalOpen(false);
       setDeletingId(null);
       setIsMutating(false);
+      setTimeout(() => setIsDeleteModalOpen(false), 10000);
     }
   };
 
@@ -175,14 +175,17 @@ export default function Region() {
           <div>
             <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
               <MapPin className="h-6 w-6 text-green-600" />
-              Gestion des Régions
+              <p className="tracking-widest animate-pulse bg-gradient-to-r from-blue-700 to-rose-700 text-transparent bg-clip-text text-4xl font-extrabold">
+                {" "}
+                Gestion des Régions
+              </p>
             </h1>
             <p className="text-muted-foreground">
               {data.total} régions enregistrées
             </p>
           </div>
 
-          <div className="flex gap-2">
+          <div className="flex gap-4 justify-between">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
@@ -204,9 +207,9 @@ export default function Region() {
               }}
             >
               <DialogTrigger asChild>
-                <Button>
+                <Button className="bg-gradient-to-r from-blue-700 to-rose-700  text-white ">
                   <Plus className="h-4 w-4 mr-2" />
-                  Nouvelle région
+                  <p className="  font-bold hidden md:block">Nouvelle région</p>
                 </Button>
               </DialogTrigger>
               <DialogContent>
@@ -332,12 +335,20 @@ export default function Region() {
                               <AlertDialogTitle>
                                 Confirmer la suppression
                               </AlertDialogTitle>
-                              <AlertDialogDescription>
-                                Êtes-vous sûr de vouloir supprimer la région{" "}
-                                {region.nom} ? Cette action supprimera également
-                                {region.districts} districts, {region.communes}{" "}
-                                communes et {region.fokontany} fokontanys
-                                associés.
+                              <AlertDialogDescription className="flex justify-center items-center flex-col ">
+                                {isMutating ? (
+                                  <Loader />
+                                ) : (
+                                  <>
+                                    Êtes-vous sûr de vouloir supprimer la région{" "}
+                                    {region.nom} ? Cette action supprimera
+                                    également
+                                    {region.districts} districts,{" "}
+                                    {region.communes} communes et{" "}
+                                    {region.fokontany} fokontanys associés.
+                                    <Trash2 className="text-red-500 h-28 w-28 animate-bounce animate-infinite animate-ease-in-out " />
+                                  </>
+                                )}
                               </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>

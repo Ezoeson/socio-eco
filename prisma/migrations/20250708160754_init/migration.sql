@@ -199,120 +199,107 @@ CREATE TABLE "destinations_commerciales" (
 );
 
 -- CreateTable
-CREATE TABLE "operateurs_marche" (
+CREATE TABLE "collecteurs" (
     "id" TEXT NOT NULL,
     "enqueteId" TEXT NOT NULL,
-    "experienceAnnees" DOUBLE PRECISION,
-    "estMareyeur" BOOLEAN DEFAULT false,
-    "lieuCollecte" TEXT[],
-    "capitalTotal" DOUBLE PRECISION,
-    "partCapitalPropre" DOUBLE PRECISION,
-    "partCapitalEmprunte" DOUBLE PRECISION,
-    "investissementEquipement" DOUBLE PRECISION,
-    "investissementLocation" DOUBLE PRECISION,
-    "coutRessourcesHumaines" DOUBLE PRECISION,
+    "annee_demarrage_activite" INTEGER,
+    "lieu_collecte" TEXT[],
+    "duree_collecte_hebdomadaire" INTEGER,
+    "frequence_passage" TEXT,
+    "effectif_personel" INTEGER,
+    "capitaux" DOUBLE PRECISION,
+    "financier_propre_pourcentage" DOUBLE PRECISION,
+    "financier_emprunte_pourcentage" DOUBLE PRECISION,
+    "investissement_propre" DOUBLE PRECISION,
+    "investissement_location" DOUBLE PRECISION,
+    "ressources_humaine" DOUBLE PRECISION,
+    "est_mareyeur" BOOLEAN DEFAULT false,
+    "est_stockage" BOOLEAN DEFAULT true,
+    "lieu_stockage" TEXT[],
+    "technique_conservation" TEXT,
+    "duree_stockage_jours" INTEGER,
+    "taux_perte" DOUBLE PRECISION,
+    "gestion_dechets" TEXT,
+    "circuit_distribution" TEXT[],
+    "point_vente" TEXT[],
+    "moyen_transport" TEXT[],
+    "frequence_livraisons" INTEGER,
+    "technique_transport" TEXT,
+    "saison_forte_demande" TEXT,
+    "saison_faible_demande" TEXT,
 
-    CONSTRAINT "operateurs_marche_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "collecteurs_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
-CREATE TABLE "produits_achetes" (
+CREATE TABLE "produits" (
     "id" TEXT NOT NULL,
-    "operateurId" TEXT NOT NULL,
-    "typeProduit" TEXT,
-    "volumeHebdomadaireKg" DOUBLE PRECISION,
-    "criteresQualite" TEXT,
-    "systemeAvance" BOOLEAN,
-    "montantAvance" INTEGER,
-    "possedeCarteProfession" BOOLEAN,
-    "varieteProduitA" TEXT,
-    "varieteProduitB" TEXT,
-    "dureeCollecteHebdo" DOUBLE PRECISION,
+    "collecteurId" TEXT NOT NULL,
+    "type_produit" TEXT,
+    "quantite_hebdomadaire" DOUBLE PRECISION,
+    "criteres_qualite" TEXT,
+    "varietes" TEXT[],
+    "systeme_avance" BOOLEAN DEFAULT false,
+    "montant_avance" DOUBLE PRECISION,
+    "possede_carte" BOOLEAN DEFAULT false,
 
-    CONSTRAINT "produits_achetes_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "produits_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
-CREATE TABLE "methodes_stockage" (
+CREATE TABLE "contrats" (
     "id" TEXT NOT NULL,
-    "operateurId" TEXT NOT NULL,
-    "typeProduit" TEXT,
-    "lieuStockage" TEXT[],
-    "techniqueConservation" TEXT,
-    "dureeStockageJours" INTEGER,
-    "tauxPerte" DOUBLE PRECISION,
-    "gestionDechets" TEXT,
+    "collecteurId" TEXT NOT NULL,
+    "type_produit" TEXT,
+    "perception_avance" BOOLEAN DEFAULT false,
+    "montant_avance" DOUBLE PRECISION,
+    "acheteur_fixe_prix" BOOLEAN DEFAULT false,
+    "prix_vente_kg" DOUBLE PRECISION,
 
-    CONSTRAINT "methodes_stockage_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "canaux_distribution" (
-    "id" TEXT NOT NULL,
-    "operateurId" TEXT NOT NULL,
-    "typeProduit" TEXT,
-    "circuitDistribution" TEXT,
-    "pointVente" TEXT[],
-    "moyenTransport" TEXT,
-    "frequenceLivraisonsMois" INTEGER,
-    "techniqueTransport" TEXT,
-    "prixVenteKg" INTEGER,
-    "periodeDemandeElevee" TEXT,
-    "periodeDemandeFaible" TEXT,
-    "requiertAvance" BOOLEAN,
-    "montantAvance" INTEGER,
-    "acheteurDeterminePrix" BOOLEAN,
-
-    CONSTRAINT "canaux_distribution_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "contrats_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
 CREATE TABLE "activites_economiques" (
     "id" TEXT NOT NULL,
     "enqueteId" TEXT NOT NULL,
-    "typeActivite" TEXT,
-    "sousType" TEXT,
+    "typeActivite" TEXT NOT NULL,
+    "importanceActivite" TEXT,
+    "autreRessourceExploitee" TEXT,
     "utilisationRessource" TEXT,
     "prixVente" INTEGER,
-    "frequenceCollecte" TEXT,
-    "frequenceCommercialisation" TEXT,
+    "frequenceCollecte" INTEGER,
+    "frequenceVente" INTEGER,
     "saisonHaute" TEXT,
     "saisonBasse" TEXT,
-    "importanceActivite" TEXT,
-    "lienAvecPeche" TEXT,
-    "superficie" DOUBLE PRECISION,
-    "productionAnnuelle" DOUBLE PRECISION,
-    "regimeFoncier" TEXT,
-    "localisation" TEXT,
-    "outilsUtilises" TEXT,
-    "frequenceActivite" TEXT,
-    "dureeExperience" TEXT,
-    "nombreAnimaux" INTEGER,
+    "activiteAgricole" TEXT,
+    "complementaritePeche" TEXT,
+    "frequenceActiviteAgricole" TEXT,
+    "superficieCultivee" DOUBLE PRECISION,
+    "quantiteProduite" DOUBLE PRECISION,
+    "statutFoncier" TEXT,
+    "lieuExploitationAgricole" TEXT,
+    "outilsProduction" TEXT,
+    "sousTypeElevage" TEXT,
+    "effectifElevage" INTEGER,
     "zonePaturage" TEXT,
     "frequenceSoins" TEXT,
-    "tempsConsacreHebdo" INTEGER,
-    "revenuMensuel" DOUBLE PRECISION,
-    "lieuExercice" TEXT,
-    "niveauSpecialization" TEXT,
+    "activiteSalariale" TEXT,
+    "dureeConsacreeSalariat" INTEGER,
+    "frequenceMensuelleSalariat" INTEGER,
+    "lieuExerciceSalariat" TEXT,
+    "revenuMensuelSalariat" DOUBLE PRECISION,
+    "activiteGeneratrice" TEXT,
+    "dureeActiviteAGR" INTEGER,
+    "frequenceMensuelleAGR" INTEGER,
+    "lieuExerciceAGR" TEXT,
+    "revenuMensuelAGR" DOUBLE PRECISION,
 
     CONSTRAINT "activites_economiques_pkey" PRIMARY KEY ("id")
 );
 
--- CreateTable
-CREATE TABLE "_ActiviteEconomiqueToPecheur" (
-    "A" TEXT NOT NULL,
-    "B" TEXT NOT NULL,
-
-    CONSTRAINT "_ActiviteEconomiqueToPecheur_AB_pkey" PRIMARY KEY ("A","B")
-);
-
--- CreateTable
-CREATE TABLE "_ActiviteEconomiqueToCollecteur" (
-    "A" TEXT NOT NULL,
-    "B" TEXT NOT NULL,
-
-    CONSTRAINT "_ActiviteEconomiqueToCollecteur_AB_pkey" PRIMARY KEY ("A","B")
-);
+-- CreateIndex
+CREATE UNIQUE INDEX "regions_nom_key" ON "regions"("nom");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "districts_nom_regionId_key" ON "districts"("nom", "regionId");
@@ -348,16 +335,10 @@ CREATE UNIQUE INDEX "pratiques_peche_pecheurId_especeCible_key" ON "pratiques_pe
 CREATE UNIQUE INDEX "embarcations_peche_pecheurId_key" ON "embarcations_peche"("pecheurId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "operateurs_marche_enqueteId_key" ON "operateurs_marche"("enqueteId");
+CREATE UNIQUE INDEX "collecteurs_enqueteId_key" ON "collecteurs"("enqueteId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "produits_achetes_operateurId_typeProduit_key" ON "produits_achetes"("operateurId", "typeProduit");
-
--- CreateIndex
-CREATE INDEX "_ActiviteEconomiqueToPecheur_B_index" ON "_ActiviteEconomiqueToPecheur"("B");
-
--- CreateIndex
-CREATE INDEX "_ActiviteEconomiqueToCollecteur_B_index" ON "_ActiviteEconomiqueToCollecteur"("B");
+CREATE UNIQUE INDEX "produits_collecteurId_type_produit_key" ON "produits"("collecteurId", "type_produit");
 
 -- AddForeignKey
 ALTER TABLE "districts" ADD CONSTRAINT "districts_regionId_fkey" FOREIGN KEY ("regionId") REFERENCES "regions"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -399,28 +380,13 @@ ALTER TABLE "circuits_commerciaux" ADD CONSTRAINT "circuits_commerciaux_pecheurI
 ALTER TABLE "destinations_commerciales" ADD CONSTRAINT "destinations_commerciales_circuitId_fkey" FOREIGN KEY ("circuitId") REFERENCES "circuits_commerciaux"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "operateurs_marche" ADD CONSTRAINT "operateurs_marche_enqueteId_fkey" FOREIGN KEY ("enqueteId") REFERENCES "enquetes"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "collecteurs" ADD CONSTRAINT "collecteurs_enqueteId_fkey" FOREIGN KEY ("enqueteId") REFERENCES "enquetes"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "produits_achetes" ADD CONSTRAINT "produits_achetes_operateurId_fkey" FOREIGN KEY ("operateurId") REFERENCES "operateurs_marche"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "produits" ADD CONSTRAINT "produits_collecteurId_fkey" FOREIGN KEY ("collecteurId") REFERENCES "collecteurs"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "methodes_stockage" ADD CONSTRAINT "methodes_stockage_operateurId_fkey" FOREIGN KEY ("operateurId") REFERENCES "operateurs_marche"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "canaux_distribution" ADD CONSTRAINT "canaux_distribution_operateurId_fkey" FOREIGN KEY ("operateurId") REFERENCES "operateurs_marche"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "contrats" ADD CONSTRAINT "contrats_collecteurId_fkey" FOREIGN KEY ("collecteurId") REFERENCES "collecteurs"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "activites_economiques" ADD CONSTRAINT "activites_economiques_enqueteId_fkey" FOREIGN KEY ("enqueteId") REFERENCES "enquetes"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "_ActiviteEconomiqueToPecheur" ADD CONSTRAINT "_ActiviteEconomiqueToPecheur_A_fkey" FOREIGN KEY ("A") REFERENCES "activites_economiques"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "_ActiviteEconomiqueToPecheur" ADD CONSTRAINT "_ActiviteEconomiqueToPecheur_B_fkey" FOREIGN KEY ("B") REFERENCES "pecheurs"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "_ActiviteEconomiqueToCollecteur" ADD CONSTRAINT "_ActiviteEconomiqueToCollecteur_A_fkey" FOREIGN KEY ("A") REFERENCES "activites_economiques"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "_ActiviteEconomiqueToCollecteur" ADD CONSTRAINT "_ActiviteEconomiqueToCollecteur_B_fkey" FOREIGN KEY ("B") REFERENCES "operateurs_marche"("id") ON DELETE CASCADE ON UPDATE CASCADE;

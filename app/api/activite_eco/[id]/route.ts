@@ -110,8 +110,6 @@ export async function PUT(
       },
       include: {
         enquete: true,
-        pecheur: true,
-        collecteur: true,
       },
     });
 

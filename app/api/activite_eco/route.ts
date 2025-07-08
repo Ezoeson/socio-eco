@@ -76,8 +76,7 @@ export async function POST(request: Request) {
       },
       include: {
         enquete: true,
-        pecheur: true,
-        collecteur: true,
+      
       },
     });
 

@@ -10,8 +10,6 @@ export async function GET() {
     const activites = await prisma.activiteEconomique.findMany({
       include: {
         enquete: true,
-        pecheur: true,
-        collecteur: true,
       },
     });
     return NextResponse.json(activites);

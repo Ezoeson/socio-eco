@@ -1,7 +1,7 @@
 // app/api/activite-economique/[id]/route.ts
 
-import { PrismaClient } from '@prisma/client';
-import { NextRequest, NextResponse } from 'next/server';
+import { PrismaClient } from "@prisma/client";
+import { NextRequest, NextResponse } from "next/server";
 
 const prisma = new PrismaClient();
 
@@ -16,14 +16,12 @@ export async function GET(
       where: { id: id },
       include: {
         enquete: true,
-        pecheur: true,
-        collecteur: true,
       },
     });
 
     if (!activite) {
       return NextResponse.json(
-        { error: 'Economic activity not found' },
+        { error: "Economic activity not found" },
         { status: 404 }
       );
     }
@@ -31,7 +29,7 @@ export async function GET(
     return NextResponse.json(activite);
   } catch {
     return NextResponse.json(
-      { error: 'Failed to fetch economic activity' },
+      { error: "Failed to fetch economic activity" },
       { status: 500 }
     );
   }
@@ -51,7 +49,7 @@ export async function PUT(
 
     if (!activiteExists) {
       return NextResponse.json(
-        { error: 'Economic activity not found' },
+        { error: "Economic activity not found" },
         { status: 404 }
       );
     }
@@ -63,7 +61,7 @@ export async function PUT(
       });
       if (!enqueteExists) {
         return NextResponse.json(
-          { error: 'Enquete not found' },
+          { error: "Enquete not found" },
           { status: 404 }
         );
       }
@@ -118,12 +116,12 @@ export async function PUT(
     });
 
     return NextResponse.json({
-      message: 'Economic activity updated successfully',
+      message: "Economic activity updated successfully",
       data: updatedActivite,
     });
   } catch {
     return NextResponse.json(
-      { error: 'Failed to update economic activity' },
+      { error: "Failed to update economic activity" },
       { status: 500 }
     );
   }
@@ -141,7 +139,7 @@ export async function DELETE(
 
     if (!activite) {
       return NextResponse.json(
-        { error: 'Economic activity not found' },
+        { error: "Economic activity not found" },
         { status: 404 }
       );
     }
@@ -151,11 +149,11 @@ export async function DELETE(
     });
 
     return NextResponse.json({
-      message: 'Economic activity deleted successfully',
+      message: "Economic activity deleted successfully",
     });
   } catch {
     return NextResponse.json(
-      { error: 'Failed to delete economic activity' },
+      { error: "Failed to delete economic activity" },
       { status: 500 }
     );
   }

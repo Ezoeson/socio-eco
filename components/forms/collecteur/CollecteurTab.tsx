@@ -51,6 +51,7 @@ export default function CollecteurTabs({
   onCollecteurChange,
 }: CollecteurTabsProps) {
   const [activeTab, setActiveTab] = useState("infos");
+  console.log(collecteur);
 
   const handleBaseInfoChange = <K extends keyof Collecteur>(
     field: K,
@@ -140,7 +141,7 @@ export default function CollecteurTabs({
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 <Label>Lieux de collecte</Label>
-                {collecteur.lieuCollecte.map((lieu, index) => (
+                {collecteur?.lieuCollecte?.map((lieu, index) => (
                   <div
                     key={index}
                     className="grid grid-cols-12 gap-4 items-end"

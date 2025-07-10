@@ -48,7 +48,19 @@ export function ActeurForm() {
   const [enqueteurs, setEnqueteurs] = useState<{ id: string; nom: string }[]>(
     []
   );
-  const [secteurs, setSecteurs] = useState<{ id: string; nom: string }[]>([]);
+  const [secteurs, setSecteurs] = useState<any[]>([]); // Modifié pour inclure la hiérarchie complète
+
+  // États pour le filtrage hiérarchique
+  const [regions, setRegions] = useState<{ id: string; nom: string }[]>([]);
+  const [districts, setDistricts] = useState<{ id: string; nom: string }[]>([]);
+  const [communes, setCommunes] = useState<{ id: string; nom: string }[]>([]);
+  const [fokontanies, setFokontanies] = useState<{ id: string; nom: string }[]>(
+    []
+  );
+  const [selectedRegion, setSelectedRegion] = useState("");
+  const [selectedDistrict, setSelectedDistrict] = useState("");
+  const [selectedCommune, setSelectedCommune] = useState("");
+  const [selectedFokontany, setSelectedFokontany] = useState("");
 
   const [formData, setFormData] = useState<EnqueteFormData>({
     id: "",
@@ -127,6 +139,18 @@ export function ActeurForm() {
 
         setEnqueteurs(enqueteursData.data);
         setSecteurs(secteursData.data);
+        // Extraire les régions uniques
+        const uniqueRegions = secteursData.data.reduce(
+          (acc: any[], secteur: any) => {
+            const region = secteur?.fokontany?.commune?.district?.region;
+            if (!acc.some((r) => r.id === region.id)) {
+              acc.push(region);
+            }
+            return acc;
+          },
+          []
+        );
+        setRegions(uniqueRegions);
       } catch (error) {
         console.error("Erreur:", error);
         toast.error("Erreur lors du chargement des données initiales");
@@ -136,7 +160,77 @@ export function ActeurForm() {
     };
 
     fetchInitialData();
-  }, []);
+  }, [secteurs, enqueteurs]);
+  // Mettre à jour les districts quand la région change
+  useEffect(() => {
+    if (selectedRegion) {
+      const filteredDistricts = secteurs
+        .filter(
+          (s) => s.fokontany.commune.district.region.id === selectedRegion
+        )
+        .map((s) => s.fokontany.commune.district)
+        .filter(
+          (district, index, self) =>
+            self.findIndex((d) => d.id === district.id) === index
+        );
+
+      setDistricts(filteredDistricts);
+      setSelectedDistrict("");
+      setSelectedCommune("");
+      setSelectedFokontany("");
+    } else {
+      setDistricts([]);
+      setSelectedDistrict("");
+      setCommunes([]);
+      setSelectedCommune("");
+      setFokontanies([]);
+      setSelectedFokontany("");
+    }
+  }, [selectedRegion]);
+
+  // Mettre à jour les communes quand le district change
+  useEffect(() => {
+    if (selectedDistrict) {
+      const filteredCommunes = secteurs
+        .filter((s) => s.fokontany?.commune?.district?.id === selectedDistrict)
+        .map((s) => s.fokontany.commune)
+        .filter(
+          (commune, index, self) =>
+            commune && self.findIndex((c) => c?.id === commune?.id) === index
+        );
+
+      setCommunes(filteredCommunes);
+      setSelectedCommune("");
+      setSelectedFokontany("");
+    } else {
+      setCommunes([]);
+      setSelectedCommune("");
+      setFokontanies([]);
+      setSelectedFokontany("");
+    }
+  }, [selectedDistrict]);
+
+  // Mettre à jour les fokontanies quand la commune change
+  useEffect(() => {
+    if (selectedCommune) {
+      const filteredFokontanies = secteurs
+        .map((s) => s.fokontany)
+        .filter(
+          (fokontany, index, self) =>
+            fokontany.commune.id === selectedCommune &&
+            self.findIndex((f) => f.id === fokontany.id) === index
+        );
+      setFokontanies(filteredFokontanies);
+      setSelectedFokontany("");
+    } else {
+      setFokontanies([]);
+      setSelectedFokontany("");
+    }
+  }, [selectedCommune]);
+
+  const filteredSecteurs = selectedFokontany
+    ? secteurs.filter((secteur) => secteur.fokontany.id === selectedFokontany)
+    : [];
 
   const handleInputChange = (
     field: keyof EnqueteFormData,
@@ -343,7 +437,86 @@ export function ActeurForm() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* Secteur - Version améliorée */}
+                  {/* Nouvelle section de filtrage hiérarchique */}
+                  <Select
+                    value={selectedRegion}
+                    onValueChange={setSelectedRegion}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Sélectionnez une région" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {/* <SelectItem value="">-- Aucune région --</SelectItem> */}
+                      {regions.map((region) => (
+                        <SelectItem key={region.id} value={region.id}>
+                          {region.nom}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+
+                  <div className="space-y-2">
+                    <Label>District</Label>
+                    <Select
+                      value={selectedDistrict}
+                      onValueChange={setSelectedDistrict}
+                      disabled={!selectedRegion}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Sélectionnez un district" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {/* <SelectItem value="">-- Aucune sélection --</SelectItem> */}
+                        {districts.map((district) => (
+                          <SelectItem key={district.id} value={district.id}>
+                            {district.nom}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Commune</Label>
+                    <Select
+                      value={selectedCommune}
+                      onValueChange={setSelectedCommune}
+                      disabled={!selectedDistrict}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Sélectionnez une commune" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {communes.map((commune) => (
+                          <SelectItem key={commune.id} value={commune.id}>
+                            {commune.nom}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Fokontany</Label>
+                    <Select
+                      value={selectedFokontany}
+                      onValueChange={setSelectedFokontany}
+                      disabled={!selectedCommune}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Sélectionnez un fokontany" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {fokontanies.map((fokontany) => (
+                          <SelectItem key={fokontany.id} value={fokontany.id}>
+                            {fokontany.nom}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Secteur (seul champ sauvegardé) */}
                   <div className="space-y-2">
                     <Label>Secteur *</Label>
                     <Select
@@ -351,17 +524,20 @@ export function ActeurForm() {
                       onValueChange={(value) =>
                         handleSelectChange("secteurId", value)
                       }
+                      disabled={!selectedFokontany}
+                      required
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Sélectionnez un secteur">
                           {formData.secteurId
-                            ? secteurs.find((s) => s.id === formData.secteurId)
-                                ?.nom
+                            ? filteredSecteurs.find(
+                                (s) => s.id === formData.secteurId
+                              )?.nom
                             : "Non sélectionné"}
                         </SelectValue>
                       </SelectTrigger>
                       <SelectContent>
-                        {secteurs.map((sec) => (
+                        {filteredSecteurs.map((sec) => (
                           <SelectItem key={sec.id} value={sec.id}>
                             {sec.nom}
                           </SelectItem>

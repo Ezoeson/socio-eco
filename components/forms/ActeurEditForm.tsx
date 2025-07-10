@@ -28,7 +28,6 @@ import { useRouter, useParams } from "next/navigation";
 import { toast } from "sonner";
 import {
   ActiviteEconomique,
-  Collecteur,
   EnqueteFormData,
   MembreFamille,
   Pecheur,
@@ -61,7 +60,7 @@ export function ActeurEditForm() {
     membresFamille: [],
     Pecheur: [],
     activites: [],
-    collecteur:[],
+    collecteur: [],
     dateEnquete: new Date().toISOString().split("T")[0],
     enqueteurId: "",
     secteurId: "",
@@ -108,6 +107,7 @@ export function ActeurEditForm() {
 
   const visibleTabs = tabsConfig?.filter((tab) => tab.show);
   const tabCount = visibleTabs?.length;
+  console.log("Données du collecteur:", formData.collecteur);
 
   useEffect(() => {
     const fetchInitialData = async () => {
@@ -144,11 +144,42 @@ export function ActeurEditForm() {
                 CircuitCommercial: enqueteData.pecheur.circuitsCommercial || [],
               }
             : null;
+          // Dans le fetchInitialData, après la transformation du pêcheur
+          const transformedCollecteur = enqueteData.collecteur
+            ? {
+                id: enqueteData.collecteur.id,
+                lieuCollecte: enqueteData.collecteur.lieuCollecte || [],
+                produitsAchetes: enqueteData.collecteur.produitsAchetes || [],
+                stockages: enqueteData.collecteur.stockages || [],
+                distributions: enqueteData.collecteur.distributions || [],
+                contratsAcheteur: enqueteData.collecteur.contratsAcheteur || [],
+                estMareyeur: enqueteData.collecteur.estMareyeur || false,
+                estStockage: enqueteData.collecteur.estStockage || true,
+                estContrat: enqueteData.collecteur.estContrat || false,
+                anneeDemarrageActivite:
+                  enqueteData.collecteur.anneeDemarrageActivite,
+                effectifPersonnel: enqueteData.collecteur.effectifPersonnel,
+                dureeCollecteHebdo: enqueteData.collecteur.dureeCollecteHebdo,
+                frequencePassage: enqueteData.collecteur.frequencePassage,
+                capitalTotal: enqueteData.collecteur.capitalTotal,
+                partCapitalPropre: enqueteData.collecteur.partCapitalPropre,
+                partCapitalEmprunte: enqueteData.collecteur.partCapitalEmprunte,
+                investissementEquipement:
+                  enqueteData.collecteur.investissementEquipement,
+                investissementLocation:
+                  enqueteData.collecteur.investissementLocation,
+                coutRessourcesHumaines:
+                  enqueteData.collecteur.coutRessourcesHumaines,
+              }
+            : null;
+
+          // Dans setFormData, ajoutez :
 
           setFormData({
             ...enqueteData,
             dateEnquete: enqueteData.dateEnquete.split("T")[0],
             Pecheur: transformedPecheur ? [transformedPecheur] : [],
+            collecteur: transformedCollecteur ? [transformedCollecteur] : [],
           });
         }
       } catch (error) {
@@ -612,30 +643,28 @@ export function ActeurEditForm() {
             </TabsContent>
           )}
 
-           {formData.estCollecteur && (
-                      <TabsContent
-                        value="collecteur"
-                        className=" shadow-md shadow-blue-500 "
-                      >
-                        <Card>
-                          <CardHeader>
-                            <CardTitle>Informations sur le collecteur</CardTitle>
-                          </CardHeader>
-                          <CardContent>
-                            <CollecteurTabs
-                              collecteur={formData.collecteur?.[0] || undefined}
-                              onCollecteurChange={(collecteur: Collecteur) => {
-                                // Si collecteur est undefined, on garde le tableau existant ou un tableau vide
-                                const newCollecteurs = collecteur
-                                  ? [collecteur]
-                                  : formData.collecteur || [];
-                                handleInputChange("collecteur", newCollecteurs);
-                              }}
-                            />
-                          </CardContent>
-                        </Card>
-                      </TabsContent>
-                    )}
+          {formData.estCollecteur && (
+            <TabsContent
+              value="collecteur"
+              className="shadow-md shadow-blue-500"
+            >
+              <Card>
+                <CardHeader>
+                  <CardTitle>Informations sur le collecteur</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <CollecteurTabs
+                    collecteur={
+                      formData.collecteur?.[0] || { id: crypto.randomUUID() }
+                    }
+                    onCollecteurChange={(collecteur) => {
+                      handleInputChange("collecteur", [collecteur]);
+                    }}
+                  />
+                </CardContent>
+              </Card>
+            </TabsContent>
+          )}
           {formData?.touteActivite && (
             <TabsContent value="autreActivite">
               <Card>

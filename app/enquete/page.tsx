@@ -174,7 +174,7 @@ export default function ListeEnquetes() {
 
     try {
       setIsMutating(true);
-      const response = await fetch(`/api/enquetes/${deletingId}`, {
+      const response = await fetch(`/api/enquete_famille/${deletingId}`, {
         method: "DELETE",
       });
 

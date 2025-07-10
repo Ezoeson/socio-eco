@@ -71,9 +71,16 @@ export async function GET(request: Request) {
         where: whereClause,
         include: {
           fokontany: {
-            select: {
-              id: true,
-              nom: true,
+            include: {
+              commune: {
+                include: {
+                  district: {
+                    include: {
+                      region: true,
+                    },
+                  },
+                },
+              },
             },
           },
           enquetes: {

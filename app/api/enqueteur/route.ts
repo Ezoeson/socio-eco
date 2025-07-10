@@ -35,7 +35,7 @@ export async function GET(request: Request) {
                 collecteur: {
                   include: {
                     produitsAchetes: true,
-                    methodesStockage: true,
+                   
                   },
                 },
                 pecheur: true,
@@ -85,7 +85,6 @@ export async function GET(request: Request) {
               collecteur: {
                 include: {
                   produitsAchetes: true,
-                  methodesStockage: true,
                 },
               },
               pecheur: true,

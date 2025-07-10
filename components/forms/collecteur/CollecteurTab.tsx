@@ -6,6 +6,7 @@ import {
   ProduitAchete,
   Stockage,
   Distribution,
+  ContratAcheteur,
 } from "@/type/localType";
 import {
   Truck,
@@ -16,6 +17,7 @@ import {
   Plus,
   Trash2,
   DollarSign,
+  FileText,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -25,6 +27,7 @@ import { ProduitsAchetes } from "./ProduitsAchetes";
 import { StockageInfo } from "./StockageInfo";
 import { DistributionInfo } from "./DistributionInfo";
 import { useState } from "react";
+import ContratInfo from "./ContratInfo";
 
 interface CollecteurTabsProps {
   collecteur?: Collecteur;
@@ -33,22 +36,14 @@ interface CollecteurTabsProps {
 
 const defaultCollecteur: Collecteur = {
   id: "",
-  experienceAnnees: undefined,
-  estMareyeur: false,
   lieuCollecte: [],
-  dureeCollecteHebdo: undefined,
-  effectifPers: undefined,
-  frequencePassage: "",
-  estStockage: true,
-  capitalTotal: undefined,
-  partCapitalPropre: undefined,
-  partCapitalEmprunte: undefined,
-  investissementEquipement: undefined,
-  investissementLocation: undefined,
-  coutRessourcesHumaines: undefined,
   produitsAchetes: [],
-  stockage: [],
-  distribution: [],
+  stockages: [],
+  distributions: [],
+  contratsAcheteur: [],
+  estMareyeur: false,
+  estStockage: true,
+  estContrat: false,
 };
 
 export default function CollecteurTabs({
@@ -69,11 +64,14 @@ export default function CollecteurTabs({
   };
 
   const handleStockageChange = (stockage: Stockage[]) => {
-    handleBaseInfoChange("stockage", stockage);
+    handleBaseInfoChange("stockages", stockage);
   };
 
   const handleDistributionChange = (distribution: Distribution[]) => {
-    handleBaseInfoChange("distribution", distribution);
+    handleBaseInfoChange("distributions", distribution);
+  };
+  const handleContratChange = (contratsAcheteur: ContratAcheteur[]) => {
+    handleBaseInfoChange("contratsAcheteur", contratsAcheteur);
   };
 
   const addLieuCollecte = () => {
@@ -99,25 +97,31 @@ export default function CollecteurTabs({
       </div>
 
       <Tabs defaultValue="infos" value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5  bg-gray-950 ">
           <TabsTrigger value="infos" className="flex gap-2">
-            <User className="h-4 w-4" />
+            <User className="h-4 w-4 text-lime-600 font-bold" />
             Informations
           </TabsTrigger>
           <TabsTrigger value="produits" className="flex gap-2">
-            <ShoppingCart className="h-4 w-4" />
+            <ShoppingCart className="h-4 w-4 text-lime-600 font-bold " />
             Produits
           </TabsTrigger>
           {collecteur.estStockage && (
             <TabsTrigger value="stockage" className="flex gap-2">
-              <Warehouse className="h-4 w-4" />
-              Stockage
+              <Warehouse className="h-4 w-4 text-lime-600 font-bold" />
+              Methode de Stockage
             </TabsTrigger>
           )}
           <TabsTrigger value="distribution" className="flex gap-2">
-            <Truck className="h-4 w-4" />
+            <Truck className="h-4 w-4 text-lime-600 font-bold" />
             Distribution
           </TabsTrigger>
+          {collecteur.estContrat && (
+            <TabsTrigger value="contrat" className="flex gap-2">
+              <FileText className="h-4 w-4 text-lime-600 font-bold" />
+              Contrat
+            </TabsTrigger>
+          )}
         </TabsList>
 
         {/* Onglet Informations */}
@@ -170,35 +174,7 @@ export default function CollecteurTabs({
                 </Button>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="space-y-2">
-                  <Label>Années d&apos;expérience</Label>
-                  <Input
-                    type="number"
-                    value={collecteur.experienceAnnees || ""}
-                    onChange={(e) =>
-                      handleBaseInfoChange(
-                        "experienceAnnees",
-                        Number(e.target.value)
-                      )
-                    }
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Effectif du personnel</Label>
-                  <Input
-                    type="number"
-                    value={collecteur.effectifPers || ""}
-                    onChange={(e) =>
-                      handleBaseInfoChange(
-                        "effectifPers",
-                        Number(e.target.value)
-                      )
-                    }
-                  />
-                </div>
-
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6  justify-center items-center ">
                 <div className="flex items-center space-x-2 pt-6">
                   <Checkbox
                     id="estMareyeur"
@@ -209,11 +185,38 @@ export default function CollecteurTabs({
                   />
                   <Label htmlFor="estMareyeur">Est mareyeur</Label>
                 </div>
+                <div className="space-y-2">
+                  <Label>Année de démarrage d&apos;activité</Label>
+                  <Input
+                    type="number"
+                    value={collecteur.anneeDemarrageActivite || ""}
+                    onChange={(e) =>
+                      handleBaseInfoChange(
+                        "anneeDemarrageActivite",
+                        Number(e.target.value)
+                      )
+                    }
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Effectif du personnel</Label>
+                  <Input
+                    type="number"
+                    value={collecteur.effectifPersonnel || ""}
+                    onChange={(e) =>
+                      handleBaseInfoChange(
+                        "effectifPersonnel",
+                        Number(e.target.value)
+                      )
+                    }
+                  />
+                </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <Label>Durée hebdomadaire de collecte (heures)</Label>
+                  <Label>Durée hebdomadaire de collecte (jours)</Label>
                   <Input
                     type="number"
                     value={collecteur.dureeCollecteHebdo || ""}
@@ -235,18 +238,6 @@ export default function CollecteurTabs({
                     }
                   />
                 </div>
-              </div>
-
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="estStockage"
-                  checked={collecteur.estStockage || false}
-                  onCheckedChange={(checked) => {
-                    handleBaseInfoChange("estStockage", !!checked);
-                    if (checked) setActiveTab("stockage");
-                  }}
-                />
-                <Label htmlFor="estStockage">Pratique le stockage</Label>
               </div>
             </CardContent>
           </Card>
@@ -271,7 +262,7 @@ export default function CollecteurTabs({
               </div>
 
               <div className="space-y-2">
-                <Label>Part capital propre (MGA)</Label>
+                <Label>Part capital propre (%)</Label>
                 <Input
                   type="number"
                   value={collecteur.partCapitalPropre || ""}
@@ -285,7 +276,7 @@ export default function CollecteurTabs({
               </div>
 
               <div className="space-y-2">
-                <Label>Part capital emprunté (MGA)</Label>
+                <Label>Part capital emprunté (%)</Label>
                 <Input
                   type="number"
                   value={collecteur.partCapitalEmprunte || ""}
@@ -341,6 +332,29 @@ export default function CollecteurTabs({
               </div>
             </CardContent>
           </Card>
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="estStockage"
+              checked={collecteur.estStockage || false}
+              onCheckedChange={(checked) => {
+                handleBaseInfoChange("estStockage", !!checked);
+                if (checked) setActiveTab("stockage");
+              }}
+            />
+            <Label htmlFor="estStockage">Pratique le stockage</Label>
+          </div>
+
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="estContrat"
+              checked={collecteur.estContrat || false}
+              onCheckedChange={(checked) => {
+                handleBaseInfoChange("estContrat", !!checked);
+                if (checked) setActiveTab("contrat");
+              }}
+            />
+            <Label htmlFor="estContrat">A des contrats avec acheteurs</Label>
+          </div>
         </TabsContent>
 
         {/* Onglet Produits */}
@@ -354,7 +368,7 @@ export default function CollecteurTabs({
         {/* Onglet Stockage */}
         <TabsContent value="stockage" className="mt-6">
           <StockageInfo
-            stockage={collecteur.stockage || []}
+            stockages={collecteur.stockages || []}
             onChange={handleStockageChange}
           />
         </TabsContent>
@@ -362,8 +376,16 @@ export default function CollecteurTabs({
         {/* Onglet Distribution */}
         <TabsContent value="distribution" className="mt-6">
           <DistributionInfo
-            distribution={collecteur.distribution || []}
+            distribution={collecteur.distributions || []}
             onChange={handleDistributionChange}
+          />
+        </TabsContent>
+
+        {/* Onglet Contrat */}
+        <TabsContent value="contrat" className="mt-6">
+          <ContratInfo
+            contrats={collecteur.contratsAcheteur}
+            onChange={handleContratChange}
           />
         </TabsContent>
       </Tabs>

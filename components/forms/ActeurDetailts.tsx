@@ -31,6 +31,7 @@ import FishermanTab from "./pecheur/FishermanTab";
 import { MembreFamilleForm } from "./MembreFamilleForm";
 import { Skeleton } from "../ui/skeleton";
 import { ActiviteEconomiqueForm } from "./ActiviteEconomiqueForm";
+import CollecteurTabs from "./collecteur/CollecteurTab";
 
 export function ActeurDetails() {
   const router = useRouter();
@@ -53,6 +54,7 @@ export function ActeurDetails() {
     touteActivite: false,
     membresFamille: [],
     Pecheur: [],
+    collecteur: [],
     activites: [],
     dateEnquete: new Date().toISOString().split("T")[0],
     enqueteurId: "",
@@ -454,13 +456,19 @@ export function ActeurDetails() {
           )}
 
           {formData.estCollecteur && (
-            <TabsContent value="collecteur">
+            <TabsContent
+              value="collecteur"
+              className=" shadow-md shadow-blue-500 "
+            >
               <Card>
                 <CardHeader>
                   <CardTitle>Informations sur le collecteur</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p>Informations spécifiques au collecteur à venir.</p>
+                  <CollecteurTabs
+                    collecteur={formData.collecteur?.[0] || undefined}
+                    onCollecteurChange={() => {}}
+                  />
                 </CardContent>
               </Card>
             </TabsContent>

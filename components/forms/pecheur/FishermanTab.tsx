@@ -47,21 +47,21 @@ export default function FishermanTabs({
       </CardHeader>
       <CardContent>
         <Tabs defaultValue="practices">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-4 bg-gray-950 ">
             <TabsTrigger value="practices">
-              <Waves className="h-4 w-4" />
-              <span className="hidden md:block">Pratiques de peche</span>
+              <Waves className="h-4 w-4 text-lime-600 font-bold" />
+              <span className="hidden md:block">Activité peche</span>
             </TabsTrigger>
             <TabsTrigger value="boats">
-              <Ship />
+              <Ship className="h-4 w-4 text-lime-600 font-bold" />
               <span className="hidden md:block">Embarcations</span>
             </TabsTrigger>
             <TabsTrigger value="equipment">
-              <Settings />
+              <Settings className="h-4 w-4 text-lime-600 font-bold" />
               <span className="hidden md:block"> Équipements</span>
             </TabsTrigger>
             <TabsTrigger value="circuits">
-              <RefreshCw />
+              <RefreshCw className="h-4 w-4 text-lime-600 font-bold" />
               <span className="hidden md:block"> Circuits Commerciaux</span>
             </TabsTrigger>
           </TabsList>

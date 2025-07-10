@@ -102,7 +102,7 @@ model Enquete {
   secteurId   String?
 
   pecheur        Pecheur?
-  collecteur     Collecteur[]
+  collecteur     Collecteur?
   membresFamille MembreFamille[]
   activites      ActiviteEconomique[]
 
@@ -245,86 +245,113 @@ model DestinationCommerciale {
 }
 
 model Collecteur {
-  id                              String             @id @default(uuid())
-  enquete            Enquete                    @relation(fields: [enqueteId], references: [id], onDelete: Cascade)
-  enqueteId          String                     @unique
-  annee_demarrage_activite        Int?               // année de démarrage
-  lieu_collecte                   String[]           // lieux de collecte
-  duree_collecte_hebdomadaire     Int?               // en jours
-  frequence_passage               String?
-  effectif_personel               Int?
-  
-  // Capitaux
-  capitaux                        Float?
-  financier_propre_pourcentage    Float?
-  financier_emprunte_pourcentage  Float?
-  investissement_propre           Float?
-  investissement_location         Float?
-  ressources_humaine              Float?
-  
-  // Caractéristiques
-  est_mareyeur                    Boolean?           @default(false)
-  est_stockage                    Boolean?           @default(true)
+  id                       String    @id @default(uuid())
+  enquete                  Enquete   @relation(fields: [enqueteId], references: [id], onDelete: Cascade)
+  enqueteId                String    @unique
 
-  
-  // Stockage (ne dépend pas du type de produit)
-  lieu_stockage                   String[]
-  technique_conservation          String?
-  duree_stockage_jours            Int?
-  taux_perte                      Float?
-  gestion_dechets                 String?
-  
-  // Distribution (ne dépend pas du type de produit)
-  circuit_distribution            String[]
-  point_vente                     String[]
-  moyen_transport                 String[]
-  frequence_livraisons            Int?
-  technique_transport             String?
-  saison_forte_demande            String?
-  saison_faible_demande           String?
-  
+  // Circuit de commercialisation
+  anneeDemarrageActivite   Int?      @map("annee_collecte") //annee_collecte
+  lieuCollecte             String[]  @map("lieu_collecte") // lieu_collecte_n
+  dureeCollecteHebdo       Int?      @map("duree_collecte_hebdo") // duree_collecte_hebdomadaire (en jours)
+  frequencePassage         String?   @map("frequence_passage")
+  effectifPersonnel        Int?      @map("effectif_personnel") // effectif_personel
+
+  // Capitaux
+  capitalTotal             Float?    @map("capital_total")
+  partCapitalPropre        Float?    @map("part_capital_propre") // financier_propre_pourcentage
+  partCapitalEmprunte      Float?    @map("part_capital_emprunte") // financier_emprunte_pourcentage
+  investissementEquipement Float?    @map("investissement_equipement") // investissement_propre
+  investissementLocation   Float?    @map("investissement_location")
+  coutRessourcesHumaines   Float?    @map("cout_ressources_humaines")
+
+  // Autres caractéristiques
+  estMareyeur              Boolean?  @default(false) @map("est_mareyeur")
+  estStockage              Boolean?  @default(true) @map("est_stockage")
+  estContrat               Boolean?  @default(false) @map("est_contrat")
+
   // Relations
-  produits                        Produit[]
-  contrats                        Contrat[]
-  
-  @@map("collecteurs")
+  produitsAchetes          ProduitAchete[]
+  stockages                Stockage[]      
+  distributions            Distribution[]   
+  contratsAcheteur         ContratAcheteur[] 
+
+  @@map("operateurs_marche")
 }
 
-model Produit {
-  id                      String       @id @default(uuid())
-  collecteurId            String
-  collecteur              Collecteur   @relation(fields: [collecteurId], references: [id], onDelete: Cascade)
+model ProduitAchete {
+  id                     String     @id @default(uuid())
+  operateur              Collecteur @relation(fields: [operateurId], references: [id], onDelete: Cascade)
+  operateurId            String     @map("operateur_id")
   
   // Infos produit
-  type_produit            String?      // crabe/crevette/poisson
-  quantite_hebdomadaire   Float?
-  criteres_qualite        String?
-  varietes                String[]
+  typeProduit            String?    @map("type_produit") // type_produit_achete_n (crabe/crevette/poisson)
+
+  
+  volumeHebdomadaireKg   Float?     @map("volume_hebdomadaire_kg") // quantite_achete_hebdomadiare_produit_n
+  criteresQualite        String?    @map("criteres_qualite") // qualite_exige_produit_n
   
   // Système d'avance
-  systeme_avance          Boolean?     @default(false)
-  montant_avance          Float?
+  systemeAvance          Boolean?   @default(false) @map("systeme_avance") // systeme_avance_produit_n
+  montantAvance          Float?     @map("montant_avance") // montant_avance_produit_n
   
   // Certification
-  possede_carte           Boolean?     @default(false)
-  
-  @@unique([collecteurId, type_produit])
-  @@map("produits")
+ possedeCarteProfession Boolean?   @default(false) @map("possede_carte_profession") // possession_carte_produit_n
+  varietes               String[]   @map("varietes") // Type_produit_n_m
+  @@unique([operateurId, typeProduit])
+  @@map("produits_achetes")
 }
 
-model Contrat {
-  id                      String       @id @default(uuid())
-  collecteurId            String
-  collecteur              Collecteur   @relation(fields: [collecteurId], references: [id], onDelete: Cascade)
-  type_produit            String?
+model Stockage {
+  id                    String     @id @default(uuid())
+  operateur             Collecteur @relation(fields: [operateurId], references: [id], onDelete: Cascade)
+  operateurId           String     @map("operateur_id")
+  typeProduit           String?    @map("type_produit") // produit_m
+  
+  // Infos stockage
+  lieux                 String[]   @map("lieux") // lieu_stockage
+  techniques            String[]   @map("techniques") // methode_conservation_produit_m_n
+  dureesStockage        Int        @map("durees_stockage") // duree_stockage_produit_m_n
+  tauxPertes            Float      @map("taux_pertes") // taux_perte_produit_m_pourcentage
+  gestionDechets        String?    @map("gestion_dechets") // destination_dechet_produit_m
+
+  @@map("stockage")
+}
+
+model Distribution {
+  id                      String     @id @default(uuid())
+  operateur               Collecteur @relation(fields: [operateurId], references: [id], onDelete: Cascade)
+  operateurId             String     @map("operateur_id")
+  
+ 
+  destination_produit     String[]   @map("destination_produit") // destination_produit
+  lieu_vente            String[]   @map("points_vente") // lieu_vente_n
+  
+  // Transport
+  moyensTransport         String[]   @map("moyens_transport") // moyen_transport_n
+  techniquesTransport     String[]   @map("techniques_transport") // methode_transport_n
+  frequenceLivraisons     Int?       @map("frequence_livraisons") // frequence_transport
+  
+  // Saisonnalité
+  periodeDemandeElevee    String?    @map("periode_demande_elevee") // saison_forte_demande
+  periodeDemandeFaible    String?    @map("periode_demande_faible") // saison_faible_demande
+
+  @@map("distribution")
+}
+
+model ContratAcheteur {
+  id                     String     @id @default(uuid())
+  operateur              Collecteur @relation(fields: [operateurId], references: [id], onDelete: Cascade)
+  operateurId            String     @map("operateur_id")
+  typeProduit            String?    @map("type_produit") // produit_m
   
   // Conditions commerciales
-  perception_avance       Boolean?     @default(false)
-  montant_avance          Float?
-  acheteur_fixe_prix      Boolean?     @default(false)
-  prix_vente_kg           Float?
-  
-  @@map("contrats")
+  perceptionAvance       Boolean?   @default(false) @map("perception_avance")
+  montantAvance          Float?     @map("montant_avance")
+  acheteurDeterminePrix  Boolean?   @default(false) @map("acheteur_determine_prix")
+  prixVenteKg            Float?     @map("prix_vente_kg") // prix_produit_m
+
+  @@unique([operateurId, typeProduit])
+  @@map("contrats_acheteur")
 }
 
 

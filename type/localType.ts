@@ -96,13 +96,14 @@ export interface DestinationCommerciale {
 export interface Collecteur {
   id: string;
 
-  experienceAnnees?: number;
-  estMareyeur?: boolean;
+  // Circuit de commercialisation
+  anneeDemarrageActivite?: number;
   lieuCollecte: string[];
   dureeCollecteHebdo?: number;
-  effectifPers?: number;
   frequencePassage?: string;
-  estStockage?: boolean;
+  effectifPersonnel?: number;
+
+  // Capitaux
   capitalTotal?: number;
   partCapitalPropre?: number;
   partCapitalEmprunte?: number;
@@ -110,44 +111,61 @@ export interface Collecteur {
   investissementLocation?: number;
   coutRessourcesHumaines?: number;
 
+  // Autres caractéristiques
+  estMareyeur?: boolean;
+  estStockage?: boolean;
+  estContrat?: boolean;
+
   // Relations
   produitsAchetes: ProduitAchete[];
-  stockage: Stockage[];
-  distribution: Distribution[];
+  stockages: Stockage[];
+  distributions: Distribution[];
+  contratsAcheteur: ContratAcheteur[];
 }
 
 export interface ProduitAchete {
   id: string;
-  operateurId: string;
+
   typeProduit?: string;
   volumeHebdomadaireKg?: number;
   criteresQualite?: string;
   systemeAvance?: boolean;
   montantAvance?: number;
   possedeCarteProfession?: boolean;
-  varieteProduit: string[];
+  varietes: string[];
 }
 
 export interface Stockage {
   id: string;
-  operateurId: string;
-  lieuStockage: string[];
-  techniqueConservation?: string;
-  dureeStockageJours?: number;
-  tauxPerte?: number;
+
+  typeProduit?: string;
+  lieux: string[];
+  techniques: string[];
+  dureesStockage: number;
+  tauxPertes: number;
   gestionDechets?: string;
 }
 
 export interface Distribution {
   id: string;
-  operateurId: string;
-  circuitDistribution: string[];
-  pointVente: string[];
-  moyenTransport: string[];
-  frequenceLivraisonsMois?: number;
-  techniqueTransport?: string;
+
+  destination_produit: string[];
+  lieu_vente: string[];
+  moyensTransport: string[];
+  techniquesTransport: string[];
+  frequenceLivraisons?: number;
   periodeDemandeElevee?: string;
   periodeDemandeFaible?: string;
+}
+
+export interface ContratAcheteur {
+  id: string;
+
+  typeProduit?: string;
+  perceptionAvance?: boolean;
+  montantAvance?: number;
+  acheteurDeterminePrix?: boolean;
+  prixVenteKg?: number;
 }
 
 export interface MembreFamille {

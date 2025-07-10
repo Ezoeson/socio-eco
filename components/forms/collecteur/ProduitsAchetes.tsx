@@ -17,14 +17,14 @@ export function ProduitsAchetes({ produits, onChange }: ProduitsAchetesProps) {
       ...produits,
       {
         id: crypto.randomUUID(),
-        operateurId: "",
+
         typeProduit: "",
         volumeHebdomadaireKg: undefined,
         criteresQualite: "",
         systemeAvance: false,
         montantAvance: undefined,
         possedeCarteProfession: false,
-        varieteProduit: [],
+        varietes: [],
       },
     ]);
   };
@@ -44,28 +44,25 @@ export function ProduitsAchetes({ produits, onChange }: ProduitsAchetesProps) {
   const addVariete = (produitId: string) => {
     const produit = produits.find((p) => p.id === produitId);
     if (produit) {
-      updateProduit(produitId, "varieteProduit", [
-        ...produit.varieteProduit,
-        "",
-      ]);
+      updateProduit(produitId, "varietes", [...produit.varietes, ""]);
     }
   };
 
   const removeVariete = (produitId: string, index: number) => {
     const produit = produits.find((p) => p.id === produitId);
     if (produit) {
-      const updatedVarietes = [...produit.varieteProduit];
+      const updatedVarietes = [...produit.varietes];
       updatedVarietes.splice(index, 1);
-      updateProduit(produitId, "varieteProduit", updatedVarietes);
+      updateProduit(produitId, "varietes", updatedVarietes);
     }
   };
 
   const updateVariete = (produitId: string, index: number, value: string) => {
     const produit = produits.find((p) => p.id === produitId);
     if (produit) {
-      const updatedVarietes = [...produit.varieteProduit];
+      const updatedVarietes = [...produit.varietes];
       updatedVarietes[index] = value;
-      updateProduit(produitId, "varieteProduit", updatedVarietes);
+      updateProduit(produitId, "varietes", updatedVarietes);
     }
   };
 
@@ -227,7 +224,7 @@ export function ProduitsAchetes({ produits, onChange }: ProduitsAchetesProps) {
                     </div>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    {produit.varieteProduit.map((variete, index) => (
+                    {produit.varietes.map((variete, index) => (
                       <div
                         key={index}
                         className="grid grid-cols-12 gap-4 items-end"

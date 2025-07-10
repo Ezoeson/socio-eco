@@ -28,6 +28,7 @@ import { useRouter, useParams } from "next/navigation";
 import { toast } from "sonner";
 import {
   ActiviteEconomique,
+  Collecteur,
   EnqueteFormData,
   MembreFamille,
   Pecheur,
@@ -36,6 +37,7 @@ import FishermanTab from "./pecheur/FishermanTab";
 import { MembreFamilleForm } from "./MembreFamilleForm";
 import { Skeleton } from "../ui/skeleton";
 import { ActiviteEconomiqueForm } from "./ActiviteEconomiqueForm";
+import CollecteurTabs from "./collecteur/CollecteurTab";
 
 export function ActeurEditForm() {
   const router = useRouter();
@@ -59,6 +61,7 @@ export function ActeurEditForm() {
     membresFamille: [],
     Pecheur: [],
     activites: [],
+    collecteur:[],
     dateEnquete: new Date().toISOString().split("T")[0],
     enqueteurId: "",
     secteurId: "",
@@ -609,18 +612,30 @@ export function ActeurEditForm() {
             </TabsContent>
           )}
 
-          {formData.estCollecteur && (
-            <TabsContent value="collecteur">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Informations sur le collecteur</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p>Informations spécifiques au collecteur à venir.</p>
-                </CardContent>
-              </Card>
-            </TabsContent>
-          )}
+           {formData.estCollecteur && (
+                      <TabsContent
+                        value="collecteur"
+                        className=" shadow-md shadow-blue-500 "
+                      >
+                        <Card>
+                          <CardHeader>
+                            <CardTitle>Informations sur le collecteur</CardTitle>
+                          </CardHeader>
+                          <CardContent>
+                            <CollecteurTabs
+                              collecteur={formData.collecteur?.[0] || undefined}
+                              onCollecteurChange={(collecteur: Collecteur) => {
+                                // Si collecteur est undefined, on garde le tableau existant ou un tableau vide
+                                const newCollecteurs = collecteur
+                                  ? [collecteur]
+                                  : formData.collecteur || [];
+                                handleInputChange("collecteur", newCollecteurs);
+                              }}
+                            />
+                          </CardContent>
+                        </Card>
+                      </TabsContent>
+                    )}
           {formData?.touteActivite && (
             <TabsContent value="autreActivite">
               <Card>

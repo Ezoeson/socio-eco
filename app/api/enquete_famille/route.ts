@@ -102,6 +102,8 @@ export async function GET(request: Request) {
             },
           },
           membresFamille: true,
+          pecheur: true,
+          collecteur: true,
         },
         orderBy: {
           dateEnquete: "desc",
@@ -138,7 +140,7 @@ export async function POST(request: Request) {
     );
   }
 
-  // Validate enqueteurId if provided
+  // Validations existantes...
   if (data.enqueteurId) {
     const enqueteurExists = await prisma.enqueteur.findUnique({
       where: { id: data.enqueteurId },
@@ -151,7 +153,6 @@ export async function POST(request: Request) {
     }
   }
 
-  // Validate secteurId if provided
   if (data.secteurId) {
     const secteurExists = await prisma.secteur.findUnique({
       where: { id: data.secteurId },
@@ -171,6 +172,7 @@ export async function POST(request: Request) {
   try {
     const newEnquete = await prisma.enquete.create({
       data: {
+        // Champs existants de l'enquête...
         nomPerscible: data.nomPerscible || "Enquête Famille",
         nomRepondant: data.nomRepondant,
         estPecheur: data.estPecheur,
@@ -198,6 +200,104 @@ export async function POST(request: Request) {
               frequentationEcole: membre.frequentationEcole,
             })) || [],
         },
+
+        // Ajout du collecteur avec les nouvelles relations
+        collecteur: data.estCollecteur
+          ? {
+              create: {
+                // Circuit de commercialisation
+                anneeDemarrageActivite:
+                  data.collecteur?.[0]?.anneeDemarrageActivite,
+                lieuCollecte: data.collecteur?.[0]?.lieuCollecte || [],
+                dureeCollecteHebdo: data.collecteur?.[0]?.dureeCollecteHebdo,
+                frequencePassage: data.collecteur?.[0]?.frequencePassage,
+                effectifPersonnel: data.collecteur?.[0]?.effectifPersonnel,
+
+                // Capitaux
+                capitalTotal: data.collecteur?.[0]?.capitalTotal,
+                partCapitalPropre: data.collecteur?.[0]?.partCapitalPropre,
+                partCapitalEmprunte: data.collecteur?.[0]?.partCapitalEmprunte,
+                investissementEquipement:
+                  data.collecteur?.[0]?.investissementEquipement,
+                investissementLocation:
+                  data.collecteur?.[0]?.investissementLocation,
+                coutRessourcesHumaines:
+                  data.collecteur?.[0]?.coutRessourcesHumaines,
+
+                // Autres caractéristiques
+                estMareyeur: data.collecteur?.[0]?.estMareyeur,
+                estStockage: data.collecteur?.[0]?.estStockage,
+                estContrat: data.collecteur?.[0]?.estContrat,
+
+                // Relations
+                produitsAchetes: data.collecteur?.[0]?.produitsAchetes
+                  ? {
+                      create: data.collecteur[0].produitsAchetes.map(
+                        (produit) => ({
+                          typeProduit: produit.typeProduit,
+                          volumeHebdomadaireKg: produit.volumeHebdomadaireKg,
+                          criteresQualite: produit.criteresQualite,
+                          systemeAvance: produit.systemeAvance,
+                          montantAvance: produit.montantAvance,
+                          possedeCarteProfession:
+                            produit.possedeCarteProfession,
+                          varietes: produit.varietes || [],
+                        })
+                      ),
+                    }
+                  : undefined,
+
+                stockages: data.collecteur?.[0]?.stockages
+                  ? {
+                      create: data.collecteur[0].stockages.map((stockage) => ({
+                        typeProduit: stockage.typeProduit,
+                        lieux: stockage.lieux || [],
+                        techniques: stockage.techniques || [],
+                        dureesStockage: stockage.dureesStockage,
+                        tauxPertes: stockage.tauxPertes,
+                        gestionDechets: stockage.gestionDechets,
+                      })),
+                    }
+                  : undefined,
+
+                distributions: data.collecteur?.[0]?.distributions
+                  ? {
+                      create: data.collecteur[0].distributions.map(
+                        (distribution) => ({
+                          destination_produit:
+                            distribution.destination_produit || [],
+                          lieu_vente: distribution.lieu_vente || [],
+                          moyensTransport: distribution.moyensTransport || [],
+                          techniquesTransport:
+                            distribution.techniquesTransport || [],
+                          frequenceLivraisons: distribution.frequenceLivraisons,
+                          periodeDemandeElevee:
+                            distribution.periodeDemandeElevee,
+                          periodeDemandeFaible:
+                            distribution.periodeDemandeFaible,
+                        })
+                      ),
+                    }
+                  : undefined,
+
+                contratsAcheteur: data.collecteur?.[0]?.contratsAcheteur
+                  ? {
+                      create: data.collecteur[0].contratsAcheteur.map(
+                        (contrat) => ({
+                          typeProduit: contrat.typeProduit,
+                          perceptionAvance: contrat.perceptionAvance,
+                          montantAvance: contrat.montantAvance,
+                          acheteurDeterminePrix: contrat.acheteurDeterminePrix,
+                          prixVenteKg: contrat.prixVenteKg,
+                        })
+                      ),
+                    }
+                  : undefined,
+              },
+            }
+          : undefined,
+
+        // Reste des relations existantes (pecheur, activites...)
         pecheur: data.estPecheur
           ? {
               create: {
@@ -302,8 +402,6 @@ export async function POST(request: Request) {
               create: data.activites.map((activite) => ({
                 typeActivite: activite.typeActivite,
                 importanceActivite: activite.importanceActivite,
-
-                // Champs mangrove
                 autreRessourceExploitee: activite.autreRessourceExploitee,
                 utilisationRessource: activite.utilisationRessource,
                 prixVente: activite.prixVente,
@@ -311,8 +409,6 @@ export async function POST(request: Request) {
                 frequenceVente: activite.frequenceVente,
                 saisonHaute: activite.saisonHaute,
                 saisonBasse: activite.saisonBasse,
-
-                // Champs agriculture
                 activiteAgricole: activite.activiteAgricole,
                 complementaritePeche: activite.complementaritePeche,
                 frequenceActiviteAgricole: activite.frequenceActiviteAgricole,
@@ -321,21 +417,15 @@ export async function POST(request: Request) {
                 statutFoncier: activite.statutFoncier,
                 lieuExploitationAgricole: activite.lieuExploitationAgricole,
                 outilsProduction: activite.outilsProduction,
-
-                // Champs élevage
                 sousTypeElevage: activite.sousTypeElevage,
                 effectifElevage: activite.effectifElevage,
                 zonePaturage: activite.zonePaturage,
                 frequenceSoins: activite.frequenceSoins,
-
-                // Champs salariat
                 activiteSalariale: activite.activiteSalariale,
                 dureeConsacreeSalariat: activite.dureeConsacreeSalariat,
                 frequenceMensuelleSalariat: activite.frequenceMensuelleSalariat,
                 lieuExerciceSalariat: activite.lieuExerciceSalariat,
                 revenuMensuelSalariat: activite.revenuMensuelSalariat,
-
-                // Champs AGR
                 activiteGeneratrice: activite.activiteGeneratrice,
                 dureeActiviteAGR: activite.dureeActiviteAGR,
                 frequenceMensuelleAGR: activite.frequenceMensuelleAGR,
@@ -345,7 +435,6 @@ export async function POST(request: Request) {
             }
           : undefined,
       },
-
       include: {
         membresFamille: true,
         pecheur: {
@@ -360,7 +449,14 @@ export async function POST(request: Request) {
             },
           },
         },
-        collecteur: true,
+        collecteur: {
+          include: {
+            produitsAchetes: true,
+            stockages: true,
+            distributions: true,
+            contratsAcheteur: true,
+          },
+        },
         enqueteur: true,
         secteur: true,
       },

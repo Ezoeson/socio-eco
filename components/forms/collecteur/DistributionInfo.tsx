@@ -39,11 +39,11 @@ export function DistributionInfo({
 }: DistributionInfoProps) {
   const dist = distribution[0] || {
     id: crypto.randomUUID(),
-    circuitDistribution: [],
-    pointVente: [],
-    moyenTransport: [],
-    frequenceLivraisonsMois: undefined,
-    techniqueTransport: "",
+    destination_produit: [],
+    lieu_vente: [],
+    moyensTransport: [],
+    techniquesTransport: [],
+    frequenceLivraisons: undefined,
     periodeDemandeElevee: "",
     periodeDemandeFaible: "",
   };
@@ -57,7 +57,11 @@ export function DistributionInfo({
   };
 
   const addItem = (
-    field: "circuitDistribution" | "pointVente" | "moyenTransport",
+    field:
+      | "destination_produit"
+      | "lieu_vente"
+      | "moyensTransport"
+      | "techniquesTransport",
     defaultValue: string = ""
   ) => {
     const currentItems = dist[field];
@@ -65,7 +69,11 @@ export function DistributionInfo({
   };
 
   const removeItem = (
-    field: "circuitDistribution" | "pointVente" | "moyenTransport",
+    field:
+      | "destination_produit"
+      | "lieu_vente"
+      | "moyensTransport"
+      | "techniquesTransport",
     index: number
   ) => {
     const updatedItems = [...dist[field]];
@@ -74,7 +82,11 @@ export function DistributionInfo({
   };
 
   const updateItem = (
-    field: "circuitDistribution" | "pointVente" | "moyenTransport",
+    field:
+      | "destination_produit"
+      | "lieu_vente"
+      | "moyensTransport"
+      | "techniquesTransport",
     index: number,
     value: string
   ) => {
@@ -90,24 +102,24 @@ export function DistributionInfo({
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Circuits de distribution */}
+        {/* Destination produit */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <RefreshCw className="h-4 w-4" />
-              Circuits de distribution
+              Destination produit
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            {dist.circuitDistribution.map((circuit, index) => (
+            {dist.destination_produit.map((destination, index) => (
               <div key={index} className="grid grid-cols-12 gap-4 items-end">
                 <div className="col-span-10 space-y-2">
                   <Input
-                    value={circuit}
+                    value={destination}
                     onChange={(e) =>
-                      updateItem("circuitDistribution", index, e.target.value)
+                      updateItem("destination_produit", index, e.target.value)
                     }
-                    placeholder="Nom du circuit"
+                    placeholder="Destination des produits"
                   />
                 </div>
                 <div className="col-span-2">
@@ -115,7 +127,7 @@ export function DistributionInfo({
                     type="button"
                     variant="destructive"
                     size="sm"
-                    onClick={() => removeItem("circuitDistribution", index)}
+                    onClick={() => removeItem("destination_produit", index)}
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
@@ -127,10 +139,12 @@ export function DistributionInfo({
               size="sm"
               variant="outline"
               className="gap-2"
-              onClick={() => addItem("circuitDistribution", "Nouveau circuit")}
+              onClick={() =>
+                addItem("destination_produit", "Nouvelle destination")
+              }
             >
               <Plus className="h-4 w-4" />
-              Ajouter un circuit
+              Ajouter une destination
             </Button>
           </CardContent>
         </Card>
@@ -144,13 +158,13 @@ export function DistributionInfo({
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            {dist.pointVente.map((point, index) => (
+            {dist.lieu_vente.map((point, index) => (
               <div key={index} className="grid grid-cols-12 gap-4 items-end">
                 <div className="col-span-10 space-y-2">
                   <Input
                     value={point}
                     onChange={(e) =>
-                      updateItem("pointVente", index, e.target.value)
+                      updateItem("lieu_vente", index, e.target.value)
                     }
                     placeholder="Nom du point de vente"
                   />
@@ -160,7 +174,7 @@ export function DistributionInfo({
                     type="button"
                     variant="destructive"
                     size="sm"
-                    onClick={() => removeItem("pointVente", index)}
+                    onClick={() => removeItem("lieu_vente", index)}
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
@@ -172,7 +186,7 @@ export function DistributionInfo({
               size="sm"
               variant="outline"
               className="gap-2"
-              onClick={() => addItem("pointVente", "Nouveau point de vente")}
+              onClick={() => addItem("lieu_vente", "Nouveau point de vente")}
             >
               <Plus className="h-4 w-4" />
               Ajouter un point
@@ -189,13 +203,13 @@ export function DistributionInfo({
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            {dist.moyenTransport.map((transport, index) => (
+            {dist.moyensTransport.map((transport, index) => (
               <div key={index} className="grid grid-cols-12 gap-4 items-end">
                 <div className="col-span-10 space-y-2">
                   <Select
                     value={transport}
                     onValueChange={(value) => {
-                      updateItem("moyenTransport", index, value);
+                      updateItem("moyensTransport", index, value);
                     }}
                   >
                     <SelectTrigger>
@@ -215,7 +229,7 @@ export function DistributionInfo({
                     type="button"
                     variant="destructive"
                     size="sm"
-                    onClick={() => removeItem("moyenTransport", index)}
+                    onClick={() => removeItem("moyensTransport", index)}
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
@@ -227,7 +241,7 @@ export function DistributionInfo({
               size="sm"
               variant="outline"
               className="gap-2"
-              onClick={() => addItem("moyenTransport", transportOptions[0])}
+              onClick={() => addItem("moyensTransport", transportOptions[0])}
             >
               <Plus className="h-4 w-4" />
               Ajouter un transport
@@ -235,34 +249,70 @@ export function DistributionInfo({
           </CardContent>
         </Card>
 
-        {/* Fréquence et technique */}
+        {/* Techniques de transport */}
         <Card>
           <CardHeader>
-            <CardTitle>Fréquence et technique</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              <Truck className="h-4 w-4" />
+              Techniques de transport
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {dist.techniquesTransport.map((technique, index) => (
+              <div key={index} className="grid grid-cols-12 gap-4 items-end">
+                <div className="col-span-10 space-y-2">
+                  <Input
+                    value={technique}
+                    onChange={(e) =>
+                      updateItem("techniquesTransport", index, e.target.value)
+                    }
+                    placeholder="Technique de transport"
+                  />
+                </div>
+                <div className="col-span-2">
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => removeItem("techniquesTransport", index)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            ))}
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              className="gap-2"
+              onClick={() =>
+                addItem("techniquesTransport", "Nouvelle technique")
+              }
+            >
+              <Plus className="h-4 w-4" />
+              Ajouter une technique
+            </Button>
+          </CardContent>
+        </Card>
+
+        {/* Fréquence de livraisons */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Fréquence de livraisons</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label>Fréquence de livraisons (par mois)</Label>
               <Input
                 type="number"
-                value={dist.frequenceLivraisonsMois || ""}
+                value={dist.frequenceLivraisons || ""}
                 onChange={(e) =>
                   updateField(
-                    "frequenceLivraisonsMois",
+                    "frequenceLivraisons",
                     e.target.value ? parseInt(e.target.value) : undefined
                   )
                 }
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label>Technique de transport</Label>
-              <Input
-                value={dist.techniqueTransport || ""}
-                onChange={(e) =>
-                  updateField("techniqueTransport", e.target.value)
-                }
-                placeholder="Ex: Emballage sous vide"
               />
             </div>
           </CardContent>

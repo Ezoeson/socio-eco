@@ -199,64 +199,82 @@ CREATE TABLE "destinations_commerciales" (
 );
 
 -- CreateTable
-CREATE TABLE "collecteurs" (
+CREATE TABLE "operateurs_marche" (
     "id" TEXT NOT NULL,
     "enqueteId" TEXT NOT NULL,
-    "annee_demarrage_activite" INTEGER,
+    "annee_collecte" INTEGER,
     "lieu_collecte" TEXT[],
-    "duree_collecte_hebdomadaire" INTEGER,
+    "duree_collecte_hebdo" INTEGER,
     "frequence_passage" TEXT,
-    "effectif_personel" INTEGER,
-    "capitaux" DOUBLE PRECISION,
-    "financier_propre_pourcentage" DOUBLE PRECISION,
-    "financier_emprunte_pourcentage" DOUBLE PRECISION,
-    "investissement_propre" DOUBLE PRECISION,
+    "effectif_personnel" INTEGER,
+    "capital_total" DOUBLE PRECISION,
+    "part_capital_propre" DOUBLE PRECISION,
+    "part_capital_emprunte" DOUBLE PRECISION,
+    "investissement_equipement" DOUBLE PRECISION,
     "investissement_location" DOUBLE PRECISION,
-    "ressources_humaine" DOUBLE PRECISION,
+    "cout_ressources_humaines" DOUBLE PRECISION,
     "est_mareyeur" BOOLEAN DEFAULT false,
     "est_stockage" BOOLEAN DEFAULT true,
-    "lieu_stockage" TEXT[],
-    "technique_conservation" TEXT,
-    "duree_stockage_jours" INTEGER,
-    "taux_perte" DOUBLE PRECISION,
-    "gestion_dechets" TEXT,
-    "circuit_distribution" TEXT[],
-    "point_vente" TEXT[],
-    "moyen_transport" TEXT[],
-    "frequence_livraisons" INTEGER,
-    "technique_transport" TEXT,
-    "saison_forte_demande" TEXT,
-    "saison_faible_demande" TEXT,
+    "est_contrat" BOOLEAN DEFAULT false,
 
-    CONSTRAINT "collecteurs_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "operateurs_marche_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
-CREATE TABLE "produits" (
+CREATE TABLE "produits_achetes" (
     "id" TEXT NOT NULL,
-    "collecteurId" TEXT NOT NULL,
+    "operateur_id" TEXT NOT NULL,
     "type_produit" TEXT,
-    "quantite_hebdomadaire" DOUBLE PRECISION,
+    "volume_hebdomadaire_kg" DOUBLE PRECISION,
     "criteres_qualite" TEXT,
-    "varietes" TEXT[],
     "systeme_avance" BOOLEAN DEFAULT false,
     "montant_avance" DOUBLE PRECISION,
-    "possede_carte" BOOLEAN DEFAULT false,
+    "possede_carte_profession" BOOLEAN DEFAULT false,
+    "varietes" TEXT[],
 
-    CONSTRAINT "produits_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "produits_achetes_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
-CREATE TABLE "contrats" (
+CREATE TABLE "stockage" (
     "id" TEXT NOT NULL,
-    "collecteurId" TEXT NOT NULL,
+    "operateur_id" TEXT NOT NULL,
+    "type_produit" TEXT,
+    "lieux" TEXT[],
+    "techniques" TEXT[],
+    "durees_stockage" INTEGER NOT NULL,
+    "taux_pertes" DOUBLE PRECISION NOT NULL,
+    "gestion_dechets" TEXT,
+
+    CONSTRAINT "stockage_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "distribution" (
+    "id" TEXT NOT NULL,
+    "operateur_id" TEXT NOT NULL,
+    "destination_produit" TEXT[],
+    "points_vente" TEXT[],
+    "moyens_transport" TEXT[],
+    "techniques_transport" TEXT[],
+    "frequence_livraisons" INTEGER,
+    "periode_demande_elevee" TEXT,
+    "periode_demande_faible" TEXT,
+
+    CONSTRAINT "distribution_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "contrats_acheteur" (
+    "id" TEXT NOT NULL,
+    "operateur_id" TEXT NOT NULL,
     "type_produit" TEXT,
     "perception_avance" BOOLEAN DEFAULT false,
     "montant_avance" DOUBLE PRECISION,
-    "acheteur_fixe_prix" BOOLEAN DEFAULT false,
+    "acheteur_determine_prix" BOOLEAN DEFAULT false,
     "prix_vente_kg" DOUBLE PRECISION,
 
-    CONSTRAINT "contrats_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "contrats_acheteur_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -335,10 +353,13 @@ CREATE UNIQUE INDEX "pratiques_peche_pecheurId_especeCible_key" ON "pratiques_pe
 CREATE UNIQUE INDEX "embarcations_peche_pecheurId_key" ON "embarcations_peche"("pecheurId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "collecteurs_enqueteId_key" ON "collecteurs"("enqueteId");
+CREATE UNIQUE INDEX "operateurs_marche_enqueteId_key" ON "operateurs_marche"("enqueteId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "produits_collecteurId_type_produit_key" ON "produits"("collecteurId", "type_produit");
+CREATE UNIQUE INDEX "produits_achetes_operateur_id_type_produit_key" ON "produits_achetes"("operateur_id", "type_produit");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "contrats_acheteur_operateur_id_type_produit_key" ON "contrats_acheteur"("operateur_id", "type_produit");
 
 -- AddForeignKey
 ALTER TABLE "districts" ADD CONSTRAINT "districts_regionId_fkey" FOREIGN KEY ("regionId") REFERENCES "regions"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -380,13 +401,19 @@ ALTER TABLE "circuits_commerciaux" ADD CONSTRAINT "circuits_commerciaux_pecheurI
 ALTER TABLE "destinations_commerciales" ADD CONSTRAINT "destinations_commerciales_circuitId_fkey" FOREIGN KEY ("circuitId") REFERENCES "circuits_commerciaux"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "collecteurs" ADD CONSTRAINT "collecteurs_enqueteId_fkey" FOREIGN KEY ("enqueteId") REFERENCES "enquetes"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "operateurs_marche" ADD CONSTRAINT "operateurs_marche_enqueteId_fkey" FOREIGN KEY ("enqueteId") REFERENCES "enquetes"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "produits" ADD CONSTRAINT "produits_collecteurId_fkey" FOREIGN KEY ("collecteurId") REFERENCES "collecteurs"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "produits_achetes" ADD CONSTRAINT "produits_achetes_operateur_id_fkey" FOREIGN KEY ("operateur_id") REFERENCES "operateurs_marche"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "contrats" ADD CONSTRAINT "contrats_collecteurId_fkey" FOREIGN KEY ("collecteurId") REFERENCES "collecteurs"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "stockage" ADD CONSTRAINT "stockage_operateur_id_fkey" FOREIGN KEY ("operateur_id") REFERENCES "operateurs_marche"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "distribution" ADD CONSTRAINT "distribution_operateur_id_fkey" FOREIGN KEY ("operateur_id") REFERENCES "operateurs_marche"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "contrats_acheteur" ADD CONSTRAINT "contrats_acheteur_operateur_id_fkey" FOREIGN KEY ("operateur_id") REFERENCES "operateurs_marche"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "activites_economiques" ADD CONSTRAINT "activites_economiques_enqueteId_fkey" FOREIGN KEY ("enqueteId") REFERENCES "enquetes"("id") ON DELETE CASCADE ON UPDATE CASCADE;

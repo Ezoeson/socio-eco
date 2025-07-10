@@ -35,7 +35,6 @@ export async function GET(request: Request) {
                 collecteur: {
                   include: {
                     produitsAchetes: true,
-                   
                   },
                 },
                 pecheur: true,
@@ -56,6 +55,7 @@ export async function GET(request: Request) {
         code: enqueteur.code,
         image: enqueteur.image,
         telephone: enqueteur.telephone,
+        email: enqueteur.email,
         actif: enqueteur.actif,
         enquetesCount: enqueteur.enquetes.length,
         totalCollecteurs: enqueteur.enquetes.reduce(

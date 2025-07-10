@@ -78,6 +78,7 @@ export default function EnqueteurPage() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isMutating, setIsMutating] = useState(false);
+  console.log(data.data);
 
   // Fetch data avec pagination et recherche
   const fetchData = useCallback(async () => {
@@ -261,10 +262,12 @@ export default function EnqueteurPage() {
               }}
             >
               <DialogTrigger asChild>
-                
                 <Button className="bg-gradient-to-r from-blue-700 to-rose-700  text-white ">
                   <Plus className="h-4 w-4 mr-2" />
-                  <p className="hidden md:block  font-bold"> Nouvel enquêteur</p>
+                  <p className="hidden md:block  font-bold">
+                    {" "}
+                    Nouvel enquêteur
+                  </p>
                 </Button>
               </DialogTrigger>
               <DialogContent className="max-w-md">

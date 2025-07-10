@@ -100,26 +100,30 @@ export default function CollecteurTabs({
         <TabsList className="grid w-full grid-cols-5  bg-gray-950 ">
           <TabsTrigger value="infos" className="flex gap-2">
             <User className="h-4 w-4 text-lime-600 font-bold" />
-            Informations
+
+            <span className="hidden md:block"> Informations</span>
           </TabsTrigger>
           <TabsTrigger value="produits" className="flex gap-2">
             <ShoppingCart className="h-4 w-4 text-lime-600 font-bold " />
-            Produits
+
+            <span className="hidden md:block"> Produits</span>
           </TabsTrigger>
           {collecteur.estStockage && (
             <TabsTrigger value="stockage" className="flex gap-2">
               <Warehouse className="h-4 w-4 text-lime-600 font-bold" />
-              Methode de Stockage
+              <span className="hidden md:block"> Methode de Stockage</span>
             </TabsTrigger>
           )}
           <TabsTrigger value="distribution" className="flex gap-2">
             <Truck className="h-4 w-4 text-lime-600 font-bold" />
-            Distribution
+
+            <span className="hidden md:block"> Distribution</span>
           </TabsTrigger>
           {collecteur.estContrat && (
             <TabsTrigger value="contrat" className="flex gap-2">
               <FileText className="h-4 w-4 text-lime-600 font-bold" />
-              Contrat
+
+              <span className="hidden md:block"> Contrat</span>
             </TabsTrigger>
           )}
         </TabsList>

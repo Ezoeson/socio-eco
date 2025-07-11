@@ -74,11 +74,19 @@ export default function CollecteurTabs({
   const handleContratChange = (contratsAcheteur: ContratAcheteur[]) => {
     handleBaseInfoChange("contratsAcheteur", contratsAcheteur);
   };
-
-  const addLieuCollecte = () => {
-    handleBaseInfoChange("lieuCollecte", [...collecteur.lieuCollecte, ""]);
+  // Vérification supplémentaire pour s'assurer que lieuCollecte est un tableau
+  const safeCollecteur = {
+    ...collecteur,
+    lieuCollecte: Array.isArray(collecteur.lieuCollecte)
+      ? collecteur.lieuCollecte
+      : [],
   };
-
+  const addLieuCollecte = () => {
+    onCollecteurChange({
+      ...safeCollecteur,
+      lieuCollecte: [...safeCollecteur.lieuCollecte, ""],
+    });
+  };
   const removeLieuCollecte = (index: number) => {
     const updated = [...collecteur.lieuCollecte];
     updated.splice(index, 1);

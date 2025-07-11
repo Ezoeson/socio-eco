@@ -408,6 +408,7 @@ model ActiviteEconomique {
   frequenceMensuelleAGR   Int?
   lieuExerciceAGR         String?
   revenuMensuelAGR        Float?   // en MGA
+  createdAt               DateTime @default(now())
 
 
 

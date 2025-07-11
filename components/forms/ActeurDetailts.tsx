@@ -138,11 +138,40 @@ export function ActeurDetails() {
                 CircuitCommercial: enqueteData.pecheur.circuitsCommercial || [],
               }
             : null;
-
+            const transformedCollecteur = enqueteData.collecteur
+              ? {
+                  id: enqueteData.collecteur.id,
+                  lieuCollecte: enqueteData.collecteur.lieuCollecte || [],
+                  produitsAchetes: enqueteData.collecteur.produitsAchetes || [],
+                  stockages: enqueteData.collecteur.stockages || [],
+                  distributions: enqueteData.collecteur.distributions || [],
+                  contratsAcheteur:
+                    enqueteData.collecteur.contratsAcheteur || [],
+                  estMareyeur: enqueteData.collecteur.estMareyeur || false,
+                  estStockage: enqueteData.collecteur.estStockage || true,
+                  estContrat: enqueteData.collecteur.estContrat || false,
+                  anneeDemarrageActivite:
+                    enqueteData.collecteur.anneeDemarrageActivite,
+                  effectifPersonnel: enqueteData.collecteur.effectifPersonnel,
+                  dureeCollecteHebdo: enqueteData.collecteur.dureeCollecteHebdo,
+                  frequencePassage: enqueteData.collecteur.frequencePassage,
+                  capitalTotal: enqueteData.collecteur.capitalTotal,
+                  partCapitalPropre: enqueteData.collecteur.partCapitalPropre,
+                  partCapitalEmprunte:
+                    enqueteData.collecteur.partCapitalEmprunte,
+                  investissementEquipement:
+                    enqueteData.collecteur.investissementEquipement,
+                  investissementLocation:
+                    enqueteData.collecteur.investissementLocation,
+                  coutRessourcesHumaines:
+                    enqueteData.collecteur.coutRessourcesHumaines,
+                }
+              : null;
           setFormData({
             ...enqueteData,
             dateEnquete: enqueteData.dateEnquete.split("T")[0],
             Pecheur: transformedPecheur ? [transformedPecheur] : [],
+            collecteur: transformedCollecteur ? [transformedCollecteur] : [],
           });
         }
       } catch (error) {

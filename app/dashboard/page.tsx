@@ -231,18 +231,20 @@ export default function Dashboard() {
                 Vue d&apos;ensemble des enquêtes socio-économiques
               </p>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 ">
               <Button variant="outline" size="sm">
                 <CalendarDays className="h-4 w-4 mr-2" />
                 Dernière mise à jour: Aujourd&apos;hui
               </Button>
               <Button variant="outline" size="sm" onClick={handleRefresh}>
                 <RefreshCw className="h-4 w-4 mr-2" />
-                Actualiser
+                <span className="hidden md:block">Actualiser</span>
               </Button>
               <Button size="sm" onClick={handleExport} disabled={isExporting}>
                 <Download className="h-4 w-4 mr-2" />
-                {isExporting ? "Exportation..." : "Exporter"}
+                <span className="hidden md:block">
+                  {isExporting ? "Exportation..." : "Exporter"}
+                </span>
               </Button>
             </div>
           </div>

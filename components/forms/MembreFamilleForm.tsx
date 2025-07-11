@@ -163,6 +163,7 @@ function MembreCard({
           {index ? `ENFANT ${index}` : "CONJOINT"}
         </h4>
         <Button
+          type="button"
           variant="outline"
           size="sm"
           onClick={() => onSupprimer(membre.id)}

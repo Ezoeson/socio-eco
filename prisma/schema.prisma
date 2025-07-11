@@ -15,6 +15,8 @@ model Region {
   id        String     @id @default(uuid())
   nom       String @unique
   districts District[]
+  updateDate             DateTime @updatedAt
+  creationDate           DateTime @default(now())
 
   @@map("regions")
 }
@@ -25,6 +27,8 @@ model District {
   region   Region    @relation(fields: [regionId], references: [id], onDelete: Cascade)
   regionId String
   communes Commune[]
+  updateDate             DateTime @updatedAt
+  creationDate           DateTime @default(now())
 
   @@unique([nom, regionId])
   @@map("districts")
@@ -36,6 +40,8 @@ model Commune {
   district   District    @relation(fields: [districtId], references: [id], onDelete: Cascade)
   districtId String
   fokontanys Fokontany[]
+  updateDate             DateTime @updatedAt
+  creationDate           DateTime @default(now())
 
   @@unique([nom, districtId])
   @@map("communes")
@@ -47,6 +53,8 @@ model Fokontany {
   commune   Commune   @relation(fields: [communeId], references: [id], onDelete: Cascade)
   communeId String
   secteurs  Secteur[]
+  updateDate             DateTime @updatedAt
+  creationDate           DateTime @default(now())
 
   @@unique([nom, communeId])
   @@map("fokontanys")
@@ -58,6 +66,8 @@ model Secteur {
   fokontany   Fokontany @relation(fields: [fokontanyId], references: [id], onDelete: Cascade)
   fokontanyId String
   enquetes    Enquete[]
+  updateDate             DateTime @updatedAt
+  creationDate           DateTime @default(now())
 
   @@unique([nom, fokontanyId])
   @@map("secteurs")
@@ -122,6 +132,8 @@ model MembreFamille {
   lienFamilial        String?
   sexe                String?
   frequentationEcole  Boolean?
+  updateDate             DateTime @updatedAt
+  creationDate           DateTime @default(now())
 
   
 
@@ -140,6 +152,7 @@ model Pecheur {
   equipementsPeche   EquipementPeche[]
   embarcations       EmbarcationPeche[]
   circuitsCommercial CircuitCommercialProduit[]
+  
 
 
   @@map("pecheurs")
@@ -159,7 +172,8 @@ model PratiquePeche {
   capturesMoyennesSaisonHaute Float?
   capturesMoyennesSaisonBasse Float?
   classificationActivite      String?
-
+  updateDate             DateTime @updatedAt
+  creationDate           DateTime @default(now())
   @@unique([pecheurId, especeCible])
   @@map("pratiques_peche")
 }
@@ -173,7 +187,8 @@ model EquipementPeche {
   utilisationHebdomadaire Int?
   dureeUtilisation        Int?
   rendementEstime         Int?
-
+  updateDate             DateTime @updatedAt
+  creationDate           DateTime @default(now())
   @@map("equipements_peche")
 }
 
@@ -201,6 +216,8 @@ model EmbarcationPeche {
   materiauxConstruction String?
   typeBois              String?
   dureeVieEstimee       Int?
+  updateDate             DateTime @updatedAt
+  creationDate           DateTime @default(now())
 
   @@map("embarcations_peche")
 }
@@ -228,7 +245,8 @@ model CircuitCommercialProduit {
   periodeDemandeElevee String?
   periodeDemandeFaible String?
 
-
+  updateDate             DateTime @updatedAt
+  creationDate           DateTime @default(now())
   destinations DestinationCommerciale[]
 
   @@map("circuits_commerciaux")
@@ -240,6 +258,8 @@ model DestinationCommerciale {
   circuitId   String
   nom         String?
   pourcentage Float?
+  updateDate             DateTime @updatedAt
+  creationDate           DateTime @default(now())
 
   @@map("destinations_commerciales")
 }
@@ -274,6 +294,8 @@ model Collecteur {
   stockages                Stockage[]      
   distributions            Distribution[]   
   contratsAcheteur         ContratAcheteur[] 
+  updateDate             DateTime @updatedAt
+  creationDate           DateTime @default(now())
 
   @@map("operateurs_marche")
 }
@@ -297,6 +319,8 @@ model ProduitAchete {
   // Certification
  possedeCarteProfession Boolean?   @default(false) @map("possede_carte_profession") // possession_carte_produit_n
   varietes               String[]   @map("varietes") // Type_produit_n_m
+    updateDate             DateTime @updatedAt
+  creationDate           DateTime @default(now())
   @@unique([operateurId, typeProduit])
   @@map("produits_achetes")
 }
@@ -313,7 +337,8 @@ model Stockage {
   dureesStockage        Int        @map("durees_stockage") // duree_stockage_produit_m_n
   tauxPertes            Float      @map("taux_pertes") // taux_perte_produit_m_pourcentage
   gestionDechets        String?    @map("gestion_dechets") // destination_dechet_produit_m
-
+  updateDate             DateTime @updatedAt
+  creationDate           DateTime @default(now())
   @@map("stockage")
 }
 
@@ -334,7 +359,8 @@ model Distribution {
   // Saisonnalité
   periodeDemandeElevee    String?    @map("periode_demande_elevee") // saison_forte_demande
   periodeDemandeFaible    String?    @map("periode_demande_faible") // saison_faible_demande
-
+   updateDate             DateTime @updatedAt
+  creationDate           DateTime @default(now())
   @@map("distribution")
 }
 
@@ -349,7 +375,8 @@ model ContratAcheteur {
   montantAvance          Float?     @map("montant_avance")
   acheteurDeterminePrix  Boolean?   @default(false) @map("acheteur_determine_prix")
   prixVenteKg            Float?     @map("prix_vente_kg") // prix_produit_m
-
+  updateDate             DateTime @updatedAt
+  creationDate           DateTime @default(now())
   @@unique([operateurId, typeProduit])
   @@map("contrats_acheteur")
 }
@@ -408,7 +435,8 @@ model ActiviteEconomique {
   frequenceMensuelleAGR   Int?
   lieuExerciceAGR         String?
   revenuMensuelAGR        Float?   // en MGA
-  createdAt               DateTime @default(now())
+  updateDate             DateTime @updatedAt
+  creationDate           DateTime @default(now())
 
 
 

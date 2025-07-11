@@ -13,24 +13,209 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { toast } from "sonner";
+import * as XLSX from "xlsx";
+
+interface Enquete {
+  id: string;
+  estPecheur: boolean;
+  estCollecteur: boolean;
+  nomRepondant: string;
+  dateEnquete?: string;
+  enqueteur?: {
+    nom: string;
+    prenom: string;
+  };
+  secteur?: {
+    nom: string;
+    fokontany: {
+      nom: string;
+      commune: {
+        nom: string;
+        district: {
+          nom: string;
+          region: {
+            nom: string;
+          };
+        };
+      };
+    };
+  };
+  membresFamille?: Array<{
+    nom: string;
+    age: number;
+    sexe: string;
+    lienFamilial: string;
+  }>;
+  pecheur?: any;
+  collecteur?: any;
+  activites?: Array<any>;
+}
 
 export default function Dashboard() {
-  const [recentActivity, setRecentActivity] = useState<any>([]);
-  useEffect(() => {
-    const recenteActivity = async () => {
-      try {
-        const data = await fetch("/api/dashboard/recenet-activity");
-        const res = await data.json();
+  const [recentActivity, setRecentActivity] = useState<any[]>([]);
+  const [isExporting, setIsExporting] = useState(false);
 
-        setRecentActivity(res);
-      } catch (error) {
-        console.error("Fetch error:", error);
-        toast.error("Erreur lors du chargement des activites");
-      }
-    };
-    recenteActivity();
+  useEffect(() => {
+    fetchRecentActivity();
   }, []);
-  console.log(recentActivity);
+
+  const fetchRecentActivity = async () => {
+    try {
+      const response = await fetch("/api/dashboard/recenet-activity");
+      if (!response.ok) throw new Error("Erreur de réseau");
+      const data = await response.json();
+      setRecentActivity(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error("Fetch error:", error);
+      toast.error("Erreur lors du chargement des activités");
+    }
+  };
+
+  const flattenEnqueteData = (enquete: Enquete) => {
+    const baseData = {
+      "ID Enquête": enquete.id,
+      "Date Enquête": enquete.dateEnquete
+        ? new Date(enquete.dateEnquete).toLocaleDateString()
+        : "N/A",
+      Enquêteur: enquete.enqueteur
+        ? `${enquete.enqueteur.prenom} ${enquete.enqueteur.nom}`
+        : "N/A",
+      "Nom Répondant": enquete.nomRepondant,
+      Type: enquete.estPecheur
+        ? "Pêcheur"
+        : enquete.estCollecteur
+        ? "Collecteur"
+        : "Autre",
+      Région:
+        enquete.secteur?.fokontany?.commune?.district?.region?.nom || "N/A",
+      District: enquete.secteur?.fokontany?.commune?.district?.nom || "N/A",
+      Commune: enquete.secteur?.fokontany?.commune?.nom || "N/A",
+      Fokontany: enquete.secteur?.fokontany?.nom || "N/A",
+      Secteur: enquete.secteur?.nom || "N/A",
+    };
+
+    const membresData = (enquete.membresFamille || []).reduce(
+      (acc, membre, index) => ({
+        ...acc,
+        [`Membre ${index + 1} - Nom`]: membre.nom,
+        [`Membre ${index + 1} - Age`]: membre.age,
+        [`Membre ${index + 1} - Sexe`]: membre.sexe,
+        [`Membre ${index + 1} - Lien`]: membre.lienFamilial,
+      }),
+      {}
+    );
+
+    const pecheurData = enquete.pecheur
+      ? {
+          "Pêcheur - Année Début":
+            enquete.pecheur.pratiquesPeche?.[0]?.anneeDebut || "N/A",
+          "Pêcheur - Espèces":
+            enquete.pecheur.pratiquesPeche
+              ?.map((p: any) => p.especeCible)
+              .join(", ") || "N/A",
+          "Pêcheur - Équipements":
+            enquete.pecheur.equipementsPeche
+              ?.map((e: any) => `${e.typeEquipement} (${e.quantite}x)`)
+              .join(", ") || "N/A",
+          "Pêcheur - Embarcation":
+            enquete.pecheur.EmbarcationPeche?.typeEmbarcation || "N/A",
+          "Pêcheur - Circuits":
+            enquete.pecheur.circuitsCommercial
+              ?.map(
+                (c: any) =>
+                  `${c.typeProduit}: ${c.destinations
+                    ?.map((d: any) => `${d.nom} (${d.pourcentage}%)`)
+                    .join(", ")}`
+              )
+              .join("; ") || "N/A",
+        }
+      : {};
+
+    const collecteurData = enquete.collecteur
+      ? {
+          "Collecteur - Produits":
+            enquete.collecteur.produitsAchetes
+              ?.map((p: any) => p.typeProduit)
+              .join(", ") || "N/A",
+          "Collecteur - Capital": enquete.collecteur.capitalTotal || "N/A",
+        }
+      : {};
+
+    return {
+      ...baseData,
+      ...membresData,
+      ...pecheurData,
+      ...collecteurData,
+    };
+  };
+
+  const handleExport = async () => {
+    setIsExporting(true);
+    toast.info("Préparation de l'exportation...");
+
+    try {
+      const response = await fetch("/api/enquete_famille");
+      if (!response.ok) throw new Error(`Erreur HTTP: ${response.status}`);
+
+      const result = await response.json();
+      const enquetes = result?.data || [];
+
+      if (enquetes.length === 0) {
+        toast.warning("Aucune donnée à exporter");
+        return;
+      }
+
+      // Préparation des données
+      const mainSheetData = enquetes.map(flattenEnqueteData);
+
+      // Création du classeur Excel
+      const wb = XLSX.utils.book_new();
+
+      // Feuille principale
+      const wsMain = XLSX.utils.json_to_sheet(mainSheetData);
+      XLSX.utils.book_append_sheet(wb, wsMain, "Enquêtes");
+
+      // Feuille détaillée pour les membres de famille
+      const membresSheetData = enquetes.flatMap((enquete: any) =>
+        (enquete.membresFamille || []).map((membre: any) => ({
+          "ID Enquête": enquete.id,
+          Nom: membre.nom,
+          Age: membre.age,
+          Sexe: membre.sexe,
+          "Lien Familial": membre.lienFamilial,
+          "Niveau Éducation": membre.niveauEducation,
+          "Ancien Lieu": membre.ancienLieuResidence,
+          "Année Arrivée": membre.anneeArrivee,
+        }))
+      );
+
+      if (membresSheetData.length > 0) {
+        const wsMembres = XLSX.utils.json_to_sheet(membresSheetData);
+        XLSX.utils.book_append_sheet(wb, wsMembres, "Membres");
+      }
+
+      // Export du fichier
+      XLSX.writeFile(
+        wb,
+        `enquetes_${new Date().toISOString().split("T")[0]}.xlsx`
+      );
+      toast.success(`${enquetes.length} enquêtes exportées avec succès`);
+    } catch (error) {
+      console.error("Erreur export:", error);
+      toast.error(
+        `Échec de l'export: ${
+          error instanceof Error ? error.message : "Erreur inconnue"
+        }`
+      );
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleRefresh = () => {
+    fetchRecentActivity();
+    toast.info("Actualisation des données...");
+  };
 
   return (
     <Wrapper>
@@ -51,13 +236,13 @@ export default function Dashboard() {
                 <CalendarDays className="h-4 w-4 mr-2" />
                 Dernière mise à jour: Aujourd&apos;hui
               </Button>
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="sm" onClick={handleRefresh}>
                 <RefreshCw className="h-4 w-4 mr-2" />
                 Actualiser
               </Button>
-              <Button size="sm">
+              <Button size="sm" onClick={handleExport} disabled={isExporting}>
                 <Download className="h-4 w-4 mr-2" />
-                Exporter
+                {isExporting ? "Exportation..." : "Exporter"}
               </Button>
             </div>
           </div>
@@ -75,7 +260,7 @@ export default function Dashboard() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {recentActivity?.map((activity: any, index: any) => (
+                {recentActivity?.map((activity, index) => (
                   <div
                     key={index}
                     className="flex items-center justify-between py-2 border-b last:border-b-0"

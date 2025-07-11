@@ -40,28 +40,28 @@ export function StatsCards() {
   const stats = [
     {
       title: "Enquêtes Totales",
-      value: data?.totals.enquetes || 0,
+      value: data?.totals?.enquetes || 0,
       description: "Nombre total d'enquêtes réalisées",
       icon: Database,
       color: "text-blue-600",
     },
     {
       title: "Pêcheurs",
-      value: data?.totals.pecheurs || 0,
+      value: data?.totals?.pecheurs || 0,
       description: "Nombre de pêcheurs enquêtés",
       icon: Fish,
       color: "text-cyan-600",
     },
     {
       title: "Collecteurs",
-      value: data?.totals.collecteurs || 0,
+      value: data?.totals?.collecteurs || 0,
       description: "Nombre de collecteurs enquêtés",
       icon: Users,
       color: "text-green-600",
     },
     {
       title: "Activités",
-      value: data?.totals.activites || 0,
+      value: data?.totals?.activites || 0,
       description: "Activités économiques recensées",
       icon: Activity,
       color: "text-purple-600",
@@ -80,9 +80,9 @@ export function StatsCards() {
             {isLoading ? (
               <Skeleton className="h-8 w-[100px]" />
             ) : (
-              <div className="text-2xl font-bold">{stat.value}</div>
+              <div className="text-2xl font-bold">{stat?.value}</div>
             )}
-            <p className="text-xs text-muted-foreground">{stat.description}</p>
+            <p className="text-xs text-muted-foreground">{stat?.description}</p>
           </CardContent>
         </Card>
       ))}

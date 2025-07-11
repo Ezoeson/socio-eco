@@ -2,7 +2,12 @@ import { NextResponse } from "next/server";
 
 import { PrismaClient } from "@prisma/client";
 import { EnqueteFormData } from "@/type/localType";
-import { createActiviteData, createCollecteurData, createMembreFamilleData, createPecheurData } from "../function/create";
+import {
+  createActiviteData,
+  createCollecteurData,
+  createMembreFamilleData,
+  createPecheurData,
+} from "../function/create";
 import getIncludeRelations from "../function/getMany";
 
 const prisma = new PrismaClient();
@@ -92,21 +97,55 @@ export async function GET(request: Request) {
         include: {
           enqueteur: {
             select: {
-              id: true,
               nom: true,
               prenom: true,
             },
           },
           secteur: {
-            select: {
-              id: true,
-              nom: true,
+            include: {
+              fokontany: {
+                include: {
+                  commune: {
+                    include: {
+                      district: {
+                        include: {
+                          region: {
+                            select: {
+                              nom: true,
+                            },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
             },
           },
           membresFamille: true,
-          pecheur: true,
-          collecteur: true,
+          pecheur: {
+            include: {
+              pratiquesPeche: true,
+              equipementsPeche: true,
+              embarcations: true,
+              circuitsCommercial: {
+                include: {
+                  destinations: true,
+                },
+              },
+            },
+          },
+          collecteur: {
+            include: {
+              produitsAchetes: true,
+              stockages: true,
+              distributions: true,
+              contratsAcheteur: true,
+            },
+          },
+          activites: true,
         },
+
         orderBy: {
           dateEnquete: "desc",
         },
@@ -244,5 +283,3 @@ export async function POST(request: Request) {
     );
   }
 }
-
-
